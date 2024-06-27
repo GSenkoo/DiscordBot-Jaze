@@ -1,0 +1,44 @@
+{
+    "developers": [1213951846234726441],
+
+    "tables": {
+        "guild": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "theme": "INTEGER DEFAULT 0xFFFFFF",
+                "test": "INTEGER DEFAULT 5"
+            }
+        },    
+        "member": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL", "user_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "warns": "JSON"
+            }
+        },
+        "user": {
+            "primary_keys": {"user_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "blacklisted": "BOOLEAN DEFAULT false"
+            }
+        },
+        "snipe": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "author_id": "BIGINT",
+                "author_name": "VARCHAR(50)",
+                "author_avatar": "VARCHAR(255)",
+                "message_content": "VARCHAR(2000)",
+                "message_datetime": "TIMESTAMP"
+            }
+        },
+        "giveaway": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL", "message_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "giveaway_reward": "VARCHAR(255) DEFAULT 'Acune récompense'",
+                "giveaway_winners_count": "INTEGER DEFAULT 1",
+                "giveaway_participants": "JSON",
+                "giveaway_end_date": "TIMESTAMP"
+            }
+        }
+    }
+}
