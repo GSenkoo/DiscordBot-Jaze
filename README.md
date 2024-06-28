@@ -28,7 +28,7 @@ TOKEN = votre_token_ici
 MYSQL_USER = votre_identifiant_mysql
 MYSQL_PASSWORD = votre_mot_de_passe_mysql
 ```
-**En Remplaçant : **
+**En Remplaçant :**
 - **`votre_token_ici`** par  *[Le token de votre bot](https://youtu.be/aI4OmIbkJH8?si=RyxOBtSf6JENda9P)*
 - **`votre_identifiant_mysql`** par *[Un idenfiant de compte local mysql](https://www.youtube.com/watch?v=5h5IKUjAO24)*
 - **`votre_mot_de_passe_mysql`** par *[Le mot de passe du compte local mysql donnée](https://www.youtube.com/watch?v=5h5IKUjAO24)*
