@@ -51,12 +51,7 @@ pip install -r requirements.txt
 ```
 Ou alors, regardez les requirements ci-dessous et installez les manuellements.
 
-# Requirements 
-- **Langages**
- - Python
- - Mysql
-
-- **Packages**
+# Requirements (avec Python et Mysql)
  - py-cord (version suppérieur ou égal à `2.5.0`)
  - aiomysql (version suppérieur ou égal à `0.2.0`)
  - python-dotenv (version suppérieur ou égal à `1.0.1`)
