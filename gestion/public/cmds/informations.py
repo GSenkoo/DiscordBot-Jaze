@@ -464,45 +464,5 @@ class Informations(commands.Cog):
         await ctx.send(embed = embed, view = view)
 
 
-    @commands.command(description = "Voir le dernier message supprimé du salon")
-    @commands.guild_only()
-    async def snipe(self, ctx):
-        database = Database()
-        await database.connect()
-
-        try:
-            author_id = await database.get_data("snipe", "author_id", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
-            author_name = await database.get_data("snipe", "author_name", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
-            author_avatar = await database.get_data("snipe", "author_avatar", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
-            message_content = await database.get_data("snipe", "message_content", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
-            message_datetime = await database.get_data("snipe", "message_datetime", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
-        finally: await database.disconnect()
-
-        if not author_id:
-            await ctx.send("> Aucun récent message supprimé n'a été enregistré.")
-            return
-        
-        embed = discord.Embed(
-            author = discord.EmbedAuthor(name = author_name, icon_url = author_avatar, url = "https://discord.com/users/" + str(author_id)),
-            description = (message_content if len(message_content) < 2000 else message_content[:1500]),
-            color = await self.bot.get_theme(ctx.guild.id),
-            timestamp = message_datetime
-        )
-
-        await ctx.send(embed = embed)
-
-
-    @commands.command(aliases = ["ping"], description = "Voir la vitesse actuel du bot")
-    @commands.guild_only()
-    async def speed(self, ctx):
-        await ctx.send(
-            embed = discord.Embed(
-                title = "Vitesse du bot",
-                description = "**`" + str(round(self.bot.latency * 1000)) + "ms`**",
-                color = await self.bot.get_theme(ctx.guild.id),
-            )
-        )
-
-
 def setup(bot):
     bot.add_cog(Informations(bot))
