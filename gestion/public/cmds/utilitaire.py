@@ -31,11 +31,13 @@ SOFTWARE.
 import discord
 import sympy
 import sys
-import aiohttp
+import asyncio
+import wikipedia
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from discord.ext import commands
 
-sys.set_int_max_str_digits(9999999999999) # Pour la commande +calc
+sys.set_int_max_str_digits(999999999) # Pour la commande +calc
 
 class Utilitaire(commands.Cog):
     def __init__(self, bot):
@@ -80,29 +82,39 @@ class Utilitaire(commands.Cog):
     @commands.guild_only()
     async def wiki(self, ctx, *search):
         search = " ".join(search)
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url = f"https://{await self.bot.get_translations_langage(ctx.guiild.id)}.wikipedia.org/w/api.php",
-                params = {
-                    "action": "query",
-                    "srsearch": search,
-                    "list": "search",
-                    "format": "json"
-                }
-            ) as response:
-                if response.status != 200:
-                    await ctx.send("> La requête n'a pas pu aboutir, merci de réessayer plus tards.")
-                    return
-        
-        if not response.get("query", {}).get("search", {}):
-            await ctx.send(f"> Aucun résultats pour `{search.replace('`', '\`')}`", allowed_mentions = None)
+
+        if len(search) > 100:
+            await ctx.send("Votre recherche est trop longue (plus de 100 caractères).")
             return
         
-        response = response["query"]["search"][0]
+        def get_summary(topic, sentences):
+            wikipedia.set_lang("fr")
+            try:
+                summary = wikipedia.summary(topic, sentences)
+                return summary
+            except: pass
+            return wikipedia.summary(topic[1:], sentences)
+
+        async def get_summary_async(topic, sentences):
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor() as pool:
+                result = await loop.run_in_executor(pool, get_summary, topic, sentences)
+            return result
+        
+        try:
+            summary = await get_summary_async(search.lower(), 500)
+        except:
+            await ctx.send(f"> Aucun résultat pour {search}")
+            return
+
+        if not summary:
+            await ctx.send(f"> Aucun résultats pour " +  search.replace("`", "'"), allowed_mentions = None)
+            return
+
         await ctx.send(
             embed = discord.Embed(
-                title = response.get("title", "Sans titre"),
-                description = response.get("snippet", "Sans description")[:4093] + ("..." if len(response.get("snippet", "Sans description")[:4096]) > 4093 else ""),
+                title = "Recherche : " + search,
+                description = summary.replace("====", "**").replace(" ====", "").replace("===", "###").replace(" ###", "").replace("==", "## ").replace(" ##", ""),
                 color = await self.bot.get_theme(ctx.guild.id),
                 timestamp = datetime.now()
             )

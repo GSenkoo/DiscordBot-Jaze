@@ -59,12 +59,13 @@ Ou alors, regardez les requirements ci-dessous et installez les manuellements.
 - **Packages**
  - py-cord (version suppérieur ou égal à `2.5.0`)
  - aiomysql (version suppérieur ou égal à `0.2.0`)
- - python-dotenv (version suppérieur égal à `1.0.1`)
- - cryptography (version suppérieur égal à `42.0.8`)
- - PyMySQL (version suppérieur égal à `1.1.1`)
- - typing_extensions (version suppérieur égal à `4.11.0`)
- - sympy (version suppérieur égal à `1.12`)
- - psutil (version suppérieur égal à `6.0.0`)
+ - python-dotenv (version suppérieur ou égal à `1.0.1`)
+ - cryptography (version suppérieur ou égal à `42.0.8`)
+ - PyMySQL (version suppérieur ou égal à `1.1.1`)
+ - typing_extensions (version suppérieur ou égal à `4.11.0`)
+ - sympy (version suppérieur ou égal à `1.12`)
+ - psutil (version suppérieur ou égal à `6.0.0`)
+ - wikipedia (version suppérieur ou égal à `1.4.0`)
 
 # Lancer votre bot (Visual Studio Code)
 Vous devez vous rendre dans le fichier `main.py`, ensuite, dans le menu tout en haut, utilisez `Run > Start Debugging`
