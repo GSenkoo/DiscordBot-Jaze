@@ -27,11 +27,14 @@ TOKEN = votre_token_ici
 
 MYSQL_USER = votre_identifiant_mysql
 MYSQL_PASSWORD = votre_mot_de_passe_mysql
+
+DEEPL_KEY = votre_clée_deepl
 ```
 **En Remplaçant :**
 - **`votre_token_ici`** par  *[Le token de votre bot](https://youtu.be/aI4OmIbkJH8?si=RyxOBtSf6JENda9P)*
 - **`votre_identifiant_mysql`** par *[Un idenfiant de compte local mysql](https://www.youtube.com/watch?v=5h5IKUjAO24)*
 - **`votre_mot_de_passe_mysql`** par *[Le mot de passe du compte local mysql donnée](https://www.youtube.com/watch?v=5h5IKUjAO24)*
+- **`votre_clée_deepl`** par *[Une clée deepl](https://www.deepl.com/fr/pro#developer)*
 
 ### 2. Fichier "config.json"
 Tout en haut du fichier "config.json", vous pouvez voir une clée "developers" accompagnée en valeurs, d'une liste.
@@ -61,6 +64,7 @@ Ou alors, regardez les requirements ci-dessous et installez les manuellements.
  - sympy (version suppérieur ou égal à `1.12`)
  - psutil (version suppérieur ou égal à `6.0.0`)
  - wikipedia (version suppérieur ou égal à `1.4.0`)
+ - deepl (version suppérieur ou égal à `1.18.0`)
 
 # Lancer votre bot (Visual Studio Code)
 Vous devez vous rendre dans le fichier `main.py`, ensuite, dans le menu tout en haut, utilisez `Run > Start Debugging`

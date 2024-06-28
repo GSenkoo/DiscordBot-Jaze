@@ -33,11 +33,17 @@ import sympy
 import sys
 import asyncio
 import wikipedia
+import deepl
+import dotenv
+import os
+import json
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from discord.ext import commands
 
 sys.set_int_max_str_digits(999999999) # Pour la commande +calc
+dotenv.load_dotenv()
+deppl_api_key = os.getenv("DEEPL_KEY") # Pour la commande +translate
 
 class Utilitaire(commands.Cog):
     def __init__(self, bot):
@@ -80,11 +86,11 @@ class Utilitaire(commands.Cog):
 
     @commands.command(usage = "<search>", description = "Faire une recherche wikipedia", aliases = ["wikipedia", "wkp"])
     @commands.guild_only()
-    async def wiki(self, ctx, *search):
-        search = " ".join(search)
+    async def wiki(self, ctx, *, search):
+        message = await ctx.send("> Recherche wikipedia en cours...")
 
         if len(search) > 100:
-            await ctx.send("Votre recherche est trop longue (plus de 100 caractères).")
+            await message.edit("Votre recherche est trop longue (plus de 100 caractères).")
             return
         
         def get_summary(topic, sentences):
@@ -104,14 +110,15 @@ class Utilitaire(commands.Cog):
         try:
             summary = await get_summary_async(search.lower(), 500)
         except:
-            await ctx.send(f"> Aucun résultat pour {search}")
+            await message.edit(f"> Aucun résultat pour {search}")
             return
 
         if not summary:
-            await ctx.send(f"> Aucun résultats pour " +  search.replace("`", "'"), allowed_mentions = None)
+            await message.edit(f"> Aucun résultats pour " +  search.replace("`", "'"), allowed_mentions = None)
             return
 
-        await ctx.send(
+        await message.edit(
+            content = None,
             embed = discord.Embed(
                 title = "Recherche : " + search,
                 description = summary.replace("====", "**").replace(" ====", "").replace("===", "###").replace(" ###", "").replace("==", "## ").replace(" ##", ""),
@@ -124,8 +131,53 @@ class Utilitaire(commands.Cog):
     @commands.command(usage = "<text>", description = "Traduir un texte dans un langage que vous choisirez sur un menu", aliases = ["tsl"])
     @commands.guild_only()
     @commands.cooldown(rate = 5, per = 60)
-    async def translate(self, ctx, *text):
-        ... # Utiliser l'API DeepL
+    async def translate(self, ctx, *, text):
+        translator = deepl.Translator(deppl_api_key)
+
+        embed = discord.Embed(
+            title = "Choisissez une langue cible",
+            color = await self.bot.get_theme(ctx.guild.id)
+        )
+
+        def get_translation(text, target):
+            translator.translate_text(text = text, target_lang = target)
+
+        async def get_translation_async(text, target):
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor() as pool:
+                result = await loop.run_in_executor(pool, get_translation, text, target)
+            return result
+
+        with open("gestion/private/data/deepl_langage_select.json", encoding = "utf-8") as file:
+            langages_dict = json.load(file)
+
+        class ChooseLangage(discord.ui.View):
+            def __init__(self, ctx, text, translator, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.ctx = ctx
+                self.text = text
+                self.translator = translator
+            
+            @discord.ui.select(
+                placeholder = "Choisir une langue",
+                options = [
+                    discord.SelectOption(
+                        label = langage,
+                        emoji = values[1],
+                        value = values[0]
+                    ) for langage, values in langages_dict.items()
+                ]
+            )
+            async def select_callback(self, select, interaction):
+                if interaction.user != self.ctx.author:
+                    await ctx.respond("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                translation = self.translator.translate_text(self.text, target_lang = select.values[0])
+                # AJOUTER UNE CLEE
+                # CONFIGURER LA REPONSE
+
+        await ctx.send(embed = embed, view = ChooseLangage(ctx, text, translator))
 
 def setup(bot):
     bot.add_cog(Utilitaire(bot))
