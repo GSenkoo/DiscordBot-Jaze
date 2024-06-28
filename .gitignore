@@ -1,0 +1,21 @@
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+
+# Environnement virtuel
+venv/
+env/
+
+# Fichiers de configuration
+.env
+
+# Logs et rapports d'erreurs
+*.log
+*.csv
+
+# Fichiers spécifiques à un éditeur
+.vscode/
+
+# Fichiers spécifiques à l'OS
+.DS_Store
+Thumbs.db

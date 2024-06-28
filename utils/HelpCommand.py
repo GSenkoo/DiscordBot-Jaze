@@ -34,6 +34,7 @@ from discord.ext import commands
 from utils.Paginator import PaginatorCreator
 from utils.Database import Database
 
+
 async def get_theme(guild_id : int):
     database = Database()
     try:
