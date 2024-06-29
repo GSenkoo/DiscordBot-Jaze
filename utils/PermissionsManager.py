@@ -39,5 +39,6 @@ class PermissionsManager:
 
         if ctx.author.id in data["developers"]:
             return True
+        return True
         
 

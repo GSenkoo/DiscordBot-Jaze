@@ -216,7 +216,7 @@ class Utilitaire(commands.Cog):
                     color = await self.bot.get_theme(self.ctx.guild.id)
                 )
                 embed.add_field(name = f"Texte d'origine", value = self.text)
-                embed.add_field(name = f"Texte traduis ({select.values[0]})", value = translation)
+                embed.add_field(name = f"Texte traduit ({select.values[0]})", value = translation)
 
                 await interaction.message.edit(embed = embed)
                 await interaction.response.defer()
