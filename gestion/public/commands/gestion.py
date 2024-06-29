@@ -93,7 +93,7 @@ class Gestion(commands.Cog):
             await channel.edit(ctx.guild.default_role, overwrites = overwrite)
             continue
 
-        await ctx.send(f"> **Tous les salon** du serveur a été **unlock**.")
+        await ctx.send(f"> **Tous les salon** du serveur ont étés **unlock**.")
 
 
     # credits : @koryai (discord)
@@ -119,7 +119,8 @@ class Gestion(commands.Cog):
         await ctx.send(f"> **Tous les salons** du serveur sont désormais **invisibles**.")
 
 
-    @commands.command(description = "Enleve tous les rôles a un membre du serveur.")
+    # credits : @koryai (discord)
+    @commands.command(description = "Enleve tous les rôles d'un membre du serveur.")
     @commands.guild_only()
     async def derank(self, ctx, member : discord.Member):
         if ctx.author == member:

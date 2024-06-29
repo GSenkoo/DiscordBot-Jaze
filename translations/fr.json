@@ -1,4 +1,20 @@
-{
+{   
+    "permissions": {
+        "administrator": "Administrateur",
+        "kick_members": "Expulser des membres",
+        "ban_members": "Bannir des membres",
+        "manage_channels": "Gérer les salons",
+        "manage_guild": "Gérer le serveur",
+        "view_audit_log": "Voir les logs",
+        "manage_messages": "Gérer les messages",
+        "mention_everyone": "Mentionner @ everyone",
+        "manage_roles": "Gérer les rôles",
+        "manage_webhooks": "Gérer les webhooks",
+        "manage_emojis_and_stickers": "Gérér les emojis et les autocollants",
+        "manage_threads": "Gérer les fils"
+    },
+
+
     "alladmins": {
         "Administrateurs": "Administrateurs"
     },
@@ -11,11 +27,122 @@
     },
     "boosters": {
         "Il n'y a pas de booster sur ce serveur": "Il n'y a pas de booster sur ce serveur",
-        "Boosters": "Boosters"
+        "Boosters": "Boosters",
+        "boost depuis [data_date]": "boost depuis [data_date]"
     },
     "rolemembers": {
         "Il n'y a aucun membre avec le rôle": "Il n'y a aucun membre avec le rôle",
         "Membre avec": "Membre avec",
         "boost depuis": "boost depuis"
+    },
+    "serverinfo": {
+        "Non débloqué": "Non débloqué",
+        "Aucun accès": "Aucun accès",
+        "Aucune description": "Aucune description",
+        "Propriétaire": "Propriétaire",
+        "Date de création": "Date de création",
+        "Membres": "Membres",
+        "En lignes": "En lignes",
+        "Inactifs": "Inactifs",
+        "Ne pas déranger": "Ne pas déranger",
+        "Hors lignes": "Hors lignes",
+
+        "Total": "Total",
+
+        "Textuels": "Textuels",
+        "Vocaux": "Vocaux",
+        "Forums": "Forums",
+        "Conférences": "Conférences",
+        "Catégories": "Catégories",
+        
+        "Rôles": "Rôles",
+        "Rôles admin": "Rôles admin",
+        "Rôles de bot": "Rôles de bot",
+        "Rôle booster": "Rôle booster",
+        "Boosts": "Boosts",
+        "Boosters": "Boosters",
+        "Bots": "Bots",
+        "Vanity": "Vanity",
+        "ID": "ID"
+    },
+    "role": {
+        "Date de création": "Date de création",
+        "Membre le possédant": "Membre le possédant",
+        "Position": "Position",
+        "Mentionnable": "Mentionnable",
+        "Affiché séparément": "Affiché séparément",
+        "Couleur": "Couleur",
+        
+        "et [data_number] autres": "et [data_number] autres",
+        "Permissions dangereuses": "Permissions dangereuses",
+        "Aucune": "Aucune",
+        "Oui": "Oui",
+        "Non": "Non"
+    },
+    "channel": {
+        "Sujet": "Sujet",
+        "Date de création": "Date de création",
+        "Position": "Position",
+        "Catégorie": "Catégorie",
+        "Aucun": "Aucun",
+        "Aucune": "Aucune",
+        "Désactivé": "Désactivé",
+        "[data_time] secondes": "[data_time] secondes",
+        "Mode lent": "Mode lent",
+        "Oui": "Oui",
+        "Non": "Non",
+        "Nsfw": "Nsfw",
+        "Utilisateurs y ayants accès": "Utilisateurs y ayants accès"
+    },
+    "vocinfo": {
+        "Statistiques vocales": "Statistiques vocales",
+        "En vocal": "En vocal",
+        "Mute": "Mute",
+        "En sourdine": "En sourdine",
+        "En streaming": "En streaming",
+        "En vidéo": "En vidéo"
+    },
+    "botinfo": {
+        "Bot discord avancé, optimisé et complet.": "Bot discord avancé, optimisé et complet.",
+        "Inviter [data_user]": "Inviter [data_user]",
+        "Développeur": "Développeur",
+        "Vitesse": "Vitesse",
+        "Version Python": "Version Python",
+        "Version Pycord": "Version Pycord",
+        "Serveurs": "Serveurs",
+        "Utilisateur": "Utilisateur",
+        "Mémoire utilisée": "Mémoire utilisée"
+    },
+    "user": {
+        "Création du compte": "Création du compte",
+        "Badges": "Badges",
+        "Bot": "Bot",
+        "Aucun": "Aucun",
+        "Oui": "Oui",
+        "Non": "Non",
+
+        "Status": "Status",
+        "Date d'arrivée": "Date d'arrivée",
+        "Booster depuis": "Booster depuis",
+        "Rôle le plus haut": "Rôle le plus haut"        
+    },
+    "pic": {
+        "Avatar de base": "Avatar de base",
+        "Avatar par défaut": "Avatar par défaut"
+    },
+    "banner": {
+        "Vous n'avez pas de bannière": "Vous n'avez pas de bannière",
+        "[data_user] n'a pas de bannière": "[data_user] n'a pas de bannière",
+        "Bannière": "Bannière"
+    },
+    "serverpic": {
+        "Le serveur [data_server] n'a pas d'icône": "Le serveur [data_server] n'a pas d'icône",
+        "Icône": "Icône"
+    },
+    "serverbanner": {
+        "Le serveur [data_server] n'a pas de bannière": "Le serveur [data_server] n'a pas de bannière",
+        "Bannière": "Bannière"
     }
+
+
 }

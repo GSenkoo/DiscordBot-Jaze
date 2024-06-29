@@ -113,7 +113,7 @@ class Informations(commands.Cog):
     async def boosters(self, ctx):
         translations = await self.bot.get_translation("boosters", ctx.guild.id)
 
-        boosters = [f"{subscriber.mention} ({translations['boost depuis']} <t:{round(subscriber.premium_since.timestamp())}:R>)" for subscriber in ctx.guild.premium_subscribers]
+        boosters = [f"{subscriber.mention} ({translations['boost depuis [data_date]'].replace('[data_date]', f'<t:{round(subscriber.premium_since.timestamp())}:R>')})" for subscriber in ctx.guild.premium_subscribers]
 
         if not boosters:
             await ctx.send(f"> " + {translations["Il n'y a pas de booster sur ce serveur"]})
@@ -161,13 +161,13 @@ class Informations(commands.Cog):
     @commands.command(description = "Voir des informations relatives au serveur")
     @commands.guild_only()
     async def serverinfo(self, ctx):
-        translations = await self.bot.get_translation("rolemembers", ctx.guild.id)
+        translation = await self.bot.get_translation("serverinfo", ctx.guild.id)
 
         member_online, member_idle, member_dnd = 0, 0, 0
-        vanity_url = "Non débloqué"
+        vanity_url = f"{translation['Non débloqué']}"
         if "VANITY_URL" in ctx.guild.features:
             try: vanity_url = f"**{await ctx.guild.vanity_invite()}**"
-            except: vanity_url = "Aucun accès"
+            except: vanity_url = f"{translation['Aucun accès']}"
 
         for member in ctx.guild.members:
             match str(member.status):
@@ -182,50 +182,50 @@ class Informations(commands.Cog):
             title = ctx.guild.name,
             thumbnail = ctx.guild.icon.url if ctx.guild.icon else None,
             color = await self.bot.get_theme(ctx.guild.id),
-            description = ctx.guild.description if ctx.guild.description else "*Aucune description*"
+            description = ctx.guild.description if ctx.guild.description else f"*{translation['Aucune description']}*"
         ).add_field(
-            name = "Propriétaire",
+            name = f"{translation['Propriétaire']}",
             value = f"{ctx.guild.owner.mention}"
         ).add_field(
-            name = "Date de création",
+            name = f"{translation['Date de création']}",
             value = f"**<t:{round(ctx.guild.created_at.timestamp())}:R>**",
             inline = False
         )
         
         embed.add_field(
-            name = "Membres",
-            value = f"*En lignes* : **{member_online}**\n"
-            + f"*Inactifs* : **{member_idle}**\n"
-            + f"*Ne pas déranger* : **{member_dnd}**\n"
-            + f"*Hors lignes* : **{len(ctx.guild.members) - member_online - member_dnd - member_idle}**\n"
-            + f"*Total* : **{len(ctx.guild.members)}**"
+            name = f"{translation['Membres']}",
+            value = f"*{translation['En lignes']}* : **{member_online}**\n"
+            + f"*{translation['Inactifs']}* : **{member_idle}**\n"
+            + f"*{translation['Ne pas déranger']}* : **{member_dnd}**\n"
+            + f"*{translation['Hors lignes']}* : **{len(ctx.guild.members) - member_online - member_dnd - member_idle}**\n"
+            + f"*{translation['Total']}* : **{len(ctx.guild.members)}**"
         )
         embed.add_field(
             name = "Salons",
-            value = f"*Textuels* : **{len(ctx.guild.text_channels)}**\n"
-            + f"*Vocaux* : **{len(ctx.guild.voice_channels)}**\n"
-            + f"*Forums* : **{len(ctx.guild.forum_channels)}**\n"
-            + f"*Conférences* : **{len(ctx.guild.stage_channels)}**\n"
-            + f"*Catégories* : **{len(ctx.guild.categories)}**\n"
-            + f"*Total* : **{len(ctx.guild.channels)}**"
+            value = f"*{translation['Textuels']}* : **{len(ctx.guild.text_channels)}**\n"
+            + f"*{translation['Vocaux']}* : **{len(ctx.guild.voice_channels)}**\n"
+            + f"*{translation['Forums']}* : **{len(ctx.guild.forum_channels)}**\n"
+            + f"*{translation['Conférences']}* : **{len(ctx.guild.stage_channels)}**\n"
+            + f"*{translation['Catégories']}* : **{len(ctx.guild.categories)}**\n"
+            + f"*{translation['Total']}* : **{len(ctx.guild.channels)}**"
         )
         embed.add_field(
-            name = "Rôles",
-            value = f"*Rôles admin* : **{len([role for role in ctx.guild.roles if role.permissions.administrator])}**\n"
-            + f"*Rôles de bot* : **{len([role for role in ctx.guild.roles if role.is_bot_managed()])}**\n"
-            + f"*Rôle booster* : " + (ctx.guild.premium_subscriber_role.mention if ctx.guild.premium_subscriber_role else "Aucun") + "\n"
-            + f"*Rôles* : **{len(ctx.guild.roles)}**"
+            name = f"{translation['Rôles']}",
+            value = f"*{translation['Rôles admin']}* : **{len([role for role in ctx.guild.roles if role.permissions.administrator])}**\n"
+            + f"*{translation['Rôles de bot']}* : **{len([role for role in ctx.guild.roles if role.is_bot_managed()])}**\n"
+            + f"*{translation['Rôle booster']}* : " + (ctx.guild.premium_subscriber_role.mention if ctx.guild.premium_subscriber_role else "Aucun") + "\n"
+            + f"*{translation['Rôles']}* : **{len(ctx.guild.roles)}**"
         )
         embed.add_field(
             name = "Autres informations",
-            value = f"*Boosts* : **{ctx.guild.premium_subscription_count}**\n"
-            + f"*Boosters* : **{len(ctx.guild.premium_subscribers)}**\n"
-            + f"*Bots* : **{len([m for m in ctx.guild.members if m.bot])}**\n"
-            + f"*Vanity* : {vanity_url}",
+            value = f"*{translation['Boosts']}* : **{ctx.guild.premium_subscription_count}**\n"
+            + f"*{translation['Boosters']}* : **{len(ctx.guild.premium_subscribers)}**\n"
+            + f"*{translation['Bots']}* : **{len([m for m in ctx.guild.members if m.bot])}**\n"
+            + f"*{translation['Vanity']}* : {vanity_url}",
             inline = True
         )
         embed.set_footer(
-            text = f"ID : {ctx.guild.id}"
+            text = f"{translation['ID']} : {ctx.guild.id}"
         )
         
         embed.timestamp = datetime.now()
@@ -238,17 +238,20 @@ class Informations(commands.Cog):
     @commands.command(usage = "<role>", description = "Voir des informations relatives à un certain rôle")
     @commands.guild_only()
     async def role(self, ctx, role : discord.Role):
+        translation = await self.bot.get_translation("role", ctx.guild.id)
+        translation_permissions = await self.bot.get_translation("permissions", ctx.guild.id)
+
         embed = discord.Embed(
             description = f"### {role.mention} (`{role.id}`)",
             color = await self.bot.get_theme(ctx.guild.id)
         )
-
-        embed.add_field(name = "Date de création", value = f"<t:{round(role.created_at.timestamp())}:R>")
-        embed.add_field(name = "Membre le possédant", value = f"{len(role.members)}")
-        embed.add_field(name = "Position", value = f"{role.position}/{len(ctx.guild.roles)}")
-        embed.add_field(name = "Mentionnable", value = "Oui" if role.mentionable else "Non")
-        embed.add_field(name = "Affiché séparément", value = "Oui" if role.hoist else "Non")
-        embed.add_field(name = "Couleur", value = f"{role.color}")
+        
+        embed.add_field(name = f"{translation['Date de création']}", value = f"<t:{round(role.created_at.timestamp())}:R>")
+        embed.add_field(name = f"{translation['Membre le possédant']}", value = f"{len(role.members)}")
+        embed.add_field(name = f"{translation['Position']}", value = f"{role.position}/{len(ctx.guild.roles)}")
+        embed.add_field(name = f"{translation['Mentionnable']}", value = f"{translation['Oui']}" if role.mentionable else f"{translation['Non']}")
+        embed.add_field(name = f"{translation['Affiché séparément']}", value = f"{translation['Oui']}" if role.hoist else f"{translation['Non']}")
+        embed.add_field(name = f"{translation['Couleur']}", value = f"{role.color}")
         dangerous_permissions = [
             "administrator",
             "kick_members",
@@ -266,12 +269,13 @@ class Informations(commands.Cog):
         role_dangerous_permissions = []
         for permission in dangerous_permissions:
             if getattr(role.permissions, permission):
-                role_dangerous_permissions.append(permission.replace("_", " ").capitalize())
+                role_dangerous_permissions.append(translation_permissions[permission])
+
         embed.add_field(
-            name = "Permissions dangereuses", 
-            value = f"Aucune" 
+            name = f"{translation['Permissions dangereuses']}", 
+            value = f"{translation['Aucune']}" 
             if not role_dangerous_permissions
-            else ", ".join(role_dangerous_permissions[:4]) + (f" (et {len(role_dangerous_permissions) - 5} autres)" if len(role_dangerous_permissions) > 3 else "")
+            else ", ".join(role_dangerous_permissions[:4]) + (translation['et [data_number] autres'].replace("[data_number]", str(len(role_dangerous_permissions) - 5)) if len(role_dangerous_permissions) > 3 else "")
         )
         embed.timestamp = datetime.now()
 
@@ -281,6 +285,8 @@ class Informations(commands.Cog):
     @commands.command(description = "Voir des informations relatives à un salon")
     @commands.guild_only()
     async def channel(self, ctx, channel : discord.TextChannel = None):
+        translation = await self.bot.get_translation("channel", ctx.guild.id)
+        
         if not channel:
             channel = ctx.channel
 
@@ -288,13 +294,13 @@ class Informations(commands.Cog):
             description = f"### {channel.mention} (`{channel.id}`)",
             color = await self.bot.get_theme(ctx.guild.id)
         )
-        embed.add_field(name = "Sujet", value = channel.topic if channel.topic else "Aucun")
-        embed.add_field(name = "Date de création", value = f"<t:{round(channel.created_at.timestamp())}:R>")
-        embed.add_field(name = "Position", value = f"{channel.position}/{len(ctx.guild.channels)}")
-        embed.add_field(name = "Catégorie", value = f"{channel.category}" if channel.category else "Aucune")
-        embed.add_field(name = "Mode lent", value = f"{channel.slowmode_delay}s" if channel.slowmode_delay else "Désactivé")
-        embed.add_field(name = "Nsfw", value = "Oui" if channel.is_nsfw else "Non")
-        embed.add_field(name = "Utilisateurs y ayants accès", value = f"{len(channel.members)}")
+        embed.add_field(name = f"{translation['Sujet']}", value = channel.topic if channel.topic else f"{translation['Aucun']}")
+        embed.add_field(name = f"{translation['Date de création']}", value = f"<t:{round(channel.created_at.timestamp())}:R>")
+        embed.add_field(name = f"{translation['Position']}", value = f"{channel.position}/{len(ctx.guild.channels)}")
+        embed.add_field(name = f"{translation['Catégorie']}", value = f"{channel.category}" if channel.category else f"{translation['Aucune']}")
+        embed.add_field(name = f"{translation['Mode lent']}", value = translation["[data_time] secondes"].replace("[data_time]", str(channel.slowmode_delay)) if channel.slowmode_delay else f"{translation['Désactivé']}")
+        embed.add_field(name = f"{translation['Nsfw']}", value = translation["Oui"] if channel.is_nsfw else translation["Non"])
+        embed.add_field(name = f"{translation['Utilisateurs y ayants accès']}", value = f"{len(channel.members)}")
         embed.timestamp = datetime.now()
         
         await ctx.send(embed = embed)
@@ -303,8 +309,10 @@ class Informations(commands.Cog):
     @commands.command(description = "Voir des informations realives aux statistiques vocales")
     @commands.guild_only()
     async def vocinfo(self, ctx):
+        translation = await self.bot.get_translation("vocinfo", ctx.guild.id)
+
         embed = discord.Embed(
-            title = "Statistiques vocales",
+            title = f"{translation['Statistiques vocales']}",
             color = await self.bot.get_theme(ctx.guild.id),
             thumbnail = ctx.guild.icon.url if ctx.guild.icon else None
         )
@@ -326,11 +334,11 @@ class Informations(commands.Cog):
                 if member_voicestate.self_mute or member_voicestate.self_mute: users_mute_count += 1
                 if member_voicestate.self_deaf or member_voicestate.deaf: users_deaf_count += 1
 
-        embed.add_field(name = "En vocal", value = str(users_count))
-        embed.add_field(name = "Mute", value = str(users_mute_count))
-        embed.add_field(name = "En sourdine", value = str(users_deaf_count))
-        embed.add_field(name = "En streaming", value = str(users_streaming_count))
-        embed.add_field(name = "En vidéo", value = str(users_video_count))
+        embed.add_field(name = translation["En vocal"], value = str(users_count))
+        embed.add_field(name = translation["Mute"], value = str(users_mute_count))
+        embed.add_field(name = translation["En sourdine"], value = str(users_deaf_count))
+        embed.add_field(name = translation["En streaming"], value = str(users_streaming_count))
+        embed.add_field(name = translation["En vidéo"], value = str(users_video_count))
 
         await ctx.send(embed = embed)
 
@@ -338,9 +346,11 @@ class Informations(commands.Cog):
     @commands.command(description = "Obtenir des informations relatives au bot")
     @commands.guild_only()
     async def botinfo(self, ctx):
+        translation = await self.bot.get_translation("botinfo", ctx.guild.id)
+
         embed = discord.Embed(
             title = self.bot.user.display_name,
-            description = "Bot discord avancé, optimisé et complet.",
+            description = translation["Bot discord avancé, optimisé et complet."],
             color = await self.bot.get_theme(ctx.guild.id),
             thumbnail = self.bot.user.avatar.url
         )
@@ -356,21 +366,22 @@ class Informations(commands.Cog):
 
 
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(style = discord.ButtonStyle.link, label = f"Inviter {self.bot.user.name}", url = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.user.id}&permissions=8&scope=bot"))
+        view.add_item(discord.ui.Button(style = discord.ButtonStyle.link, label = translation["Inviter [data_user]"].replace("data_user", self.bot.user.name), url = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.user.id}&permissions=8&scope=bot"))
         developers = [await self.bot.fetch_user(developer) for developer in developers]
-        embed.add_field(name = "Développeur", value = ", ".join([f'[**{developer.display_name}**](https://discord.com/users/{developer.id})' for developer in developers]))
-        embed.add_field(name = "Vitesse", value = f"{round(self.bot.latency * 1000)}ms")
-        embed.add_field(name = "Version Python", value = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
-        embed.add_field(name = "Version Pycord", value = f"{discord.__version__}")
-        embed.add_field(name = "Serveurs", value = f"{len(self.bot.guilds)}")
-        embed.add_field(name = "Utilisateur", value = f"{len(self.bot.users)}")
-        embed.add_field(name = "Mémoire utilisée", value = str(round(memory_usage, 3)) + "GB")
+        embed.add_field(name = translation["Développeur"], value = ", ".join([f'[**{developer.display_name}**](https://discord.com/users/{developer.id})' for developer in developers]))
+        embed.add_field(name = translation["Vitesse"], value = f"{round(self.bot.latency * 1000)}ms")
+        embed.add_field(name = translation["Version Python"], value = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+        embed.add_field(name = translation["Version Pycord"], value = f"{discord.__version__}")
+        embed.add_field(name = translation["Serveurs"], value = f"{len(self.bot.guilds)}")
+        embed.add_field(name = translation["Utilisateur"], value = f"{len(self.bot.users)}")
+        embed.add_field(name = translation["Mémoire utilisée"], value = str(round(memory_usage, 3)) + "GB")
 
         await ctx.send(embed = embed, view = view)
 
     @commands.command(description = "Voir des informations relatives à un membre/utilisateur")
     @commands.guild_only()
     async def user(self, ctx, user : discord.User = None):
+        translation = await self.bot.get_translation("user", ctx.guild.id)
         if not user:
             user = ctx.author
 
@@ -388,20 +399,20 @@ class Informations(commands.Cog):
                 cflag[index] = word.capitalize()
             user_flags.append("".join(cflag))
 
-        embed.add_field(name = "Création du compte", value = f"<t:{round(user.created_at.timestamp())}:R>")
-        embed.add_field(name = "Badges", value = ", ".join(user_flags) if user_flags else "Aucun")
-        embed.add_field(name = "Bot", value = "Oui" if user.bot else "Non")
+        embed.add_field(name = translation["Création du compte"], value = f"<t:{round(user.created_at.timestamp())}:R>")
+        embed.add_field(name = translation["Badges"], value = ", ".join(user_flags) if user_flags else translation["Aucun"])
+        embed.add_field(name = translation["Bot"], value = translation["Oui"] if user.bot else translation["Non"])
 
         member = None
         try: member = await ctx.guild.fetch_member(user.id)
         except: pass
 
         if member:
-            embed.add_field(name = "Status", value = member.status)
-            embed.add_field(name = "Date d'arrivée", value = f"<t:{round(member.joined_at.timestamp())}:R>")
+            embed.add_field(name = translation["Status"], value = member.status)
+            embed.add_field(name = translation["Date d'arrivée"], value = f"<t:{round(member.joined_at.timestamp())}:R>")
             if member.premium_since:
-                embed.add_field(name = "Booster depuis", value = f"<t:{round(member.premium_since.timestamp())}:R>")
-            embed.add_field(name = "Rôle le plus haut", value = f"{member.top_role.mention}")
+                embed.add_field(name = translation["Booster depuis"], value = f"<t:{round(member.premium_since.timestamp())}:R>")
+            embed.add_field(name = translation["Rôle le plus haut"], value = f"{member.top_role.mention}")
         if user.banner: embed.set_image(url = user.banner.url)
         await ctx.send(embed = embed)
 
@@ -422,12 +433,13 @@ class Informations(commands.Cog):
 
         embed2 = None
         if user.display_avatar.url != user.avatar.url:
+            translation = await self.bot.get_translation("pic", ctx.guild.id)
             embed2 = discord.Embed(
-                title = user.display_name + " (Avatar de base)",
+                title = user.display_name + f" ({translation['Avatar de base']})",
                 url = f"https://discord.com/users/{user.id}",
                 color = await self.bot.get_theme(ctx.guild.id)
             ).set_image(url = user.display_avatar.url)
-            view.add_item(discord.ui.Button(label = "Avatar par défaut", style = discord.ButtonStyle.link, url = user.display_avatar.url))
+            view.add_item(discord.ui.Button(label = translation["Avatar par défaut"], style = discord.ButtonStyle.link, url = user.display_avatar.url))
         
         if not embed2:
             await ctx.send(embed = embed)
@@ -438,14 +450,16 @@ class Informations(commands.Cog):
     @commands.command(description = "Voir la bannière de profil d'un utilisateur")
     @commands.guild_only()
     async def banner(self, ctx, user : discord.User = None):
+        translation = await self.bot.get_translation("banner", ctx.guild.id)
+
         if not user:
             user = ctx.author
         if not user.banner:
-            await ctx.send(f"> " + (user.mention + " n'a" if user != ctx.author else "Vous n'avez") + " pas de bannière.", allowed_mentions = None)
+            await ctx.send(f"> " + (translation["[data_user] n'a pas de bannière"].replace("[data_user]", user.mention) if user != ctx.author else translation["Vous n'avez pas de bannière"]) + ".", allowed_mentions = None)
             return
         
         view = discord.ui.View(timeout = None)
-        view.add_item(discord.ui.Button(label = "Bannière", style = discord.ButtonStyle.link, url = user.banner.url))
+        view.add_item(discord.ui.Button(label = translation["Bannière"], style = discord.ButtonStyle.link, url = user.banner.url))
         embed = discord.Embed(
             title = user.display_name,
             url = f"https://discord.com/users/{user.id}",
@@ -458,10 +472,12 @@ class Informations(commands.Cog):
     @commands.command(description = "Voir l'icône du serveur ou celui d'un des serveurs du bot")
     @commands.guild_only()
     async def serverpic(self, ctx, server : discord.Guild = None):
+        translation = await self.bot.get_translation("serverpic", ctx.guild.id)
+
         if not server:
             server = ctx.guild
         if not ctx.guild.icon:
-            await ctx.send(f"> Le serveur{' ' + server.name if server != ctx.guild else ''} n'a pas d'icône.")
+            await ctx.send(f"> " + translation["Le serveur [data_server] n'a pas d'icône"].replace("[data_server]", f"**{server.name}**") + ".")
             return
         
         view = discord.ui.View(timeout = None)
@@ -477,14 +493,15 @@ class Informations(commands.Cog):
     @commands.command(description = "Voir la bannière du serveur ou celui d'un des serveurs du bot")
     @commands.guild_only()
     async def serverbanner(self, ctx, server : discord.Guild = None):
+        translation = await self.bot.get_translation("serverbanner", ctx.guild.id)
         if not server:
             server = ctx.guild
         if not ctx.guild.banner:
-            await ctx.send(f"> Le serveur{' ' + server.name if server != ctx.guild else ''} n'a pas de bannière.")
+            await ctx.send(f"> " + translation["Le serveur [data_server] n'a pas de bannière"].replace("[data_server]", f"**{server.name}**") + ".")
             return
         
         view = discord.ui.View(timeout = None)
-        view.add_item(discord.ui.Button(label = "Bannière", style = discord.ButtonStyle.link, url = server.banner.url))
+        view.add_item(discord.ui.Button(label = translation["Bannière"], style = discord.ButtonStyle.link, url = server.banner.url))
         embed = discord.Embed(
             title = server.name,
             color = await self.bot.get_theme(ctx.guild.id)

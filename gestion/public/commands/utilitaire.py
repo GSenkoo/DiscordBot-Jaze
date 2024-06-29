@@ -292,7 +292,7 @@ class Utilitaire(commands.Cog):
             return discord.Embed(
                 title = data["title"]
             )
-        
+
         class EmbedCreator(discord.ui.View):
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)

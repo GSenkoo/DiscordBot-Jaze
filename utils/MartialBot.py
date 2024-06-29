@@ -68,7 +68,7 @@ class MartialBot(commands.AutoShardedBot):
 
 
     async def get_translation(self, translation_key : str, guild_id : int):
-        langage = await self.get_translations_langages(guild_id)
+        langage = await self.get_translations_langage(guild_id)
 
         with open(f"translations/{langage}.json", encoding = "utf-8") as file:
             translation_data = json.load(file)
