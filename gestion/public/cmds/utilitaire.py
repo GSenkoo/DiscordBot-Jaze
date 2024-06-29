@@ -47,6 +47,12 @@ dotenv.load_dotenv()
 deppl_api_key = os.getenv("DEEPL_KEY") # Pour la commande +translate
 
 
+"""
+Liens des documentations :
+    API DEEPL : https://developers.deepl.com/docs/api-reference/translate
+    API/Package Wikipedia : https://wikipedia.readthedocs.io/en/latest/
+"""
+
 class Utilitaire(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -134,6 +140,9 @@ class Utilitaire(commands.Cog):
     @commands.guild_only()
     @commands.cooldown(rate = 5, per = 60)
     async def translate(self, ctx, *, text):
+        if len(text) <= 5:
+            await ctx.send("> Demande de traduction trop courte.")
+            return
         if len(text) > 500:
             await ctx.send("> Demande de traduction trop longue (plus de 500 caractères).")
             return
@@ -149,7 +158,11 @@ class Utilitaire(commands.Cog):
         )
 
         def get_translation(text, target):
-            translator.translate_text(text = text, target_lang = target)
+            result = translator.translate_text(text = text, target_lang = target)
+            assert result
+
+            return result
+        
 
         async def get_translation_async(text, target):
             loop = asyncio.get_event_loop()
@@ -161,11 +174,17 @@ class Utilitaire(commands.Cog):
             langages_dict = json.load(file)
 
         class ChooseLangage(discord.ui.View):
-            def __init__(self, ctx, text, translator, *args, **kwargs):
-                super().__init__(*args, **kwargs)
+            def __init__(self, bot, ctx, text, translator, *args, **kwargs):
+                super().__init__(*args, **kwargs, timeout = 15)
+                self.bot = bot
                 self.ctx = ctx
                 self.text = text
                 self.translator = translator
+
+            async def on_timeout(self) -> None:
+                if self.message:
+                    try: await self.message.edit(view = None)
+                    except: pass
             
             @discord.ui.select(
                 placeholder = "Choisir une langue",
@@ -182,12 +201,27 @@ class Utilitaire(commands.Cog):
                     await ctx.respond("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                translation = self.translator.translate_text(self.text, target_lang = select.values[0])
-                print(translation)
-                # AJOUTER UNE CLEE
-                # CONFIGURER LA REPONSE
+                try: translation = await get_translation_async(self.text, select.values[0])
+                except:
+                    await interaction.message.edit(
+                        embed = discord.Embed(
+                            title = "La traduction de votre texte n'a pas pu aboutir.",
+                            color = self.bot.get_theme(self.ctx.guild.id)
+                        )
+                    )
+                    await interaction.response.defer()
 
-        await ctx.send(embed = embed, view = ChooseLangage(ctx, text, translator))
+                embed = discord.Embed(
+                    title = "Traduction de texte",
+                    color = await self.bot.get_theme(self.ctx.guild.id)
+                )
+                embed.add_field(name = f"Texte d'origine", value = self.text)
+                embed.add_field(name = f"Texte traduis ({select.values[0]})", value = translation)
+
+                await interaction.message.edit(embed = embed)
+                await interaction.response.defer()
+
+        await ctx.send(embed = embed, view = ChooseLangage(self.bot, ctx, text, translator))
 
 
     @commands.command(description = "Voir le dernier message supprimé du salon")
