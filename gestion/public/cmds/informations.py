@@ -47,12 +47,34 @@ class Informations(commands.Cog):
     @commands.command(aliases = ["alladmin"], description = "Voir les membres avec la permission administrateur")
     @commands.guild_only()
     async def alladmins(self, ctx):
+        translations = await self.bot.get_translation("alladmins", ctx.guild.id)
+
         administrators = [f"{member.mention} `({member.id})`" for member in ctx.guild.members if (member.guild_permissions.administrator) and (not member.bot)]
         paginator_creator = PaginatorCreator()
         paginator = await paginator_creator.create_paginator(
-            title = f"Administrateurs ({len(administrators)})",
+            title = f"{translations['Administrateurs']} ({len(administrators)})",
             embed_color = await self.bot.get_theme(ctx.guild.id),
             data_list = administrators,
+            data_per_page = 10,
+        )
+        
+        if type(paginator) == list:
+            await ctx.send(embed = paginator[0])
+        else:
+            await paginator.send(ctx)
+
+
+    @commands.command(aliases = ["allbot"], description = "Voir les bots sur le serveur")
+    @commands.guild_only()
+    async def allbots(self, ctx):
+        translations = await self.bot.get_translation("allbots", ctx.guild.id)
+
+        bots = [f"{member.mention} `({member.id})`" for member in ctx.guild.members if member.bot]
+        paginator_creator = PaginatorCreator()
+        paginator = await paginator_creator.create_paginator(
+            title = f"{translations['Bots']} ({len(bots)})",
+            embed_color = await self.bot.get_theme(ctx.guild.id),
+            data_list = bots,
             data_per_page = 10,
         )
         
@@ -65,15 +87,16 @@ class Informations(commands.Cog):
     @commands.command(aliases = ["botadmin"], description = "Voir les bots avec la permission administrateur")
     @commands.guild_only()
     async def botadmins(self, ctx):
+        translations = await self.bot.get_translation("botadmins", ctx.guild.id)
+
         bots = [f"{member.mention} `({member.id})`" for member in ctx.guild.members if (member.guild_permissions.administrator) and (member.bot)]
-        
         if not bots:
-            await ctx.send("> Il n'y a pas de booster sur votre serveur.")
+            await ctx.send(f'>' + translations['Il n\'y a pas de bot avec la permission administrateur sur le serveur'] + '.')
             return
         
         paginator_creator = PaginatorCreator()
         paginator = await paginator_creator.create_paginator(
-            title = f"Bot Administrateurs ({len(bots)})",
+            title = f"{translations['Bot Administrateurs']} ({len(bots)})",
             embed_color = await self.bot.get_theme(ctx.guild.id),
             data_list = bots,
             data_per_page = 10,
@@ -88,15 +111,17 @@ class Informations(commands.Cog):
     @commands.command(aliases = ["subscribers", "boosteurs"], description = "Voir les boosters du serveur")
     @commands.guild_only()
     async def boosters(self, ctx):
-        boosters = [f"{subscriber.mention} (boost depuis <t:{round(subscriber.premium_since.timestamp())}:R>)" for subscriber in ctx.guild.premium_subscribers]
-        
+        translations = await self.bot.get_translation("boosters", ctx.guild.id)
+
+        boosters = [f"{subscriber.mention} ({translations['boost depuis']} <t:{round(subscriber.premium_since.timestamp())}:R>)" for subscriber in ctx.guild.premium_subscribers]
+
         if not boosters:
-            await ctx.send("> Il n'y a pas de booster sur ce serveur")
+            await ctx.send(f"> " + {translations["Il n'y a pas de booster sur ce serveur"]})
             return
-        
+
         paginator_creator = PaginatorCreator()
         paginator = await paginator_creator.create_paginator(
-            title = f"Boosters ({len(boosters)})",
+            title = f"{translations['Boosters']} ({len(boosters)})",
             embed_color = await self.bot.get_theme(ctx.guild.id),
             data_list = boosters,
             data_per_page = 10,
@@ -110,16 +135,18 @@ class Informations(commands.Cog):
 
     @commands.command(description = "Voir les membres avec un certains rôle", aliases = ["rlmb", "rolemb"])
     @commands.guild_only()
-    async def rolemembers(self, ctx, role : discord.Role):
+    async def rolemembers(self, ctx, role: discord.Role):
+        translations = await self.bot.get_translation("rolemembers", ctx.guild.id)
+
         members = [f"{member.mention} (`{member.id}`)" for member in role.members]
-        
+
         if not members:
-            await ctx.send(f"> Il n'y a aucun membre avec le rôle {role.mention}", allowed_mentions = None)
+            await ctx.send(f">" +  translations["Il n'y a aucun membre avec le rôle"] + f" {role.mention}", allowed_mentions = None)
             return
-        
+
         paginator_creator = PaginatorCreator()
         paginator = await paginator_creator.create_paginator(
-            title = f"Membre avec @{role.name} ({len(members)})",
+            title = f"{translations['Membre avec']} @{role.name} ({len(members)})",
             embed_color = await self.bot.get_theme(ctx.guild.id),
             data_list = members,
             data_per_page = 10,
@@ -134,6 +161,8 @@ class Informations(commands.Cog):
     @commands.command(description = "Voir des informations relatives au serveur")
     @commands.guild_only()
     async def serverinfo(self, ctx):
+        translations = await self.bot.get_translation("rolemembers", ctx.guild.id)
+
         member_online, member_idle, member_dnd = 0, 0, 0
         vanity_url = "Non débloqué"
         if "VANITY_URL" in ctx.guild.features:

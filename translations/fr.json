@@ -1,3 +1,21 @@
 {
-      
+    "alladmins": {
+        "Administrateurs": "Administrateurs"
+    },
+    "allbots": {
+        "Bots": "Bots"
+    },
+    "botadmins": {
+        "Il n'y a pas de bot avec la permission administrateur sur le serveur": "Il n'y a pas de bot avec la permission administrateur sur le serveur",
+        "Bot Administrateurs": "Bot Administrateurs"
+    },
+    "boosters": {
+        "Il n'y a pas de booster sur ce serveur": "Il n'y a pas de booster sur ce serveur",
+        "Boosters": "Boosters"
+    },
+    "rolemembers": {
+        "Il n'y a aucun membre avec le rôle": "Il n'y a aucun membre avec le rôle",
+        "Membre avec": "Membre avec",
+        "boost depuis": "boost depuis"
+    }
 }

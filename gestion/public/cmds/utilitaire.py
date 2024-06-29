@@ -263,5 +263,127 @@ class Utilitaire(commands.Cog):
             )
         )
 
+    @commands.command(description = "Afficher un bouton pour inviter le bot")
+    @commands.guild_only()
+    async def invite(self, ctx):
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(
+            style = discord.ButtonStyle.link,
+            label = f"Inviter {self.bot.user.display_name}",
+            url = f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=8&scope=bot+applications.commands"
+        ))
+
+        await ctx.send(
+            embed = discord.Embed(
+                author = discord.EmbedAuthor(name = self.bot.user.display_name, icon_url = self.bot.user.avatar.url),
+                description = "Utilisez le bouton ci-dessous pour m'inviter",
+                color = await self.bot.get_theme(ctx.guild.id)
+            ),
+            view = view
+        )
+        
+
+    @commands.command(description = "Créer un embed")
+    @commands.guild_only()
+    async def embed(self, ctx):
+        embed = discord.Embed(description = "ㅤ" )
+
+        def formate_embed(data):
+            return discord.Embed(
+                title = data["title"]
+            )
+        
+        class EmbedCreator(discord.ui.View):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.embed = {
+                    "title": "",
+                    "description": "ㅤ",
+                    "color": 0xFFFFFF,
+                    "footer": "",
+                    "timestamp": "",
+                    "thumbnail": "",
+                    "author": {
+                        "name": "",
+                        "icon_url": "",
+                        "url": ""
+                    },
+                    "fields": {
+                        # field exemple "name": {"value": "My field name", "inline": True}
+                    },
+                }
+                self.embeds_backup = []
+                self.embeds_backup_of_backup = []
+
+            async def on_timeout(self):
+                return await super().on_timeout()
+            
+            @discord.ui.select(
+                placeholder = "Modifier l'embed",
+                options = [
+                    discord.SelectOption(label = "Titre", emoji = "✏", value = "title"),
+                    discord.SelectOption(label = "Description", emoji = "📝", value = "description"),
+                    discord.SelectOption(label = "Couleur", emoji = "⚪", value = "color"),
+                    discord.SelectOption(label = "Footer", emoji = "🏷", value = "footer"),
+                    discord.SelectOption(label = "Timestamp", emoji = "⏱", value = "timestamp"),
+                    discord.SelectOption(label = "Image", emoji = "🖼", value = "image"),
+                    discord.SelectOption(label = "Thumbnail", emoji = "🎴", value = "thumbnail"),
+                    discord.SelectOption(label = "Auteur", emoji = "👤", value = "author"),
+                    discord.SelectOption(label = "Ajouter un champ", emoji = "➕", value = "field_add"),
+                    discord.SelectOption(label = "Retirer un champ", emoji = "➖", value = "field_remove")
+                ]
+            )
+            async def select_callback(self, select, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                await interaction.response.defer()
+                
+                if select.values[0] in ["title", "description", "footer"]:
+                    await ctx.send(f"Quel sera ")
+                    
+
+            @discord.ui.button(label = "Envoyer", emoji = "✅", style = discord.ButtonStyle.secondary)
+            async def send(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                ...
+
+            @discord.ui.button(label = "Annuler", emoji = "❌", style = discord.ButtonStyle.secondary)
+            async def cancel(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                ...
+
+            @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
+            async def reset(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+
+            @discord.ui.button(label = "Revenir en arrière", emoji = "↩", style = discord.ButtonStyle.secondary, row = 2)
+            async def back(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+
+                ...
+
+            @discord.ui.button(label = "Restaurer", emoji = "↪", style = discord.ButtonStyle.secondary, row = 2)
+            async def restaure(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+
+                ...
+
+
+        await ctx.send(embed = embed, view = EmbedCreator())
+
 def setup(bot):
     bot.add_cog(Utilitaire(bot))
