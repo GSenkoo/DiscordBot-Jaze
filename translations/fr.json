@@ -15,6 +15,9 @@
     },
 
 
+
+
+
     "alladmins": {
         "Administrateurs": "Administrateurs"
     },
@@ -142,7 +145,46 @@
     "serverbanner": {
         "Le serveur [data_server] n'a pas de bannière": "Le serveur [data_server] n'a pas de bannière",
         "Bannière": "Bannière"
+    },
+
+
+
+
+
+    "find": {
+        "Vous n'êtes pas dans un salon vocal": "Vous n'êtes pas dans un salon vocal",
+        "[data_user] n'est pas dans un salon vocal": "[data_user] n'est pas dans un salon vocal",
+        "Vous êtes actuelllement dans [data_channel]": "Vous êtes actuelllement dans [data_channel]",
+        "[data_user] est actuellement dans [data_channel]": "[data_user] est actuellement dans [data_channel]"
+    },
+    "calc": {
+        "Syntaxe de calcul invalide": "Syntaxe de calcul invalide",
+        "Résultat": "Résultat",
+        "Résultat trop grand": "Résultat trop grand"
+    },
+    "wiki": {
+        "Recherche wikipedia en cours": "Recherche wikipedia en cours",
+        "Votre recherche est trop longue (plus de 100 caractères)": "Votre recherche est trop longue (plus de 100 caractères)",
+        "Aucun résultat pour [data_query]": "Aucun résultat pour [data_query]",
+        "Recherche : [data_query]": "Recherche : [data_query]"
+    },
+    "translate": {
+        "Demande de traduction trop courte": "Demande de traduction trop courte",
+        "Demande de traduction trop longue (plus de 500 caractères)": "Demande de traduction trop longue (plus de 500 caractères)",
+        "Choisissez une langue cible": "Choisissez une langue cible",
+        "Votre texte": "Votre texte",
+        "Choisir une langue": "Choisir une langue",
+        "Vous n'êtes pas autorisés à intéragir avec ceci": "Vous n'êtes pas autorisés à intéragir avec ceci",
+        "La traduction de votre texte n'a pas pu aboutir": "La traduction de votre texte n'a pas pu aboutir",
+        "Traduction de texte": "Traduction de texte",
+        "Texte d'origine": "Texte d'origine",
+        "Texte traduit ([data_langage])": "Texte traduit ([data_langage])"
+    },
+    "snipe": {
+        "Aucun récent message supprimé n'a été enregistré": "Aucun récent message supprimé n'a été enregistré"
+    },
+    "invite": {
+        "Inviter [data_user]": "Inviter [data_user]",
+        "Utilisez le bouton ci-dessous pour m'inviter": "Utilisez le bouton ci-dessous pour m'inviter"
     }
-
-
 }

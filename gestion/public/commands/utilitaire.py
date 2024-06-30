@@ -61,32 +61,40 @@ class Utilitaire(commands.Cog):
     @commands.command(description = "Chercher le salon vocal dans lequel se situe un utilisateur")
     @commands.guild_only()
     async def find(self, ctx, member : discord.Member):
+        translation = await self.bot.get_translation("find", ctx.guild.id)
+
         if not member.voice:
-            await ctx.send(f"> " +  ("Vous n'êtes" if ctx.author == member else f"{member.mention} n'est") + " pas dans un salon vocal", allowed_mentions = None)
+            await ctx.send("> " + (translation["Vous n'êtes pas dans un salon vocal"] if member == ctx.author else translation["[data_user] n'est pas dans un salon vocal"].replace("[data_user]", member.mention)) + ".", allowed_mentions = None)
             return
         
-        await ctx.send(f"> " + ("Vous êtes" if ctx.author == member else f"{member.mention} est") + f" actuellement dans le salon {member.voice.channel.mention}")
+        await ctx.send(
+            f"> " + (translation["Vous êtes actuelllement dans [data_channel]"].replace("[data_channel]", member.voice.channel.mention) 
+            if member == ctx.author
+            else translation["[data_user] est actuellement dans [data_channel]"].replace("[data_user]", member.mention).replace("[data_channel]", member.voice.channel.mention)) + ".",
+            allowed_mentions = None
+        )
 
 
     @commands.command(usage = "<calcul>", description = "Faire un calcul", aliases = ["calculate"])
     @commands.guild_only()
-    async def calc(self, ctx, *calcul):
-        calcul = "".join(calcul)
+    async def calc(self, ctx, *, calcul):
+        translation = await self.bot.get_translation("calc", ctx.guild.id)
+
         calcul = calcul.replace("\"", "").replace("x", "*").replace(",", ".").replace("÷", "/").replace("^^", "**")
         try:
             result = sympy.sympify(calcul)
         except:
-            await ctx.send("> Syntaxe de calcul invalide.")
+            await ctx.send(f"> {translation['Syntaxe de calcul invalide']}.")
             return
         
         try:
             embed = discord.Embed(
-                title = "Résultat",
+                title = translation["Résultat"],
                 description = f"```yml\n" + (str(result) if len(str(result)) < 500 else str(result)[:500] + "...") + "\n```",
                 color = 0xFFFFFF
             )
         except:
-            await ctx.send("> Résultat trop grand.")
+            await ctx.send(f"> {translation['Résultat trop grand']}.")
             return
 
         await ctx.send(embed = embed)
@@ -95,14 +103,16 @@ class Utilitaire(commands.Cog):
     @commands.command(usage = "<search>", description = "Faire une recherche wikipedia", aliases = ["wikipedia", "wkp"])
     @commands.guild_only()
     async def wiki(self, ctx, *, search):
-        message = await ctx.send("> Recherche wikipedia en cours...")
+        translation = await self.bot.get_translation("wiki", ctx.guild.id)
+        langage = await self.bot.get_translations_langage(ctx.guild.id)
+        message = await ctx.send(f"> {translation['Recherche wikipedia en cours']}...")
 
         if len(search) > 100:
-            await message.edit("Votre recherche est trop longue (plus de 100 caractères).")
+            await message.edit(f"{translation['Votre recherche est trop longue (plus de 100 caractères)']}.")
             return
         
         def get_summary(topic, sentences):
-            wikipedia.set_lang("fr")
+            wikipedia.set_lang(langage)
             try:
                 summary = wikipedia.summary(topic, sentences)
                 return summary
@@ -118,17 +128,17 @@ class Utilitaire(commands.Cog):
         try:
             summary = await get_summary_async(search.lower(), 500)
         except:
-            await message.edit(f"> Aucun résultat pour {search}")
+            await message.edit("> " + translation["Aucun résultat pour [data_query]"].replace("[data_query]", search), allowed_mentions = None)
             return
 
         if not summary:
-            await message.edit(f"> Aucun résultats pour " +  search.replace("`", "'"), allowed_mentions = None)
+            await message.edit("> " + translation["Aucun résultat pour [data_query]"].replace("[data_query]", search), allowed_mentions = None)
             return
 
         await message.edit(
             content = None,
             embed = discord.Embed(
-                title = "Recherche : " + search,
+                title = translation["Recherche : [data_query]"].replace("[data_qery]", search),
                 description = summary.replace("====", "**").replace(" ====", "").replace("===", "###").replace(" ###", "").replace("==", "## ").replace(" ##", ""),
                 color = await self.bot.get_theme(ctx.guild.id),
                 timestamp = datetime.now()
@@ -140,20 +150,22 @@ class Utilitaire(commands.Cog):
     @commands.guild_only()
     @commands.cooldown(rate = 5, per = 60)
     async def translate(self, ctx, *, text):
+        translation = await self.bot.get_translation("translate", ctx.guild.id)
+
         if len(text) <= 5:
-            await ctx.send("> Demande de traduction trop courte.")
+            await ctx.send(f"> {translation['Demande de traduction trop courte']}.")
             return
         if len(text) > 500:
-            await ctx.send("> Demande de traduction trop longue (plus de 500 caractères).")
+            await ctx.send(f"> {translation['Demande de traduction trop longue (plus de 500 caractères)']}.")
             return
         
         translator = deepl.Translator(deppl_api_key)
 
         embed = discord.Embed(
-            title = "Choisissez une langue cible",
+            title = translation["Choisissez une langue cible"],
             color = await self.bot.get_theme(ctx.guild.id)
         ).add_field(
-            name = "Votre texte",
+            name = translation["Votre texte"],
             value = text
         )
 
@@ -187,7 +199,7 @@ class Utilitaire(commands.Cog):
                     except: pass
             
             @discord.ui.select(
-                placeholder = "Choisir une langue",
+                placeholder = translation["Choisir une langue"],
                 options = [
                     discord.SelectOption(
                         label = langage,
@@ -198,25 +210,25 @@ class Utilitaire(commands.Cog):
             )
             async def select_callback(self, select, interaction):
                 if interaction.user != self.ctx.author:
-                    await ctx.respond("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    await ctx.respond("> " + translation["Vous n'êtes pas autorisés à intéragir avec ceci"] + ".", ephemeral = True)
                     return
                 
                 try: translation = await get_translation_async(self.text, select.values[0])
                 except:
                     await interaction.message.edit(
                         embed = discord.Embed(
-                            title = "La traduction de votre texte n'a pas pu aboutir.",
+                            title = translation["La traduction de votre texte n'a pas pu aboutir"] + ".",
                             color = self.bot.get_theme(self.ctx.guild.id)
                         )
                     )
                     await interaction.response.defer()
 
                 embed = discord.Embed(
-                    title = "Traduction de texte",
+                    title = translation["Traduction de texte"],
                     color = await self.bot.get_theme(self.ctx.guild.id)
                 )
-                embed.add_field(name = f"Texte d'origine", value = self.text)
-                embed.add_field(name = f"Texte traduit ({select.values[0]})", value = translation)
+                embed.add_field(name = translation["Texte d'origine"], value = self.text)
+                embed.add_field(name = translation["Texte traduit ([data_langage])"].replace("[data_langage]", select.values[0]), value = translation)
 
                 await interaction.message.edit(embed = embed)
                 await interaction.response.defer()
@@ -227,6 +239,7 @@ class Utilitaire(commands.Cog):
     @commands.command(description = "Voir le dernier message supprimé du salon")
     @commands.guild_only()
     async def snipe(self, ctx):
+        translation = await self.bot.get_translation("snipe", ctx.guild.id)
         database = Database()
         await database.connect()
 
@@ -239,7 +252,7 @@ class Utilitaire(commands.Cog):
         finally: await database.disconnect()
 
         if not author_id:
-            await ctx.send("> Aucun récent message supprimé n'a été enregistré.")
+            await ctx.send(f"> " + translation["Aucun récent message supprimé n'a été enregistré"] + ".")
             return
         
         embed = discord.Embed(
@@ -266,17 +279,19 @@ class Utilitaire(commands.Cog):
     @commands.command(description = "Afficher un bouton pour inviter le bot")
     @commands.guild_only()
     async def invite(self, ctx):
+        translation = await self.bot.get_translation("invite", ctx.guild.id)
+
         view = discord.ui.View()
         view.add_item(discord.ui.Button(
             style = discord.ButtonStyle.link,
-            label = f"Inviter {self.bot.user.display_name}",
+            label = translation["Inviter [data_user]"].replace("[data_user]", self.bot.user.display_name),
             url = f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=8&scope=bot+applications.commands"
         ))
 
         await ctx.send(
             embed = discord.Embed(
                 author = discord.EmbedAuthor(name = self.bot.user.display_name, icon_url = self.bot.user.avatar.url),
-                description = "Utilisez le bouton ci-dessous pour m'inviter",
+                description = translation["Utilisez le bouton ci-dessous pour m'inviter"],
                 color = await self.bot.get_theme(ctx.guild.id)
             ),
             view = view
