@@ -184,8 +184,8 @@ class Informations(commands.Cog):
             color = await self.bot.get_theme(ctx.guild.id),
             description = ctx.guild.description if ctx.guild.description else f"*{translation['Aucune description']}*"
         ).add_field(
-            name = f"{translation['Propriétaire']}",
-            value = f"{ctx.guild.owner.mention}"
+            name = translation['Propriétaire'],
+            value = ctx.guild.owner.mention
         ).add_field(
             name = f"{translation['Date de création']}",
             value = f"**<t:{round(ctx.guild.created_at.timestamp())}:R>**",
@@ -246,12 +246,12 @@ class Informations(commands.Cog):
             color = await self.bot.get_theme(ctx.guild.id)
         )
         
-        embed.add_field(name = f"{translation['Date de création']}", value = f"<t:{round(role.created_at.timestamp())}:R>")
-        embed.add_field(name = f"{translation['Membre le possédant']}", value = f"{len(role.members)}")
-        embed.add_field(name = f"{translation['Position']}", value = f"{role.position}/{len(ctx.guild.roles)}")
-        embed.add_field(name = f"{translation['Mentionnable']}", value = f"{translation['Oui']}" if role.mentionable else f"{translation['Non']}")
-        embed.add_field(name = f"{translation['Affiché séparément']}", value = f"{translation['Oui']}" if role.hoist else f"{translation['Non']}")
-        embed.add_field(name = f"{translation['Couleur']}", value = f"{role.color}")
+        embed.add_field(name = translation['Date de création'], value = f"<t:{round(role.created_at.timestamp())}:R>")
+        embed.add_field(name = translation['Membre le possédant'], value = f"{len(role.members)}")
+        embed.add_field(name = translation['Position'], value = f"{role.position}/{len(ctx.guild.roles)}")
+        embed.add_field(name = translation['Mentionnable'], value = f"{translation['Oui']}" if role.mentionable else f"{translation['Non']}")
+        embed.add_field(name = translation['Affiché séparément'], value = f"{translation['Oui']}" if role.hoist else f"{translation['Non']}")
+        embed.add_field(name = translation['Couleur'], value = f"{role.color}")
         dangerous_permissions = [
             "administrator",
             "kick_members",
@@ -272,8 +272,8 @@ class Informations(commands.Cog):
                 role_dangerous_permissions.append(translation_permissions[permission])
 
         embed.add_field(
-            name = f"{translation['Permissions dangereuses']}", 
-            value = f"{translation['Aucune']}" 
+            name = translation['Permissions dangereuses'], 
+            value = translation['Aucune']
             if not role_dangerous_permissions
             else ", ".join(role_dangerous_permissions[:4]) + (translation['et [data_number] autres'].replace("[data_number]", str(len(role_dangerous_permissions) - 5)) if len(role_dangerous_permissions) > 3 else "")
         )
@@ -294,13 +294,13 @@ class Informations(commands.Cog):
             description = f"### {channel.mention} (`{channel.id}`)",
             color = await self.bot.get_theme(ctx.guild.id)
         )
-        embed.add_field(name = f"{translation['Sujet']}", value = channel.topic if channel.topic else f"{translation['Aucun']}")
-        embed.add_field(name = f"{translation['Date de création']}", value = f"<t:{round(channel.created_at.timestamp())}:R>")
-        embed.add_field(name = f"{translation['Position']}", value = f"{channel.position}/{len(ctx.guild.channels)}")
-        embed.add_field(name = f"{translation['Catégorie']}", value = f"{channel.category}" if channel.category else f"{translation['Aucune']}")
-        embed.add_field(name = f"{translation['Mode lent']}", value = translation["[data_time] secondes"].replace("[data_time]", str(channel.slowmode_delay)) if channel.slowmode_delay else f"{translation['Désactivé']}")
-        embed.add_field(name = f"{translation['Nsfw']}", value = translation["Oui"] if channel.is_nsfw else translation["Non"])
-        embed.add_field(name = f"{translation['Utilisateurs y ayants accès']}", value = f"{len(channel.members)}")
+        embed.add_field(name = translation['Sujet'], value = channel.topic if channel.topic else f"{translation['Aucun']}")
+        embed.add_field(name = translation['Date de création'], value = f"<t:{round(channel.created_at.timestamp())}:R>")
+        embed.add_field(name = translation['Position'], value = f"{channel.position}/{len(ctx.guild.channels)}")
+        embed.add_field(name = translation['Catégorie'], value = f"{channel.category}" if channel.category else f"{translation['Aucune']}")
+        embed.add_field(name = translation['Mode lent'], value = translation["[data_time] secondes"].replace("[data_time]", str(channel.slowmode_delay)) if channel.slowmode_delay else f"{translation['Désactivé']}")
+        embed.add_field(name = translation['Nsfw'], value = translation["Oui"] if channel.is_nsfw else translation["Non"])
+        embed.add_field(name = translation['Utilisateurs y ayants accès'], value = f"{len(channel.members)}")
         embed.timestamp = datetime.now()
         
         await ctx.send(embed = embed)
