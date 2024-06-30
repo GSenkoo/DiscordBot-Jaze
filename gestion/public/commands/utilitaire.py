@@ -37,6 +37,7 @@ import deepl
 import dotenv
 import os
 import json
+import mimetypes
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from discord.ext import commands
@@ -276,6 +277,7 @@ class Utilitaire(commands.Cog):
             )
         )
 
+
     @commands.command(description = "Afficher un bouton pour inviter le bot")
     @commands.guild_only()
     async def invite(self, ctx):
@@ -302,26 +304,68 @@ class Utilitaire(commands.Cog):
     @commands.guild_only()
     async def embed(self, ctx):
         embed = discord.Embed(description = "ㅤ" )
+        bot = self.bot
 
         def formate_embed(data):
-            return discord.Embed(
-                title = data["title"]
+            embed = discord.Embed(
+                title = data["title"],
+                description = data["description"],
+                color = data["color"],
+                timestamp = data["timestamp"],
+                thumbnail = data["thumbnail"]
             )
+
+            if data["footer"]["text"]:
+                embed.set_footer(text = data["footer"]["text"], icon_url = data["footer"]["icon_url"])
+            if data["author"]["name"]:
+                embed.set_author(name = data["author"]["name"], icon_url = data["author"]["icon_url"], url = data["author"]["url"])
+            if data["fields"]:
+                for field, field_data in data["fields"].items():
+                    embed.add_field(name = field, value = field_data["value"], inline = field_data["inline"])
+
+            return embed
+
+        def get_total_characters(data):
+            total = 0
+            if data["title"]: total += len(data["title"])
+            if data["description"]: total += len(data["description"])
+            for field, field_data in data["fields"].items(): total += len(field) + len(field_data["value"])
+            if data["footer"]["text"]: total += len(data["footer"]["text"])
+            if data["author"]["name"]: total += len(data["author"]["name"])
+            return total
+
+        def is_valid_image_url(url):
+            mimetype, encoding = mimetypes.guess_type(url)
+            return mimetype and mimetype.startswith('image')
+
+        max_sizes = {
+            "title": 256,
+            "description": 4096,
+            "fields": 25,
+            "field_name": 256,
+            "field_value": 1024,
+            "footer_text": 2048,
+            "author_name": 256,
+            "sum": 6000
+        }
 
         class EmbedCreator(discord.ui.View):
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 self.embed = {
-                    "title": "",
+                    "title": None,
                     "description": "ㅤ",
-                    "color": 0xFFFFFF,
-                    "footer": "",
-                    "timestamp": "",
-                    "thumbnail": "",
+                    "color": None,
+                    "footer": {
+                        "text": None,
+                        "icon_url": None
+                    },
+                    "timestamp": None,
+                    "thumbnail": None,
                     "author": {
-                        "name": "",
-                        "icon_url": "",
-                        "url": ""
+                        "name": None,
+                        "icon_url": None,
+                        "url": None
                     },
                     "fields": {
                         # field exemple "name": {"value": "My field name", "inline": True}
@@ -349,15 +393,134 @@ class Utilitaire(commands.Cog):
                 ]
             )
             async def select_callback(self, select, interaction):
-                if interaction.user != ctx.author:
+                if interaction.user != ctx.author: 
                     await interaction.response.send_message("Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
-                
                 await interaction.response.defer()
+
+                temporary_data = self.embed # données temporaires utiles pour check si le nombre de caractère total > 6000, sans modifier self.embed
+
+                def response_check(message):
+                    return (message.author == ctx.author) and (message.channel == ctx.channel)
                 
-                if select.values[0] in ["title", "description", "footer"]:
-                    await ctx.send(f"Quel sera ")
+                message = None
+                if select.values[0] not in ["footer", "author", "field_add", "field_remove"]:
+                    message = await ctx.send(f"Quel sera la nouvelle valeur de votre **{select.values[0]}** ? Envoyez `cancel` pour annuler")
+
+                    # Attendre la réponse de l'utilisateur, après 60 secondes d'attente, l'action est annulée
+                    try: response = await bot.wait_for('message', timeout = 60, check = response_check)
+                    except asyncio.TimeoutError:
+                        await ctx.send("> Action annulée, 1 minute dépassée.", delete_after = 2)
+                        return
+                    finally:
+                        await message.delete()
+                
+
+                    # Supprimer le message de l'utilisateur
+                    try: await response.delete()
+                    except: pass
+
+                    # @Check Annulation
+                    if response.content.lower() == "cancel":
+                        await ctx.send("> Action annulée.", delete_after = 2)
+                        return
+                
+
+                # ---------------------------- TITRE & DESCRIPTION ----------------------------
+                if select.values[0] in ["title", "description"]:
+                    if len(response.content) == 0:
+                        await ctx.send(f"> Votre {select.values[0]} ne peut pas être vide.")
+                        return
+                    if len(response.content) > max_sizes[select.values[0]]:
+                        await ctx.send(f"> Vous ne pouvez pas dépasser {max_sizes[select.values[0]]} caractères pour votre **{select.values[0]}**.", delete_after = 2)
+                        return
                     
+                    # @Check total embed < 6000 caractères
+                    temporary_data[select.values[0]] = response.content
+                    if get_total_characters(temporary_data) > 6000:
+                        await ctx.send("> Le nombre total de charactère dans votre embed ne doit pas dépasser les 6000 caractères.", delete_after = 2)
+                        return
+
+                    self.embed[select.values[0]] = response.content
+
+                # ---------------------------- COULEUR ----------------------------
+                if select.values[0] == "color":
+                    if not len(response.content.removeprefix("#")) == 6:
+                        await ctx.send("> La couleur HEX donnée est invalide.", delete_after = 2)
+                        return
+                    
+                    self.embed["color"] = int(response.content.removeprefix("#"), 16)
+
+                # ---------------------------- FOOTER ----------------------------
+                if select.values[0] == "footer":
+                    # ----- FOOTER / TEXT
+                    message1 = await ctx.send("Quel sera le **texte** de votre **footer** ? Envoyez `cancel` pour annuler.")
+                    
+                    try: response = await bot.wait_for("message", timeout = 60, check = response_check)
+                    except asyncio.TimeoutError:
+                        await ctx.send("> Action annulée, 1 minute dépassée.", delete_after = 2)
+                        return
+                    finally:
+                        await message1.delete()
+                    await response.delete()
+
+                    # @Check annulation
+                    if response.content.lower() == "cancel":
+                        await ctx.send("> Action annulée.", delete_after = 2)
+                        return
+                    
+                    # @Check total embed < 6000 caractères
+                    if len(response.content) > max_sizes["footer_text"]:
+                        await ctx.send(f"> Vous ne pouvez pas dépasser {max_sizes['footer_text']} caractères pour votre **footer**.", delete_after = 2)
+                        return
+                    
+                    temporary_data["footer"]["text"] = response.content
+                    if get_total_characters(temporary_data) > 6000:
+                        await ctx.send(f"> Le nombre total de charactère dans votre embed ne doit pas dépasser les 6000 caractères.", delete_after = 2)
+
+                    # ----- FOOTER / ICON
+                    message2 = await ctx.send("Quel sera l'**icône** du **footer**? Envoyez `skip` pour ne pas en mettre.")
+                    try: response : discord.Message = await bot.wait_for("message", timeout = 60, check = response_check)
+                    except asyncio.TimeoutError:
+                        await ctx.send("> Action annulée.", delete_after = 2)
+                        return
+                    finally:
+                        await message2.delete()
+                    await response.delete()
+
+                    if response.content.lower() == "skip":
+                        self.embed = temporary_data
+                    else:
+                        if response.attachments: # TO FIX
+                            if not response.attachments[0].content_type == "image":
+                                await ctx.send("> La première pièce jointe donnée n'est pas une image.", delete_after = 2)
+                                return
+                            self.embed["image"] = response.attachments[0].url
+                        else: # TO FIX
+                            if not is_valid_image_url(response.content):
+                                await ctx.send("> Le lien donné n'est pas une image valide.", delete_after = 2)
+                                return
+                            self.embed["image"] = response.content
+
+                # ---------------------------- TIMESTAMP ----------------------------
+                ... # TODO
+
+                await ctx.send(f"Votre **{select.values[0]}** a été mis à jours.", delete_after = 2)
+
+
+                back = self.get_item("back")
+                self.remove_item(back)
+                back.disabled = False if self.embeds_backup else True
+                self.add_item(back)
+
+                restaure = self.get_item("restaure")
+                self.remove_item(restaure)
+                restaure.disabled = False if self.embeds_backup_of_backup else True
+                self.add_item(restaure)
+                
+                
+                # Mettre à jours l'embed
+                await interaction.message.edit(embed = formate_embed(self.embed), view = self)
 
             @discord.ui.button(label = "Envoyer", emoji = "✅", style = discord.ButtonStyle.secondary)
             async def send(self, button, interaction):
@@ -381,7 +544,7 @@ class Utilitaire(commands.Cog):
                     await interaction.response.send_message("Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
 
-            @discord.ui.button(label = "Revenir en arrière", emoji = "↩", style = discord.ButtonStyle.secondary, row = 2)
+            @discord.ui.button(label = "Revenir en arrière", emoji = "↩", style = discord.ButtonStyle.secondary, row = 2, custom_id = "back")
             async def back(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
@@ -389,7 +552,7 @@ class Utilitaire(commands.Cog):
 
                 ...
 
-            @discord.ui.button(label = "Restaurer", emoji = "↪", style = discord.ButtonStyle.secondary, row = 2)
+            @discord.ui.button(label = "Restaurer", emoji = "↪", style = discord.ButtonStyle.secondary, row = 2, custom_id = "restaure")
             async def restaure(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
