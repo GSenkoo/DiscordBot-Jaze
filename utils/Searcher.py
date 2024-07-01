@@ -101,7 +101,7 @@ class Searcher():
         --------------------------------------------
         `Union[discord.Role, None]`
 
-        Example
+        Exemple
         --------------------------------------------
         ```
         import discord
@@ -128,5 +128,57 @@ class Searcher():
             if query.replace("<@&", "").replace("<@", "").replace(">", "").isdigit():
                 if role.id == int(query.replace("<@&", "").replace("<@", "").replace(">", "")):
                     return role
+        
+        return None
+    
+
+    async def search_channel(self, query : str, guild : discord.Guild = None) -> Union[discord.TextChannel, None]: # all types of channel
+        """
+        Arguments
+        --------------------------------------------
+        query `str` :
+            L'id/Le nom/La mention du salon que vous voulez trouver.
+        guild `discord.Guild`, default `None` :
+            L'instance d'un serveur spécifique, si celui du contexte donné ne correspond pas.
+
+        Return
+        --------------------------------------------
+        `Union[discord.Channel, None]`
+
+        Exemple
+        --------------------------------------------
+        ```
+        import discord
+        from discord.ext import commands
+        from utils.Searcher import Searcher
+
+        bot = commands.Bot(command_prefix = "+", intents = discord.Intents.all())
+
+        @bot.command
+        async def search_channel(ctx, query):
+            my_searcher = Searcher(bot, ctx)
+            channel = await my_searcher.search_channel(query)
+            if channel:
+                await ctx.send(f"Salon trouvé : {channel.mention}")
+            else:
+                await ctx.send("Salon invalide.")
+        ```
+        """
+        if not guild: guild = self.ctx.guild
+        
+        query_rmention = query.replace("<#", "").replace(">", "")
+        if query_rmention.isdigit():
+            try: channel = await guild.fetch_channel(int(query_rmention))
+            except: pass
+
+        if channel:
+            return channel
+        
+        for channel in guild.roles:
+            if channel.name == query:
+                return channel
+            if query_rmention.isdigit():
+                if channel.id == int(query.replace("<@&", "").replace("<@", "").replace(">", "")):
+                    return channel
         
         return None
