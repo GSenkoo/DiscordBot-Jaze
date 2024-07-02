@@ -302,14 +302,13 @@ class Utilitaire(commands.Cog):
         
 
     @commands.command(description = "Créer un embed")
+    @commands.bot_has_permissions(embed_links = True, manage_messages = True, read_messages = True)
     @commands.guild_only()
     async def embed(self, ctx):
         embed = discord.Embed(description = "ㅤ" )
         bot = self.bot
 
         def formate_embed(data) -> discord.Embed:
-            print("--------------------------")
-            print(data)
             embed = discord.Embed(
                 title = data["title"],
                 description = data["description"],
@@ -416,8 +415,10 @@ class Utilitaire(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 await interaction.response.defer()
-
-                temporary_data = self.embed.copy() # données temporaires utiles pour check si le nombre de caractère total > 6000, sans modifier self.embed
+                
+                # Données temporaires utile pour check par exemple : si le nombre de caractère total > 6000, sans modifier self.embed / Ou alors pour éviter les problèmes d'objets / Ou alors pour éviter de devoir faire de grosse manipulation pour revenir en arrière quand une valeure est fausse.
+                temporary_data = self.embed.copy()
+                # Sauvegarder une ancienne version de self.embed pour ensuite l'ajouter dans self.embed_backups si des changements ont eu lieu
                 previous_embed_copy = self.embed.copy()
 
                 def response_check(message):
@@ -791,7 +792,8 @@ class Utilitaire(commands.Cog):
                         await interaction.message.edit(
                             embed = discord.Embed(
                                 title = f"Message envoyé dans le salon #{channel.name}.",
-                                color = await bot.get_theme(interaction.guild.id)
+                                color = await bot.get_theme(interaction.guild.id),
+                                url = f"https://discord.com/channels/{interaction.guild.id}/{channel.id}"
                             ),
                             view = None
                         )
@@ -854,9 +856,9 @@ class Utilitaire(commands.Cog):
                             embed = discord.Embed(
                                 title = "Le message donné a été modifié.",
                                 url = response.content,
-                                color = await bot.get_theme(ctx.guild.id),
-                                view = None
-                            )
+                                color = await bot.get_theme(ctx.guild.id)
+                            ),
+                            view = None
                         )   
 
 
@@ -921,7 +923,7 @@ class Utilitaire(commands.Cog):
                 
                 await interaction.message.edit(
                     embed = discord.Embed(
-                        title = "Où souhaitez vous envoyer l'embed?",
+                        title = "> Où souhaitez-vous envoyer l'embed?",
                         color = await bot.get_theme(ctx.guild.id)
                     ),
                     view = ChooseDestination()

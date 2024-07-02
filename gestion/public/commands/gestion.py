@@ -6,117 +6,57 @@ class Gestion(commands.Cog):
         self.bot = bot
 
 
-    # credits : @koryai (discord)
-    @commands.command(description = "Empêcher les membres d'envoyer des messages dans un salon")
+    @commands.command(description = "Modifier la visiblitée/la permission d'envoi pour un salon", usage = "<lock/unlock/hide/unhide> [channel]")
+    @commands.bot_has_permissions(manage_channels = True)
     @commands.guild_only()
-    async def lock(self, ctx, channel : discord.TextChannel = None):
+    async def ch(self, ctx, action : str, channel : discord.ChannelType = None):
+        if action.lower() not in ["lock", "unlock", "hide", "unhide"]:
+            await ctx.send("> Merci de donner une action valide (lock/unlock/hide/unhide).")
+            return
+        
         if not channel:
             channel = ctx.channel
-
         overwrite = channel.overwrites_for(ctx.guild.default_role)
-        overwrite.send_messages = False
-        await channel.edit(ctx.guild.default_role, overwrites = overwrite)
-        await ctx.send(f"> Le salon {channel.mention} a été **lock**.")
 
-    
-    # credits : @koryai (discord)
-    @commands.command(description = "Autoriser les membres d'envoyer des messages dans un salon")
+        if action.lower() in ["lock", "unlock"]:
+            send_messages_perm = False if action.lower() == "lock" else True
+            if overwrite.send_messages == send_messages_perm:
+                await ctx.send(f"> Ce salon est déjà **{action.lower()}**.")
+                return
+            overwrite.send_messages = send_messages_perm
+        else:
+            view_channel_perm = False if action.lower() == "hide" else True
+            if overwrite.view_channel == view_channel_perm:
+                await ctx.send(f"> Ce salon est déjà **{action.lower()}**.")
+                return
+            overwrite.view_channel = view_channel_perm
+
+        await channel.set_permissions(
+            ctx.guild.default_role,
+            reason = f"{action.lower()} de {ctx.author.display_name} ({ctx.author.id})",
+            overwrite = overwrite
+        )
+
+        if ctx.channel != channel:
+            await ctx.send(f"> Le salon {channel.mention} a été **{action.lower()}**.")
+        await channel.send(f"> Le salon {channel.mention} a été **{action.lower()}** par {ctx.author.mention}.", allowed_mentions = discord.AllowedMentions().none())
+
+
+    @commands.command(description = "Modifier la visiblitée/la permission d'envoi pour tous les salons (dans une certaine catégorie, si spécifiée)", usage = "<lock/unlock/hide/unhide> [catégorie]")
     @commands.guild_only()
-    async def unlock(self, ctx, channel : discord.TextChannel = None):
-        if not channel:
-            channel = ctx.channel
-            
-        if channel.permissions_for(ctx.guild.default_role).send_messages:
-            await ctx.send("> Les membres ne peuvent déjà plus envoyer de message dans ce salon.")
+    async def chall(self, ctx, action, category : discord.CategoryChannel = None):
+        """
+        Lorsque vous spécifiez une catégorie, **uniquements** les salons de celle-ci seront affectés.
+        Sinon, **tous les salons** seront affectés.
+        """
+        if action.lower() not in ["lock", "unlock", "hide", "unhide"]:
+            await ctx.send("> Merci de donner une action valide (lock/unlock/hide/unhide).")
             return
 
-        overwrite = channel.overwrites_for(ctx.guild.default_role)
-        overwrite.send_messages = True
-        await channel.edit(ctx.guild.default_role, overwrites = overwrite)
-        await ctx.send(f"> Le salon {channel.mention} a été **unlock**.")
+        
 
-
-    # credits : @koryai (discord)
-    @commands.command(description = "Cacher un salon du serveur")
-    @commands.guild_only()
-    async def hide(self, ctx, channel : discord.TextChannel = None):
-        if not channel:
-            channel = ctx.channel
-            
-        if channel.permissions_for(ctx.guild.default_role).send_messages:
-            await ctx.send("> Les membres ne peuvent déjà plus envoyer de message dans ce salon.")
-            return
-
-        overwrite = channel.overwrites_for(ctx.guild.default_role)
-        overwrite.view_channel = True
-        await channel.edit(ctx.guild.default_role, overwrites = overwrite)
-        await ctx.send(f"> Le salon {channel.mention} a été **hide**.")
-
-
-    # credits : @koryai (discord)
-    @commands.command(description = "Cacher un salon du serveur.")
-    @commands.guild_only()
-    async def unhide(self, ctx, channel : discord.TextChannel = None):
-        if not channel:
-            channel = ctx.channel
-            
-        if channel.permissions_for(ctx.guild.default_role).send_messages:
-            await ctx.send("> Les membres ne peuvent déjà plus envoyer de message dans ce salon.")
-            return
-
-        overwrite = channel.overwrites_for(ctx.guild.default_role)
-        overwrite.view_channel = False
-        await channel.edit(ctx.guild.default_role, overwrites = overwrite)
-        await ctx.send(f"> Le salon {channel.mention} a été **unhide**.")
-
-
-    # credits : @koryai (discord)
-    @commands.command(description = "Empêcher les membres d'envoyer des messages dans tous les salons.")
-    @commands.guild_only()
-    async def lockall(self, ctx):
-        for channel in ctx.guild.channels:
-            overwrite = channel.overwrites_for(ctx.guild.default_role)
-            overwrite.send_messages = False
-            await channel.edit(ctx.guild.default_role, overwrites = overwrite)
-            continue
-
-        await ctx.send(f"> **Tous les salons** du serveur ont étés **lock**.")
-
-    
-    # credits : @koryai (discord)
-    @commands.command(description = "Autoriser les membres à envoyer des messages dans tous les salons.")
-    @commands.guild_only()
-    async def unlockall(self, ctx):
-        for channel in ctx.guild.channels:
-            overwrite = channel.overwrites_for(ctx.guild.default_role)
-            overwrite.send_messages = True
-            await channel.edit(ctx.guild.default_role, overwrites = overwrite)
-            continue
-
-        await ctx.send(f"> **Tous les salon** du serveur ont étés **unlock**.")
-
-
-    # credits : @koryai (discord)
-    @commands.command(description = "Cacher tous les salons du serveur.")
-    async def hideall(self, ctx):
-        for channel in ctx.guild.channels:
-            overwrite = channel.overwrites_for(ctx.guild.default_role)
-            overwrite.view_channel = False
-            await channel.edit(ctx.guild.default_role, overwrites = overwrite)
-
-        await ctx.send("> **Tous les salons** du serveur sont désormais **visibles**.")
-
-
-    # credits : @koryai (discord)
-    @commands.command(description = "Rendre visible tous les salons du serveur.")
-    @commands.guild_only()
-    async def unhideall(self, ctx):
-        for channel in ctx.guild.channels:
-            overwrite = channel.overwrites_for(ctx.guild.default_role)
-            overwrite.view_channel = True
-            await channel.edit(ctx.guild.default_role, overwrites = overwrite)
-
-        await ctx.send(f"> **Tous les salons** du serveur sont désormais **invisibles**.")
+        
+        
 
 
     # credits : @koryai (discord)
