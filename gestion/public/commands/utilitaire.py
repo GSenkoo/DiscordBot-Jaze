@@ -308,6 +308,8 @@ class Utilitaire(commands.Cog):
         bot = self.bot
 
         def formate_embed(data) -> discord.Embed:
+            print("--------------------------")
+            print(data)
             embed = discord.Embed(
                 title = data["title"],
                 description = data["description"],
@@ -455,7 +457,8 @@ class Utilitaire(commands.Cog):
                         await ctx.send("> Le nombre total de charactère dans votre embed ne doit pas dépasser les 6000 caractères.", delete_after = 2)
                         return
 
-                    self.embed[select.values[0]] = response.content
+                    temporary_data[select.values[0]] = response.content
+                    self.embed = temporary_data.copy()
 
 
                 # ---------------------------- IMAGE & THUMBNAIL ----------------------------
@@ -464,15 +467,17 @@ class Utilitaire(commands.Cog):
                         await ctx.send("> Action annulée, lien d'image invalide.", delete_after = 2)
                         return
                     
-                    self.embed[select.values[0]] = response.content
-
+                    temporary_data[select.values[0]] = response.content
+                    self.embed = temporary_data.copy()
 
                 # ---------------------------- COLOUR ----------------------------
                 if select.values[0] == "color":
-                    try: self.embed["color"] = int(response.content.removeprefix("#"), 16)
+                    try: temporary_data["color"] = int(response.content.removeprefix("#"), 16)
                     except:
                         await ctx.send("> La couleur HEX (exemple : `#FF12F4`) donnée est invalide.", delete_after = 2)
                         return
+
+                    self.embed = temporary_data.copy()
 
 
                 # ---------------------------- FOOTER ----------------------------
@@ -503,6 +508,9 @@ class Utilitaire(commands.Cog):
                         await ctx.send(f"> Vous ne pouvez pas dépasser {max_sizes['footer_text']} caractères pour votre **footer**.", delete_after = 2)
                         return
                     
+                    # Pour éviter les bug dans la liste des données d'embed self.embed_backups (car le dictionnaire footer est considéré comme le même objet PARTOUT)
+                    temporary_data["footer"] = temporary_data["footer"].copy()
+
                     # @Check total embed < 6000 caractères
                     temporary_data["footer"]["text"] = response.content
                     if get_total_characters(temporary_data) > 6000:
@@ -524,14 +532,13 @@ class Utilitaire(commands.Cog):
                     if response.content.lower() == "delete":
                         temporary_data["footer"]["icon_url"] = None
                     
-                    if response.content.lower() in ["skip", "delete"]:
-                        self.embed = temporary_data
-                    else:
+                    if response.content.lower() not in ["skip", "delete"]:
                         if not response.content.startswith(("https://", "http://")) or " " in response.content:
                             await ctx.send("> Votre image doit être un lien valide.")
                             return
                         
-                        self.embed["footer"]["icon_url"] = response.content
+                        temporary_data["footer"]["icon_url"] = response.content
+                    self.embed = temporary_data.copy()
 
 
                 # ---------------------------- TIMESTAMP ----------------------------
@@ -556,7 +563,8 @@ class Utilitaire(commands.Cog):
                             await ctx.send("> Action annulée, durée invalide.", delete_after = 2)
                             return
                     else: date = datetime.now()
-                    self.embed["timestamp"] = date
+                    temporary_data["timestamp"] = date
+                    self.embed = temporary_data.copy()
 
                 
                 # ---------------------------- AUTHOR ----------------------------
@@ -622,19 +630,20 @@ class Utilitaire(commands.Cog):
                         return
                     if response.content.lower() == "delete":
                         temporary_data["author"]["url"] = None
-                    if response.content.lower() in ["delete", "skip"]:
-                        self.embed = temporary_data
-                    else:
+                    if response.content.lower() not in ["delete", "skip"]:
                         if not response.content.startswith(("https://", "http://")) or " " in response.content:
                             await ctx.send("> Action annulée, lien invalide.", delete_after = 2)
                             return
                         
                         temporary_data["author"]["url"] = response.content
-                        self.embed = temporary_data
+                    
+                    self.embed = temporary_data.copy()
 
 
                 # ---------------------------- ADD FIELD ----------------------------
                 if select.values[0] == "field_add":
+                    # J'ajoute cette ligne pour que tous les dictionnaires dans self.embed_backups n'est pas en valeur "fields" un même OBJET, sinon, quand on modifie une valeur ici, alors on modifie PARTOUT.
+                    temporary_data["fields"] = temporary_data["fields"].copy()
 
                     # -------------- ADD FIELD / FIELD NAME & FIELD VALUE
                     for data_type in ["name", "value"]:
@@ -678,7 +687,7 @@ class Utilitaire(commands.Cog):
                     if response.content.lower() in ["yes", "oui"]: temporary_data["fields"][-1]["inline"] = True
                     else: temporary_data["fields"][-1]["inline"] = False
 
-                    self.embed = temporary_data
+                    self.embed = temporary_data.copy()
 
                 
                 # ---------------------------- REMOVE FIELD ----------------------------
@@ -714,7 +723,7 @@ class Utilitaire(commands.Cog):
                 await ctx.send(f"Votre **embed** a été mis à jours.", delete_after = 2)
 
                 # Mettre à jour les backups
-                self.embeds_backup.append(previous_embed_copy)
+                self.embeds_backup.append(previous_embed_copy.copy())
                 self.embeds_backup_of_backup = []
 
                 # Mettre à jours les bouttons backups
