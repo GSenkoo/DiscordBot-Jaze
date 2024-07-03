@@ -30,6 +30,10 @@ class Gestion_des_Permissions(commands.Cog):
                 ]
             )
             async def select_callback(self, select, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
                 await interaction.response.defer()
 
                 for option in select.options:
