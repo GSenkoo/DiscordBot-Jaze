@@ -1000,5 +1000,6 @@ class Utilitaire(commands.Cog):
 
         await ctx.send(embed = embed, view = EmbedCreator())
 
+
 def setup(bot):
     bot.add_cog(Utilitaire(bot))

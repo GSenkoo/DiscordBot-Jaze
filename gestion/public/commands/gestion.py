@@ -38,13 +38,14 @@ class Gestion(commands.Cog):
         )
 
         if ctx.channel != channel:
-            await ctx.send(f"> Le salon {channel.mention} a été **{action.lower()}**.")
+            await ctx.send(f"> Le salon {channel.mention} a été **{action.lower()}**.", delete_after = 10)
         await channel.send(f"> Le salon {channel.mention} a été **{action.lower()}** par {ctx.author.mention}.", allowed_mentions = discord.AllowedMentions().none())
 
 
-    @commands.command(description = "Modifier la visiblitée/la permission d'envoi pour tous les salons (dans une certaine catégorie, si spécifiée)", usage = "<lock/unlock/hide/unhide> [catégorie]")
+    @commands.command(description = "Modifier la visiblitée/la permission d'envoi pour tous les salons\n(Ou dans une certaine catégorie, si spécifiée)", usage = "<lock/unlock/hide/unhide> [catégorie]")
+    @commands.bot_has_permissions(manage_channels = True, send_messages = True)
     @commands.guild_only()
-    async def chall(self, ctx, action, category : discord.CategoryChannel = None):
+    async def chall(self, ctx, action : str, category : discord.CategoryChannel = None):
         """
         Lorsque vous spécifiez une catégorie, **uniquements** les salons de celle-ci seront affectés.
         Sinon, **tous les salons** seront affectés.
@@ -53,32 +54,87 @@ class Gestion(commands.Cog):
             await ctx.send("> Merci de donner une action valide (lock/unlock/hide/unhide).")
             return
 
+        if category: channels = category.channels
+        else: channels = ctx.guild.channels
+
+        msg = await ctx.send(f"> Action {action}all en cours...")
+
+        if action.lower() in ["lock", "unlock"]: perms = {"send_messages": False if action.lower() == "lock" else True}
+        else: perms = {"view_channel": False if action.lower() == "hide" else True}
+
+        saves = []
+        for channel in channels:
+            channel_overwrites = channel.overwrites_for(ctx.guild.default_role)
+            perm_to_def = list(perms.keys())[0]
+            current_channel_perm_value = getattr(channel_overwrites, perm_to_def)
+            perm_to_def_value = perms[perm_to_def]
+
+            if current_channel_perm_value == perm_to_def_value:
+                continue
         
+            saves.append(channel.id)
+            setattr(channel_overwrites, perm_to_def, perm_to_def_value)
+            await channel.set_permissions(
+                ctx.guild.default_role,
+                overwrite = channel_overwrites,
+                reason = f"{action.lower()} (pour tous les salons{'' if not category else f' de la catégorie {category.name}'}) de {ctx.author.display_name} ({ctx.author.id})"
+            )
 
+            try: await channel.send(f"> Le salon {channel.mention} a été **{action.lower()}**.", delete_after = 10)
+            except: pass
+
+        class RestorePermissions(discord.ui.View):
+            def __init__(self, permission_data):
+                super().__init__(timeout = 600)
+                self.permissions_data = permission_data
+
+            async def on_timeout(self):
+                try:
+                    self.disable_all_items()
+                    await self.message.edit(view = self)
+                except: pass
+
+            @discord.ui.button(
+                label = "Restaurer les permissions",
+                style = discord.ButtonStyle.danger,
+                custom_id = "restore"
+            )
+            async def restore_permission(self, button, interaction):
+                if (interaction.user != ctx.author) and (interaction.user != ctx.guild.owner):
+                    await interaction.response.send_message(f"> Seul {interaction.user.mention} peut intéragir avec ceci (ou le propriétaire du serveur).", ephemeral = True)
+                    return
+                
+                button.disabled = True
+                await interaction.response.defer()
+                await interaction.message.edit("> Restauration des permissions en cours...", view = self)
+
+                for channel in interaction.guild.channels:
+                    if channel.id not in self.permissions_data:
+                        continue
+                    
+                    channel_overwrites = channel.overwrites_for(interaction.guild.default_role)
+                    setattr(channel_overwrites, perm_to_def, not perm_to_def_value)
+                    await channel.set_permissions(
+                        interaction.guild.default_role,
+                        overwrite = channel_overwrites,
+                        reason = f"Restauration de permission par {interaction.user.display_name} ({interaction.user.id})"
+                    )
+                try: await interaction.message.edit(f"> Restauration de {len(self.permissions_data)} salons terminés.", view = self)
+                except: pass
         
-        
+        try:
+            await msg.edit(
+                f"> Tous les salons {'du serveur' if not category else f'de la catégorie **{category.name}**'} ont étés **{action}**.\n\n"
+                + "*Pour restorer les permissions, intéragissez avec le boutton ci-dessous dans les 10 minutes qui suivent.*",
+                view = RestorePermissions(saves)
+            )
+        except:
+            await ctx.send(
+                f"> Tous les salons {'du serveur' if not category else f'de la catégorie **{category.name}**'} ont étés **{action}**.\n\n"
+                + "*Pour restorer les permissions, intéragissez avec le boutton ci-dessous dans les 10 minutes qui suivent.*",
+                view = RestorePermissions(saves)
+            )
 
-
-    # credits : @koryai (discord)
-    @commands.command(description = "Enleve tous les rôles d'un membre du serveur.")
-    @commands.guild_only()
-    async def derank(self, ctx, member : discord.Member):
-        if ctx.author == member:
-            await ctx.send("> Vous ne pouvez pas vous auto-dérank.")
-            return
-        if ctx.guild.owner == member:
-            await ctx.send("> Je ne peux pas dérank le propriétaire du serveur.")
-            return
-        if member.top_role.position <= ctx.guild.me.top_role.position:
-            await ctx.send(f"> Je ne peux pas dérank {member.mention} car il est au-dessus de moi dans la hiérarchie du serveur.", allowed_mentions = None)
-            return
-
-        member_roles = [role for role in member.roles if role.is_assignable()] 
-        
-        for role in member_roles:
-            await member.remove_roles(role, atomic = True)
-
-        await ctx.send(f"{member.mention} a été derank, {len(member_roles)} rôles lui ont étés retirés.")
 
 
 def setup(bot):

@@ -58,7 +58,7 @@ class CustomHelp(commands.HelpCommand):
             if not commands_signatures:
                 continue
 
-            titles.append(getattr(cog, "qualified_name"))
+            titles.append(getattr(cog, "qualified_name").replace("_", " "))
             descriptions.append(
                 f"*Utilisez des espaces pour séparer vos arguments, mettez les entre guillemets `\"\"` si vos arguments comportent des espaces. "
                 + "Les arguments sous forme `<...>` sont obligatoires, tandis que les arguments sous forme `[...]` sont facultatifs.*\n\n"
@@ -91,6 +91,14 @@ class CustomHelp(commands.HelpCommand):
             return False
 
         for cog, commands in mapping.items():
+            cog_name = getattr(cog, "qualified_name", None)
+            
+            if cog_name:
+                if string == cog_name.replace("_", " "):
+                    return
+                if (string in cog_name.replace("_", " ") or (cog_name.replace("_", " ") in string)) and cog_name != "Developer":
+                    propositions.append(self.context.clean_prefix + f"help {cog_name.replace('_', ' ')}")
+
             for command in commands:
                 if (str(command) in string) or (string in str(command)) or has_aliases_comparison(command, string):
                     propositions.append(self.context.clean_prefix + f"help {command}")

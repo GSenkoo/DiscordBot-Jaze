@@ -72,7 +72,7 @@ class on_command_error(commands.Cog):
             case commands.NSFWChannelRequired:
                 await ctx.send(f"> Vous devez être dans un salon NSFW pour faire ceci.")
             case _:
-                print(error)
+                raise error
             
     
 def setup(bot):
