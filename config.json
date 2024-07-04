@@ -6,7 +6,8 @@
             "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
             "keys": {
                 "theme": "INTEGER DEFAULT 0xFFFFFF",
-                "langage": "VARCHAR(2) DEFAULT 'fr'"
+                "langage": "VARCHAR(2) DEFAULT 'fr'",
+                "owners": "VARCHAR(2000) DEFAULT '[]'"
             }
         },    
         "member": {
@@ -47,7 +48,7 @@
             "keys": {
                 "roles": "VARCHAR(500) DEFAULT '[]'",
                 "users": "VARCHAR(500) DEFAULT '[]'",
-                "perms": "VARCHAR(500) DEFAULT '[]'",
+                "guildperms": "VARCHAR(500) DEFAULT '[]'",
                 "cmds": "VARCHAR(3000) DEFAULT '[]'"
             }
         },
@@ -56,7 +57,7 @@
             "keys": {
                 "roles": "VARCHAR(500) DEFAULT '[]'",
                 "users": "VARCHAR(500) DEFAULT '[]'",
-                "perms": "VARCHAR(500) DEFAULT '[]'",
+                "guildperms": "VARCHAR(500) DEFAULT '[]'",
                 "cmds": "VARCHAR(500) DEFAULT '[]'"
             }
         }

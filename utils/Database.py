@@ -263,3 +263,10 @@ class Database:
         for column_data in columns_data:
             if column_data[0] == column:
                 return column_data[4]
+
+    async def get_table_columns(self, table : str) -> list:
+        cursor = await self.connection.cursor()
+        await cursor.execute(f"SHOW COLUMNS FROM {table}")
+        columns = [column_data[0] for column_data in await cursor.fetchall()]
+        await cursor.close()
+        return columns

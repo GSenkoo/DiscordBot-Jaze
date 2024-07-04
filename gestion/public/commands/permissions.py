@@ -84,7 +84,29 @@ class Gestion_des_Permissions(commands.Cog):
     @commands.command(description = "Voir les permissions hiérarchiques")
     @commands.guild_only()
     async def perms(self, ctx):
-        ...
+        class ConfigPerms(discord.ui.View):
+            @discord.ui.select(
+                placeholder = "Choisir une permission",
+                options = [
+                    discord.SelectOption(label = f"Perm{i}", emoji = "🔒", value = str(i)) for i in range(1, 10)
+                ]
+            )
+            async def select_callback(self, select, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+
+        embed = discord.Embed(
+            title = "Permissions hiérarchiques",
+            description = textwrap.dedent(f"""
+                *Vous pouvez voir et modifier vos permsisions via le menu ci-dessous*
+                *Pour voir les commandes par permissions, utilisez la commande `{await self.bot.get_prefix(ctx.message)}helpall`.*
+
+                **__Vos permissions configurés__**
+                
+            """)
+        )
 
 
     @commands.command(description = "Voir vos permissions personnalisées")

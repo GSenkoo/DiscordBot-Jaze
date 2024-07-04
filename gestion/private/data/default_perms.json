@@ -1,9 +1,44 @@
 {
-    "0": ["ping"],
+    "0": [
+        "ping",
+        "allbots",
+        "rolemembers",
+        "boosters",
+        "serverinfo",
+        "role",
+        "channel",
+        "vocinfo",
+        "botinfo",
+        "user",
+        "pic",
+        "banner",
+        "serverpic",
+        "serverbanner",
+        "find",
+        "calc",
+        "wiki",
+        "translate",
+        "snipe",
+        "speed",
+        "invite"
+    ],
     "1": [],
-    "2": [],
-    "3": [],
-    
-    "13": [],
-    "14": []
+    "2": [
+        "ban",
+        "kick"
+    ],
+    "3": [
+        "ch",
+        "chall",
+        "alladmins",
+        "botadmins",
+        "embed"
+    ],
+    "13": [
+        "owners"
+    ],
+    "14": [
+        "owner",
+        "unowner"
+    ]
 }

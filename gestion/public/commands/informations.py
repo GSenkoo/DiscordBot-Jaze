@@ -248,7 +248,7 @@ class Informations(commands.Cog):
         
         embed.add_field(name = translation['Date de création'], value = f"<t:{round(role.created_at.timestamp())}:R>")
         embed.add_field(name = translation['Membre le possédant'], value = f"{len(role.members)}")
-        embed.add_field(name = translation['Position'], value = f"{role.position}/{len(ctx.guild.roles)}")
+        embed.add_field(name = translation['Position'], value = f"{len(ctx.guild.roles) - role.position}/{len(ctx.guild.roles)}")
         embed.add_field(name = translation['Mentionnable'], value = f"{translation['Oui']}" if role.mentionable else f"{translation['Non']}")
         embed.add_field(name = translation['Affiché séparément'], value = f"{translation['Oui']}" if role.hoist else f"{translation['Non']}")
         embed.add_field(name = translation['Couleur'], value = f"{role.color}")
