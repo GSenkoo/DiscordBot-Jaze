@@ -11,7 +11,8 @@
         "manage_roles": "Gérer les rôles",
         "manage_webhooks": "Gérer les webhooks",
         "manage_emojis_and_stickers": "Gérér les emojis et les autocollants",
-        "manage_threads": "Gérer les fils"
+        "manage_threads": "Gérer les fils",
+        "moderate_members": "Modérer les membres"
     },
 
 
@@ -187,4 +188,5 @@
         "Inviter [data_user]": "Inviter [data_user]",
         "Utilisez le bouton ci-dessous pour m'inviter": "Utilisez le bouton ci-dessous pour m'inviter"
     }
+
 }

@@ -43,15 +43,6 @@
                 "giveaway_participants": "JSON",
                 "giveaway_end_date": "TIMESTAMP"
             }
-        },
-
-        "cache_commands_perms": {
-            "primary_keys": {"guild_id": "BIGINT NOT NULL", "command_name": "VARCHAR(50) DEFAULT 'nope'"},
-            "keys": {
-                "allowed_users": "VARCHAR(500)",
-                "allowed_roles": "VARCHAR(500)",
-                "allowed_guildperms": "VARCHAR(500)"
-            }
         }
     }
 }
