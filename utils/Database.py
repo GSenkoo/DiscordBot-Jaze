@@ -172,17 +172,18 @@ class Database:
             await self.disconnect()
 
     
-    async def execute(self, code : str, data : tuple = None, fetch : bool = False):
+    async def execute(self, code : str, data : tuple = None, fetch : bool = False, commit : bool = True):
         cursor = await self.connection.cursor()
         await cursor.execute(code, data)
-        print("executed")
         
-        await self.connection.commit()
-        await cursor.close()
+        if commit:
+            await self.connection.commit()
 
         if fetch:
             result = await cursor.fetchall()
+            await cursor.close()
             return result
+        await cursor.close()
 
 
     async def set_data(self, table : str, column : str, new_value, commit : bool = True, **keys_indicator) -> None:

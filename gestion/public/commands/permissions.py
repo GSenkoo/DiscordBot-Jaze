@@ -2,6 +2,8 @@ import discord
 import textwrap
 from datetime import datetime
 from discord.ext import commands
+from utils.PermissionsManager import PermissionsManager
+from utils.Paginator import PaginatorCreator
 
 
 class Gestion_des_Permissions(commands.Cog):
@@ -22,7 +24,8 @@ class Gestion_des_Permissions(commands.Cog):
             @discord.ui.select(
                 placeholder = "Choisir un guide",
                 options = [
-                    discord.SelectOption(label = "1. Permissions hiérarchiques et personnalisées", value = "perms_hp"),
+                    discord.SelectOption(label = "1. Permissions hiérarchiques et personnalisées [1]", value = "perms_hp"),
+                    discord.SelectOption(label = "1. Permissions hiérarchiques et personnalisées [2]", value = "perms_hp2"),
                     discord.SelectOption(label = "2. Comprendre vos configurations", value = "understand_config"),
                     discord.SelectOption(label = "3. Gérer les commandes de vos permissions", value = "config_commands"),
                     discord.SelectOption(label = "4. Gérer les autorisations de vos permissions", value = "manage_perms_of_perms"),
@@ -60,6 +63,13 @@ class Gestion_des_Permissions(commands.Cog):
                             """)
                         ),
                         view = self
+                    )
+                if select.values == "perms_hp2":
+                    await interaction.message.edit(
+                        embed = discord.Embed(
+                            color = await bot.get_theme(ctx.guild.id),
+                            description = textwrap.dedent()
+                        )
                     )
 
         current_date = datetime.now()
@@ -104,10 +114,44 @@ class Gestion_des_Permissions(commands.Cog):
                 *Pour voir les commandes par permissions, utilisez la commande `{await self.bot.get_prefix(ctx.message)}helpall`.*
 
                 **__Vos permissions configurés__**
-                
+
             """)
         )
 
+
+    @commands.command(description = "Voir vos commandes par permissions hiérarchiques")
+    @commands.guild_only()
+    async def helpall(self, ctx):
+        perms_manager = PermissionsManager()
+        paginator_creator = PaginatorCreator()
+
+        prefix = await self.bot.get_prefix(ctx.message)
+        custom_names = {
+            "0": "Public",
+            "10": "Owner",
+            "11": "Propriéataire"
+        }
+        descriptions = []
+        for index in range(12):
+            commands = await perms_manager.get_perm_commands(ctx.guild.id, index)
+            if commands:
+                descriptions.append(
+                    f"*Utilisez des espaces pour séparer vos arguments, mettez les entre guillemets `\"\"` si vos arguments comportent des espaces. "
+                    + "Les arguments sous forme `<...>` sont obligatoires, tandis que les arguments sous forme `[...]` sont facultatifs.*\n\n"
+                    + "**__" + custom_names.get(str(index), f"Perm{index}") + "__**" + "\n"
+                    + "**`" + "`**\n**`".join([f"{prefix}{command}" for command in commands]) + "`**"
+                )
+
+        paginator = await paginator_creator.create_paginator(
+            title = "Commandes par permission",
+            data_list = descriptions,
+            data_per_page = 1,
+            embed_color = await self.bot.get_theme(ctx.guild.id),
+            pages_looped = True
+        )
+
+        await paginator.send(ctx)
+        
 
     @commands.command(description = "Voir vos permissions personnalisées")
     @commands.guild_only()

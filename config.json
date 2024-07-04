@@ -7,9 +7,12 @@
             "keys": {
                 "theme": "INTEGER DEFAULT 0xFFFFFF",
                 "langage": "VARCHAR(2) DEFAULT 'fr'",
-                "owners": "VARCHAR(2000) DEFAULT '[]'"
+                "owners": "TEXT",
+                "whitelist": "TEXT",
+                "perms_hierarchic": "TEXT",
+                "perms_custom": "TEXT"
             }
-        },    
+        },
         "member": {
             "primary_keys": {"guild_id": "BIGINT NOT NULL", "user_id": "BIGINT NOT NULL UNIQUE"},
             "keys": {
@@ -42,23 +45,12 @@
             }
         },
 
-
-        "hierarchic_perms": {
-            "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
+        "cache_commands_perms": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL", "command_name": "VARCHAR(50) DEFAULT 'nope'"},
             "keys": {
-                "roles": "VARCHAR(500) DEFAULT '[]'",
-                "users": "VARCHAR(500) DEFAULT '[]'",
-                "guildperms": "VARCHAR(500) DEFAULT '[]'",
-                "cmds": "VARCHAR(3000) DEFAULT '[]'"
-            }
-        },
-        "custom_perms": {
-            "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
-            "keys": {
-                "roles": "VARCHAR(500) DEFAULT '[]'",
-                "users": "VARCHAR(500) DEFAULT '[]'",
-                "guildperms": "VARCHAR(500) DEFAULT '[]'",
-                "cmds": "VARCHAR(500) DEFAULT '[]'"
+                "allowed_users": "VARCHAR(500)",
+                "allowed_roles": "VARCHAR(500)",
+                "allowed_guildperms": "VARCHAR(500)"
             }
         }
     }

@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from utils.Database import Database
+from utils.PermissionsManager import PermissionsManager
 
 
 class on_ready(commands.Cog):
@@ -14,6 +15,13 @@ class on_ready(commands.Cog):
         db = Database()
         await db.intialize(intialize_tables = ["snipe"])
         print("[Database] Configuration de la base de donnée terminée.")
+
+        print("[PermissionManager] Initialisation des permissions des serveurs en cours...")
+        permission_manager = PermissionsManager()
+        for guild in self.bot.guilds:
+            await permission_manager.initialize_guild_perms(guild.id)
+            print(f"[PermissionManager] Le serveur {guild.name} a été intialisé avec succès.")
+        print("[PermissionManager] Initialisation des serveurs terminés.")
 
 def setup(bot):
     bot.add_cog(on_ready(bot))

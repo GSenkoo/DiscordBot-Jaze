@@ -14,14 +14,13 @@ class Proprietaire(commands.Cog):
     async def owner(self, ctx, user : discord.User):
         db = Database()
         await db.connect()
-        current_owners = json.loads(await db.get_data("guild", "owners", guild_id = ctx.guild.id))
+
+        data_owner = await db.get_data("guild", "owners", guild_id = ctx.guild.id)
+        if not data_owner: data_owner = "[]"
+        current_owners = json.loads(data_owner)
 
         if user.id in current_owners:
-            await ctx.send(f"> **{user.display_name}** a déjà les permissions owners")
-            return
-        
-        if not len(current_owners) <= 100:
-            await ctx.send("> Vous ne pouvez pas dépasser la limite de 100 owners.")
+            await ctx.send(f"> **{user.display_name}** a déjà la permission owner")
             return
         
         current_owners.append(user.id)
@@ -31,12 +30,15 @@ class Proprietaire(commands.Cog):
         await ctx.send(f"> **{user.display_name}** a désormais la permission owner.")
     
 
-    @commands.command(description = "Retirer la permission owner à un utilisateurs")
+    @commands.command(description = "Retirer la permission owner à un utilisateur")
     @commands.guild_only()
     async def unowner(self, ctx, user : discord.User):
         db = Database()
         await db.connect()
-        current_owners = json.loads(await db.get_data("guild", "owners", guild_id = ctx.guild.id))
+
+        data_owner = await db.get_data("guild", "owners", guild_id = ctx.guild.id)
+        if not data_owner: data_owner = "[]"
+        current_owners = json.loads(data_owner)
 
         if user.id not in current_owners:
             await ctx.send(f"> **{user.display_name}** n'a pas les permissions owners")
@@ -54,7 +56,11 @@ class Proprietaire(commands.Cog):
     async def owners(self, ctx):
         db = Database()
         await db.connect()
-        current_owners = json.loads(await db.get_data("guild", "owners", guild_id = ctx.guild.id))
+
+        data_owner = await db.get_data("guild", "owners", guild_id = ctx.guild.id)
+        if not data_owner: data_owner = "[]"
+        current_owners = json.loads(data_owner)
+        
         await db.disconnect()
 
         paginator_creator = PaginatorCreator()
