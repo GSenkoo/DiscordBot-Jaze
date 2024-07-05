@@ -16,6 +16,24 @@ class MyViewClass(discord.ui.View):
             try: await self.message.edit(view = None)
             except: pass
 
+
+guildpermissions = [
+    "administrator",
+    "kick_members",
+    "ban_members",
+    "manage_channels",
+    "manage_guild",
+    "view_audit_log",
+    "manage_messages",
+    "mention_everyone",
+    "manage_roles",
+    "manage_webhooks",
+    "manage_emojis_and_stickers",
+    "manage_threads",
+    "moderate_members"
+]
+
+
 custom_names = {
     "0": "Public",
     "10": "Owner",
@@ -132,6 +150,7 @@ class Gestion_des_Permissions(commands.Cog):
                     permissions_data = json.loads(await db.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
                     await db.disconnect()
 
+                    guildpermissions_translations = await bot.get_translation("permissions", interaction.guild.id)
                     perm_authorzation_data = permissions_data["authorizations"][select.values[0]]
                     perm_commands = [command for command, permission in permissions_data["commands"].items() if permission == select.values[0]]
 
@@ -155,7 +174,7 @@ class Gestion_des_Permissions(commands.Cog):
                         value = "\n".join([f"<@{user_id}>" for user_id in perm_authorzation_data["users"]]) if perm_authorzation_data["users"] else "*Aucun utilisateur*"
                     ).add_field(
                         name = "Permissions autorisés",
-                        value = "\n".join(perm_authorzation_data["guildpermissions"]) if perm_authorzation_data["guildpermissions"] else "*Aucune permission autorisé*"
+                        value = "\n".join([guildpermissions_translations[p] for p in perm_authorzation_data["guildpermissions"]]) if perm_authorzation_data["guildpermissions"] else "*Aucune permission autorisé*"
                     )
 
                     return embed
@@ -168,7 +187,7 @@ class Gestion_des_Permissions(commands.Cog):
                             discord.SelectOption(label = "Retirer des rôles", emoji = "🎭", value = "remove_roles"),
                             discord.SelectOption(label = "Ajouter des utilisateurs", emoji = "👥", value = "add_users"),
                             discord.SelectOption(label = "Retirer des utilisateurs", emoji = "👥", value = "remove_users"),
-                            discord.SelectOption(label = "Gérer les permissions", emoji = "🗝", value = "manage_guild")
+                            discord.SelectOption(label = "Gérer les permissions", emoji = "🗝", value = "manage_guildpermissions")
                         ]
                     )
                     async def select_callback(self, select, interaction):
@@ -328,7 +347,98 @@ class Gestion_des_Permissions(commands.Cog):
 
                             await interaction.message.edit(view = AddUsers())
 
-                        # FAIRE remove_users et manage_guild
+                        if select.values[0] == "remove_users":
+                            if not permission_data["users"]:
+                                await interaction.response.send_message("> Il n'y aucun utilisateur à retirer.", ephemeral = True)
+                                return
+                            
+                            usr = {}
+                            for user_id in permission_data["users"]:
+                                try:
+                                    user = await bot.fetch_user(user_id)
+                                    usr[str(user_id)] = user.display_name
+                                except:
+                                    usr[str(user_id)] = "UtilisateurIntrouvable"
+
+                            
+                            class RemoveUsers(MyViewClass):
+                                @discord.ui.select(
+                                    max_values = len(usr),
+                                    placeholder = "Choisir des utilisateurs",
+                                    options = [
+                                        discord.SelectOption(label = user_name, value = user_id, description = "Identifiant : " + user_id) for user_id, user_name in usr.items()
+                                    ]
+                                )
+                                async def remove_user_select(self, select, interaction):
+                                    if interaction.user != ctx.author:
+                                        await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                        return
+                                    
+                                    db = Database()
+                                    await db.connect()
+                                    permissions_data = json.loads(await db.get_data("guild", "perms_hierarchic", guild_id = interaction.guild.id))
+                                    permission_data = permissions_data["authorizations"][original_permission]
+                                    
+                                    for user_id in select.values:
+                                        if int(user_id) not in permission_data["users"]:
+                                            continue
+                                        permission_data["users"].remove(int(user_id))
+
+                                    permissions_data["authorizations"][original_permission] = permission_data
+                                    await db.set_data("guild", "perms_hierarchic", json.dumps(permissions_data), guild_id = interaction.guild.id)
+                                    await db.disconnect()
+
+                                    await interaction.response.defer()
+                                    await interaction.message.edit(embed = await get_permission_embed(), view = previous_view)
+
+
+                                @discord.ui.button(label = "Choisissez des utilisateurs à retirer", disabled = True, style = discord.ButtonStyle.primary)
+                                async def callback(self, button, interaction):
+                                    pass
+                            
+                            await interaction.response.defer()
+                            await interaction.message.edit(view = RemoveUsers())
+
+                        if select.values[0] == "manage_guildpermissions":
+                            guildpermissions_translations = await bot.get_translation("permissions", interaction.guild.id)
+                            
+                            class ManageGuildPermissions(MyViewClass):
+                                @discord.ui.select(
+                                    placeholder = "Choisissez des permissions",
+                                    max_values = len(guildpermissions),
+                                    options = [
+                                        discord.SelectOption(label = guildpermissions_translations[p], value = p) for p in guildpermissions
+                                    ]
+                                )
+                                async def manage_perm_select_callback(self, select, interaction):
+                                    if interaction.user != ctx.author:
+                                        await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                        return
+                                    
+                                    db = Database()
+                                    await db.connect()
+                                    permissions_data = json.loads(await db.get_data("guild", "perms_hierarchic", guild_id = interaction.guild.id))
+                                    
+                                    for guildperm in select.values:
+                                        for perm, perm_data in permissions_data["authorizations"].items():
+                                            if guildperm not in perm_data["guildpermissions"]:
+                                                continue
+                                            permissions_data["authorizations"][perm]["guildpermissions"].remove(guildperm)
+                                    permissions_data["authorizations"][original_permission]["guildpermissions"] = select.values
+
+                                    await db.set_data("guild", "perms_hierarchic", json.dumps(permissions_data), guild_id = interaction.guild.id)
+                                    await db.disconnect()
+
+                                    await interaction.response.defer()
+                                    await interaction.message.edit(embed = await get_permission_embed(), view = previous_view)
+
+
+                                @discord.ui.button(label = "Choisssez les permissions qui seront autorisés", style = discord.ButtonStyle.primary, disabled = True)
+                                async def callback(self, button, interaction):
+                                    pass
+                                
+                            await interaction.message.edit(view = ManageGuildPermissions())
+                            await interaction.response.defer()
 
                 await interaction.response.defer()
                 for option in select.options:

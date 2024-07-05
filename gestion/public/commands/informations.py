@@ -366,7 +366,7 @@ class Informations(commands.Cog):
 
 
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(style = discord.ButtonStyle.link, label = translation["Inviter [data_user]"].replace("data_user", self.bot.user.name), url = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.user.id}&permissions=8&scope=bot"))
+        view.add_item(discord.ui.Button(style = discord.ButtonStyle.link, label = translation["Inviter [data_user]"].replace("[data_user]", self.bot.user.name), url = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.user.id}&permissions=8&scope=bot"))
         developers = [await self.bot.fetch_user(developer) for developer in developers]
         embed.add_field(name = translation["Développeur"], value = ", ".join([f'[**{developer.display_name}**](https://discord.com/users/{developer.id})' for developer in developers]))
         embed.add_field(name = translation["Vitesse"], value = f"{round(self.bot.latency * 1000)}ms")
