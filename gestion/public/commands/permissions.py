@@ -130,6 +130,29 @@ class Gestion_des_Permissions(commands.Cog):
     async def perms(self, ctx):
         bot = self.bot
 
+        async def get_main_embed():
+            db = Database()
+            await db.connect()
+            permissions_data = json.loads(await db.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
+            await db.disconnect()
+
+            perms = {str(k):0 for k in range(12)}
+            for name, perm in permissions_data["commands"].items():
+                perms[perm] += 1
+            perms = [" - **" + custom_names.get(perm, f"Perm{perm}") + "**" + f" ({cmds_count})" for perm, cmds_count in perms.items() if cmds_count != 0]
+            embed = discord.Embed(
+                title = "Permissions hiérarchiques",
+                color = await self.bot.get_theme(ctx.guild.id),
+                description = textwrap.dedent(f"""
+                    *Vous pouvez voir et modifier vos permsisions via le menu ci-dessous*
+                    *Pour voir les commandes par permissions, utilisez la commande `{await self.bot.get_prefix(ctx.message)}helpall`.*
+
+                    - **__Permissions possédant des commandes__**
+                """) + '\n'.join(perms)
+            )
+
+            return embed
+
         class ConfigPerms(MyViewClass):
             @discord.ui.select(
                 placeholder = "Choisir une permission",
@@ -142,6 +165,7 @@ class Gestion_des_Permissions(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
+                choose_permission_view = self
                 original_permission = select.values[0]
 
                 async def get_permission_embed():
@@ -181,14 +205,15 @@ class Gestion_des_Permissions(commands.Cog):
                 
                 class EditPerm(MyViewClass):
                     @discord.ui.select(
-                        placeholder = "Modifier le select menu",
+                        placeholder = "Modifier le la permission",
                         options = [
                             discord.SelectOption(label = "Ajouter des rôles", emoji = "🎭", value = "add_roles"),
                             discord.SelectOption(label = "Retirer des rôles", emoji = "🎭", value = "remove_roles"),
                             discord.SelectOption(label = "Ajouter des utilisateurs", emoji = "👥", value = "add_users"),
                             discord.SelectOption(label = "Retirer des utilisateurs", emoji = "👥", value = "remove_users"),
                             discord.SelectOption(label = "Gérer les permissions", emoji = "🗝", value = "manage_guildpermissions")
-                        ]
+                        ],
+                        custom_id = "edit_perm"
                     )
                     async def select_callback(self, select, interaction):
                         if interaction.user != ctx.author:
@@ -440,6 +465,15 @@ class Gestion_des_Permissions(commands.Cog):
                             await interaction.message.edit(view = ManageGuildPermissions())
                             await interaction.response.defer()
 
+                    @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
+                    async def comeback_button_callback(self, button, interaction):
+                        if interaction.user != ctx.author:
+                            await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                            return
+                        
+                        await interaction.response.defer()
+                        await interaction.message.edit(view = choose_permission_view, embed = await get_main_embed())
+
                 await interaction.response.defer()
                 for option in select.options:
                     option.default = option.value == select.values[0]
@@ -447,28 +481,7 @@ class Gestion_des_Permissions(commands.Cog):
                 await interaction.message.edit(embed = await get_permission_embed(), view = EditPerm())
 
 
-                
-        db = Database()
-        await db.connect()
-        permissions_data = json.loads(await db.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
-        await db.disconnect()
-
-        perms = {str(k):0 for k in range(12)}
-        for name, perm in permissions_data["commands"].items():
-            perms[perm] += 1
-        perms = [" - **" + custom_names.get(perm, f"Perm{perm}") + "**" + f" ({cmds_count})" for perm, cmds_count in perms.items() if cmds_count != 0]
-        embed = discord.Embed(
-            title = "Permissions hiérarchiques",
-            color = await self.bot.get_theme(ctx.guild.id),
-            description = textwrap.dedent(f"""
-                *Vous pouvez voir et modifier vos permsisions via le menu ci-dessous*
-                *Pour voir les commandes par permissions, utilisez la commande `{await self.bot.get_prefix(ctx.message)}helpall`.*
-
-                - **__Permissions possédant des commandes__**
-            """) + '\n'.join(perms)
-        )
-
-        await ctx.send(embed = embed, view = ConfigPerms())
+        await ctx.send(embed = await get_main_embed(), view = ConfigPerms())
 
 
     @commands.command(description = "Voir vos commandes par permissions hiérarchiques")

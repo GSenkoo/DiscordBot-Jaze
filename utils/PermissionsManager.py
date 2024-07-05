@@ -130,7 +130,7 @@ class PermissionsManager:
                     "roles": [],
                     "users": [],
                     "guildpermissions": []
-                } for index in range(12)
+                } for index in range(1, 10)
             },
             "commands": await self.get_default_commands_perm()
         }
