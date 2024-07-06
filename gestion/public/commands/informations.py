@@ -422,6 +422,8 @@ class Informations(commands.Cog):
     async def pic(self, ctx, user : discord.User = None):
         if not user:
             user = ctx.author
+        if not user.avatar:
+            await ctx.send(f"> {user.mention} n'a pas d'avatar.", allowed_mentions = discord.AllowedMentions.none)
 
         view = discord.ui.View(timeout = None)
         view.add_item(discord.ui.Button(label = "Avatar", style = discord.ButtonStyle.link, url = user.avatar.url))

@@ -17,6 +17,7 @@ class MyViewClass(discord.ui.View):
             except: pass
 
 
+# ------------------ Les permissions qui peuvent être utilisés pour les "permissions autorisées"
 guildpermissions = [
     "administrator",
     "kick_members",
@@ -34,6 +35,7 @@ guildpermissions = [
 ]
 
 
+# ------------------ Les noms des permissions 0, 10 et 11
 custom_names = {
     "0": "Public",
     "10": "Owner",
@@ -125,7 +127,7 @@ class Gestion_des_Permissions(commands.Cog):
         )
 
     
-    @commands.command(description = "Voir les permissions hiérarchiques")
+    @commands.command(description = "Voir et configurer les autorisations des permissions hiérarchiques")
     @commands.guild_only()
     async def perms(self, ctx):
         bot = self.bot
@@ -147,7 +149,7 @@ class Gestion_des_Permissions(commands.Cog):
                     *Vous pouvez voir et modifier vos permsisions via le menu ci-dessous*
                     *Pour voir les commandes par permissions, utilisez la commande `{await self.bot.get_prefix(ctx.message)}helpall`.*
 
-                    - **__Permissions possédant des commandes__**
+                    - **__Permissions possédants des commandes__**
                 """) + '\n'.join(perms)
             )
 
@@ -482,6 +484,263 @@ class Gestion_des_Permissions(commands.Cog):
 
 
         await ctx.send(embed = await get_main_embed(), view = ConfigPerms())
+
+
+    @commands.command(description = "Modifier les commandes par permission.")
+    @commands.guild_only()
+    async def switch(self, ctx):
+        bot = self.bot # Pour pouvoir accéder à l'instance du bot dans les callback des bouttons/select menus
+        prefix = ctx.clean_prefix
+
+        # ------------------ Commandes par cogs ({"cog": ["commands", "commands", "commands"]})
+        cogs_to_commands = {}
+        for cog in bot.cogs:
+            cog_instance = bot.get_cog(cog)
+            if (not cog_instance.get_commands()) or (getattr(cog_instance, "qualified_name") == "Developer"):
+                continue
+            cogs_to_commands[getattr(cog_instance, "qualified_name")] = [command.name for command in cog_instance.get_commands()]
+
+        # ------------------ Charger les commandes réservés aux propriéataire (qui ne peuvent pas donc être déplacés)
+        with open("gestion/private/data/default_perms.json") as file:
+            data = json.load(file)
+            buyer_commands = data["11"]
+
+        
+        # ------------------ Obtenir l'embed qui est affiché au début de la configuration
+        async def get_switch_main_embed():
+            database = Database()
+            await database.connect()
+
+            permissions_data = json.loads(await database.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
+            permissions_to_commands = {}
+            permissions_commands_text = ""
+
+            for command_name, command_current_permission in permissions_data["commands"].items():
+                permissions_to_commands[command_current_permission] = permissions_to_commands.get(command_current_permission, 0) + 1
+
+            for permission_id, permission_commands_count in permissions_to_commands.items():
+                permissions_commands_text += "\n"
+                permissions_commands_text += f" - **{custom_names.get(permission_id, 'Perm' + permission_id)}** ({permission_commands_count})"
+
+            embed = discord.Embed(
+                title = "Choisissez une permission à gérer",
+                description = 
+                "*Chaque commande doit appartenir à une seule permission hiérarchique. Ainsi, lorsque vous déplacez une commande d'une permission à une autre, elle sera automatiquement retirée de sa permission précédente.*"
+                + "\n\n- **__Permissions possédants des commandes__**"
+                + permissions_commands_text,
+                color = await bot.get_theme(ctx.guild.id)
+            )
+
+            await database.disconnect()
+            return embed
+
+
+        # ------------------ Obtenir l'embed de permission pour une certaine permission
+        async def get_permission_embed(perm : int):
+            database = Database()
+            await database.connect()
+
+            permissions_data = json.loads(await database.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
+            permission_commands = []
+
+            for command_name, permission_number in permissions_data["commands"].items():
+                if int(permission_number) == perm:
+                    permission_commands.append(command_name)
+            permission_commands = [
+                f"**`{prefix}{command_name}`**" + (" (*non transférable*)" if command_name in buyer_commands else "")
+                for command_name in permission_commands
+            ]
+            permission_commands = "\n".join(permission_commands)
+            
+            embed = discord.Embed(
+                title = custom_names.get(str(perm), "Permission n°" + str(perm)),
+                description = 
+                "*Chaque commande doit appartenir à une seule permission hiérarchique. Ainsi, lorsque vous déplacez une commande d'une permission à une autre, elle sera automatiquement retirée de sa permission précédente.*"
+                + "\n\n"
+                + "**__Commandes__**\n"
+                + permission_commands if permission_commands else "*Aucune commande*",
+                color = await bot.get_theme(ctx.guild.id)
+            )
+
+            await database.disconnect()
+            return embed
+
+        
+        # ------------------ Classe discord.ui.View composé d'un select menu permettant de choisir une permission à modifier
+        class ChoosePermission(MyViewClass):
+            @discord.ui.select(
+                placeholder = "Choisir une permission",
+                options = [
+                    discord.SelectOption(
+                        label = custom_names.get(str(i), "Perm" + str(i)),
+                        value = str(i)
+                    ) for i in range(12)
+                ]
+            )
+            async def choose_permission_select_callback(self, select, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                choose_permission_view = self # Sauvegarder la classe pour la restaurer plus tards si besoin
+                original_permission = select.values[0]
+
+                # ------------------ Classe discord.ui.View composé d'un select menu permettant de modifier les commandes d'une permission et d'un boutton permettant de revenir en arrière
+                class EditPermissionCommands(MyViewClass):
+                    @discord.ui.select(
+                        placeholder = "Modifier la permission",
+                        options = [
+                            discord.SelectOption(label = "Importer des commandes", value = "import_commands", emoji = "📥"),
+                            discord.SelectOption(label = "Importer une permission",  value = "import_perm", emoji = "📬")
+                        ]
+                    )
+                    async def edit_permission_commands_callback(self, select, interaction):
+                        if interaction.user != ctx.author:
+                            await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                            return
+                        
+                        await interaction.response.defer()
+                        edit_permission_view = self # Sauvegarde du menu de configuration de la permission pour la restaurer plus tards quand l'utilisatreur aura complété son action
+                        
+                        # ------------------ Importer des commandes ------------------
+                        if select.values[0] == "import_commands":
+                            # Choisir une catégorie
+                            class ChooseCategory(MyViewClass):
+                                @discord.ui.select(
+                                    placeholder = "Choisir une catégorie",
+                                    options = [
+                                        discord.SelectOption(label = cog_name.replace("_", " "), value = cog_name)
+                                        for cog_name, cog_commands in cogs_to_commands.items() if cog_name != "Proprietaire"
+                                    ]
+                                )
+                                async def choose_category_select(self, select, interaction):
+                                    if interaction.user != ctx.author:
+                                        await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                        return
+                                    
+                                    
+                                    # Choisir une commande
+                                    class ChooseCommand(MyViewClass):
+                                        @discord.ui.select(
+                                            placeholder = "Choisir une commande",
+                                            max_values = len(cogs_to_commands[select.values[0]]),
+                                            options = [
+                                                discord.SelectOption(label = f"{prefix}{command}", value = command)
+                                                for command in cogs_to_commands[select.values[0]]
+                                            ]
+                                        )
+                                        async def choose_command_select_callback(self, select, interaction):
+                                            if interaction.user != ctx.author:
+                                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                                return
+                                            
+                                            database = Database()
+                                            await database.connect()
+                                            permissions_data = json.loads(await database.get_data("guild", "perms_hierarchic", guild_id = interaction.guild.id))
+                                            if original_permission == "0":
+                                                commands_not_added = []
+                                                
+                                                with open("gestion/private/data/default_perms.json") as file:
+                                                    data = json.load(file)
+
+                                                # Pour des raisons de sécuritée, on empêche l'ajout des commandes par défaut n'étant pas public vers la permission public.
+                                                for command_name in select.values:
+                                                    if command_name not in data["0"]: commands_not_added.append(command_name)
+                                                    else: permissions_data["commands"][command_name] = "0"
+
+                                                if commands_not_added:
+                                                    await interaction.response.send_message(
+                                                        "Votre permission a été mise à jours, mais pour des raisons de sécurités, les commandes suivantes n'ont pas été transférées vers la permission Public :"
+                                                        + "\n"
+                                                        + "\n".join([f"`{prefix}{command}`" for command in commands_not_added]),
+                                                        ephemeral = True
+                                                    )
+                                                else: await interaction.response.defer()
+                                                await database.set_data("guild", "perms_hierarchic", json.dumps(permissions_data), guild_id = interaction.guild.id)
+                                                await interaction.message.edit(view = edit_permission_view, embed = await get_permission_embed(int(original_permission)))
+                                                await database.disconnect()
+                                                return
+                                            
+                                            for command_name in select.values:
+                                                permissions_data["commands"][command_name] = original_permission
+
+                                            await database.set_data("guild", "perms_hierarchic", json.dumps(permissions_data), guild_id = interaction.guild.id)
+                                            await interaction.response.defer()
+                                            await interaction.message.edit(view = edit_permission_view, embed = await get_permission_embed(int(original_permission)))
+
+                                            await database.disconnect()
+                                            
+
+                                        @discord.ui.button(label = "Choisissez les commandes à transférer", style = discord.ButtonStyle.primary, disabled = True)
+                                        async def callback(self, button, interaction):
+                                            pass
+                                    
+                                    await interaction.response.defer()
+                                    await interaction.message.edit(view = ChooseCommand())
+
+                                @discord.ui.button(label = "Choisissez une catégorie de commande", style = discord.ButtonStyle.primary, disabled = True)
+                                async def callback(self, button, interaction):
+                                    pass
+
+                            await interaction.message.edit(view = ChooseCategory(timeout = 300))
+
+                        # ------------------ Importer toutes les commandes d'une permission ------------------
+                        if select.values[0] == "import_perm":
+                            if original_permission == "0":
+                                await interaction.response.send_message("> Vous ne pouvez pas importer de permissions vers la permission publique.", ephemeral = True)
+                                return
+                            
+                            class ChoosePermission(MyViewClass):
+                                @discord.ui.select(
+                                    placeholder = "Choisir une permission",
+                                    options = [
+                                        discord.SelectOption(label = custom_names.get(str(i), "Perm" + str(i)), value = str(i))
+                                        for i in range(11) if str(i) != original_permission
+                                    ]
+                                )
+                                async def choose_permission_callback(self, select, interaction):
+                                    if interaction.user != ctx.author:
+                                        await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                        return
+                                    
+                                    database = Database()
+                                    await database.connect()
+                                    
+                                    permissions_data = json.loads(await database.get_data("guild", "perms_hierarchic", guild_id = interaction.guild.id))
+                                    for command_name, command_current_permission in permissions_data["commands"].items():
+                                        if command_current_permission != select.values[0]:
+                                            continue
+                                        permissions_data["commands"][command_name] = original_permission
+
+                                    await database.set_data("guild", "perms_hierarchic", json.dumps(permissions_data), guild_id = interaction.guild.id)
+                                    await interaction.response.defer()
+                                    await interaction.message.edit(embed = get_permission_embed(int(original_permission)), view = edit_permission_view)
+                                    await database.disconnect()
+
+                                @discord.ui.button(label = "Choisissez une permission à importer", style = discord.ButtonStyle.primary, disabled = True)
+                                async def callback(self, button, interaction):
+                                    pass
+                            
+                            await interaction.message.edit(view = ChoosePermission())
+
+
+                    @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
+                    async def comback_switch_main_button(self, button, interaction):
+                        if interaction.user != ctx.author:
+                            await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                            return
+                        
+                        await interaction.response.defer()
+                        await interaction.message.edit(embed = await get_switch_main_embed(), view = choose_permission_view)
+
+
+                await interaction.response.defer()
+                await interaction.message.edit(embed = await get_permission_embed(int(select.values[0])), view = EditPermissionCommands(timeout = 300))
+                
+
+        await ctx.send(embed = await get_switch_main_embed(), view = ChoosePermission(timeout = 300))
+
+
 
 
     @commands.command(description = "Voir vos commandes par permissions hiérarchiques")

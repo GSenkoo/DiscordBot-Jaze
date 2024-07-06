@@ -20,7 +20,8 @@
         "translate",
         "snipe",
         "speed",
-        "invite"
+        "invite",
+        "helpall"
     ],
     "1": [],
     "2": [
@@ -38,7 +39,11 @@
         "owners",
         "wl",
         "unwl",
-        "wls"
+        "wls",
+        "perms",
+        "switch",
+        "customperms",
+        "guideperms"
     ],
     "11": [
         "owner",

@@ -167,7 +167,7 @@ class PermissionsManager:
                 continue
             del guild_perm_data["commands"][command]
 
-        await db.set_data("guild", "perms_hierarchic", json.dumps(guild_perm_data), False, guild_id = guild_id)
+        await db.set_data("guild", "perms_hierarchic", json.dumps(guild_perm_data), guild_id = guild_id)
 
 
     async def get_command_perm(self, guild_id : int, command_name : str):
@@ -198,5 +198,3 @@ class PermissionsManager:
         if ctx.author.id in data["developers"]:
             return True
         return True
-        
-
