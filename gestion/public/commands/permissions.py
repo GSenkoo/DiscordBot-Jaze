@@ -1,6 +1,7 @@
 import discord
 import textwrap
 import json
+
 from datetime import datetime
 from discord.ext import commands
 from utils.PermissionsManager import PermissionsManager
@@ -599,11 +600,11 @@ class Gestion_des_Permissions(commands.Cog):
                             await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                             return
                         
-                        await interaction.response.defer()
                         edit_permission_view = self # Sauvegarde du menu de configuration de la permission pour la restaurer plus tards quand l'utilisatreur aura complété son action
                         
                         # ------------------ Importer des commandes ------------------
                         if select.values[0] == "import_commands":
+                
                             # Choisir une catégorie
                             class ChooseCategory(MyViewClass):
                                 @discord.ui.select(
@@ -681,7 +682,8 @@ class Gestion_des_Permissions(commands.Cog):
                                 @discord.ui.button(label = "Choisissez une catégorie de commande", style = discord.ButtonStyle.primary, disabled = True)
                                 async def callback(self, button, interaction):
                                     pass
-
+                            
+                            await interaction.response.defer()
                             await interaction.message.edit(view = ChooseCategory(timeout = 300))
 
                         # ------------------ Importer toutes les commandes d'une permission ------------------
@@ -721,6 +723,7 @@ class Gestion_des_Permissions(commands.Cog):
                                 async def callback(self, button, interaction):
                                     pass
                             
+                            await interaction.response.defer()
                             await interaction.message.edit(view = ChoosePermission())
 
 
