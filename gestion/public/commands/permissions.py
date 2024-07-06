@@ -744,8 +744,6 @@ class Gestion_des_Permissions(commands.Cog):
         await ctx.send(embed = await get_switch_main_embed(), view = ChoosePermission(timeout = 300))
 
 
-
-
     @commands.command(description = "Voir vos commandes par permissions hiérarchiques")
     @commands.guild_only()
     async def helpall(self, ctx):
@@ -760,8 +758,11 @@ class Gestion_des_Permissions(commands.Cog):
                 descriptions.append(
                     f"*Utilisez des espaces pour séparer vos arguments, mettez les entre guillemets `\"\"` si vos arguments comportent des espaces. "
                     + "Les arguments sous forme `<...>` sont obligatoires, tandis que les arguments sous forme `[...]` sont facultatifs.*\n\n"
-                    + "**__" + custom_names.get(str(index), f"Perm{index}") + "__**" + "\n"
-                    + "**`" + "`**\n**`".join([f"{prefix}{command}" for command in commands]) + "`**"
+                    + "**__" + custom_names.get(str(index), f"Perm{index}") + "__**"
+                    + "\n"
+                    + "**`"
+                    + "`**\n**`".join([f"{prefix}{command}" for command in commands])
+                    + "`**"
                 )
 
         paginator = await paginator_creator.create_paginator(

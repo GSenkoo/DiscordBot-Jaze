@@ -46,7 +46,7 @@ class Database:
         self.connection = None
 
 
-    async def connect(self):
+    async def connect(self, delete_after : int = None):
         """
         Créer une connection
         --------------------------------------------
@@ -63,7 +63,7 @@ class Database:
         self.connection = connection
 
         def end_connection():
-            time.sleep(60)
+            time.sleep(60 if not delete_after else delete_after)
             if self.connection:
                 self.connection.close()
                 self.connection = None

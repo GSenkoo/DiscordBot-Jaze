@@ -191,10 +191,65 @@ class PermissionsManager:
         return commands
 
 
-    async def can_use_cmd(self, ctx):
-        with open("config.json") as file:
-            data = json.load(file)
+    async def can_use_cmd(self, ctx, bot):
+        database = Database()
+        await database.connect(delete_after = 5) 
 
-        if ctx.author.id in data["developers"]:
+        owners = await database.get_data("guild", "owners", guild_id = ctx.guild.id)
+        if not owners:
+            owners = "[]"
+        owners = json.loads(owners)
+
+        developer_cog = bot.get_cog("Developer")
+        perms_hierarchic_data = json.loads(await database.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
+        current_command_perm = perms_hierarchic_data["commands"][ctx.command.name]
+
+        # Tous le monde a accès aux commandes publiques
+        if current_command_perm == "0":
             return True
-        return True
+
+        # Pour les commandes réservé aux développeurs
+        if ctx.command.name in [command.name for command in developer_cog.get_commands()]:
+            with open("config.json") as file:
+                config_data = json.load(file)
+
+            if ctx.author.id in config_data["developers"]:
+                return True
+            return False
+        
+        # Pour le propriétaire du serveur, tout est autorisé.
+        if ctx.author == ctx.guild.owner:
+            return True
+        if (ctx.author.id in owners) and (current_command_perm != "11"):
+            return True
+        
+        # --------------- Check hierarchic perms
+        def check_permission(permission_authorization):
+            if permission_authorization["roles"]:
+                for role in ctx.author.roles:
+                    if role.id not in permission_authorization["roles"]:
+                        continue
+                    return True
+            if permission_authorization["users"]:
+                if ctx.author.id in permission_authorization["users"]:
+                    return True
+            if permission_authorization["guildpermissions"]:
+                for perm_id in permission_authorization["guildpermissions"]:
+                    if not getattr(ctx.author.guild_permissions, perm_id):
+                        continue
+                    return True
+
+
+        for i in range(int(current_command_perm) + 1):
+            if check_permission(perms_hierarchic_data["authorizations"][str(i)]):
+                return True
+        
+        # --------------- Check custom perms
+        perms_custom_data = json.loads(await database.get_data("guild", "perms_custom", guild_id = ctx.guild.id))
+        command_permissions = perms_custom_data["commands"][ctx.command.name]
+
+        for permission in command_permissions:
+            if check_permission(perms_custom_data["authorizations"][permission]):
+                return True
+    
+        return False

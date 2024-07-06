@@ -13,7 +13,7 @@ bot = MartialBot(command_prefix = "+", intents = discord.Intents.all(), help_com
 @bot.check
 async def can_use_cmd(ctx):
     permission_manager = PermissionsManager()
-    return await permission_manager.can_use_cmd(ctx)
+    return await permission_manager.can_use_cmd(ctx, bot)
 
 manage_files(bot, "load")
 

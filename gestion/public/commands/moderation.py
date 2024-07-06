@@ -18,10 +18,11 @@ class Moderation(commands.Cog):
         if member == ctx.guild.owner:
             await ctx.send("> Vous ne pouvez pas bannir le propriétaire du serveur.")
             return
-        if member.top_role.position <= ctx.author.top_role.position:
-            await ctx.send("> Vous ne pouvez pas bannir un membre qui est suppérieur ou égal à vous hiérarchiquement.")
-            return
-        if member.top_role.position <= ctx.guild.me.top_role.position:
+        if ctx.author != ctx.guild.owner:
+            if member.top_role.position >= ctx.author.top_role.position:
+                await ctx.send("> Vous ne pouvez pas bannir un membre qui est suppérieur ou égal à vous hiérarchiquement.")
+                return
+        if member.top_role.position >= ctx.guild.me.top_role.position:
             await ctx.send(f"> Je ne peux pas bannir {member.mention} car il est suppérieur ou égal à moi hiérarchiquement", allowed_mentions = None)
             return
         
@@ -45,10 +46,11 @@ class Moderation(commands.Cog):
         if member == ctx.guild.owner:
             await ctx.send("> Vous ne pouvez pas kick le propriétaire du serveur.")
             return
-        if member.top_role.position <= ctx.author.top_role.position:
-            await ctx.send("> Vous ne pouvez pas kick un membre qui est suppérieur ou égal à vous hiérarchiquement.")
-            return
-        if member.top_role.position <= ctx.guild.me.top_role.position:
+        if ctx.author != ctx.guild.owner:
+            if member.top_role.position >= ctx.author.top_role.position:
+                await ctx.send("> Vous ne pouvez pas kick un membre qui est suppérieur ou égal à vous hiérarchiquement.")
+                return
+        if member.top_role.position >= ctx.guild.me.top_role.position:
             await ctx.send(f"> Je ne peux pas kick {member.mention} car il est suppérieur ou égal à moi hiérarchiquement", allowed_mentions = None)
             return
         
