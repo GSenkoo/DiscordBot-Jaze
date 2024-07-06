@@ -214,7 +214,8 @@ class Gestion_des_Permissions(commands.Cog):
                             discord.SelectOption(label = "Retirer des rôles", emoji = "🎭", value = "remove_roles"),
                             discord.SelectOption(label = "Ajouter des utilisateurs", emoji = "👥", value = "add_users"),
                             discord.SelectOption(label = "Retirer des utilisateurs", emoji = "👥", value = "remove_users"),
-                            discord.SelectOption(label = "Gérer les permissions", emoji = "🗝", value = "manage_guildpermissions")
+                            discord.SelectOption(label = "Gérer les permissions de serveur", emoji = "🗝", value = "manage_guildpermissions"),
+                            discord.SelectOption(label = "Supprimer les permissions de serveur", emoji = "🗝", value = "del_guildpermissions")
                         ],
                         custom_id = "edit_perm"
                     )
@@ -467,6 +468,21 @@ class Gestion_des_Permissions(commands.Cog):
                                 
                             await interaction.message.edit(view = ManageGuildPermissions())
                             await interaction.response.defer()
+
+                        if select.values[0] == "del_guildpermissions":
+                            if not permission_data["guildpermissions"]:
+                                await interaction.response.send_message("> Il n'y a pas de permission de serveur à supprimer.", ephemeral = True)
+                                return
+                            
+                            permission_data["guildpermissions"] = []
+                            permissions_data["authorizations"][original_permission] = permission_data
+
+                            await db.connect()
+                            await db.set_data("guild", "perms_hierarchic", json.dumps(permissions_data), guild_id = interaction.guild.id)
+                            await interaction.response.defer()
+                            await interaction.message.edit(embed = await get_permission_embed())
+                            await db.disconnect()
+
 
                     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
                     async def comeback_button_callback(self, button, interaction):

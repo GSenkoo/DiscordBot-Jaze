@@ -204,7 +204,7 @@ class PermissionsManager:
         perms_hierarchic_data = json.loads(await database.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
         current_command_perm = perms_hierarchic_data["commands"][ctx.command.name]
 
-        # Tous le monde a accès aux commandes publiques
+        # Tous le monde a accès aux commandes publique
         if current_command_perm == "0":
             return True
 
@@ -238,9 +238,11 @@ class PermissionsManager:
                     if not getattr(ctx.author.guild_permissions, perm_id):
                         continue
                     return True
+            return False
 
 
-        for i in range(int(current_command_perm) + 1):
+        for i in range(1, int(current_command_perm) + 1):
+            print(i)
             if check_permission(perms_hierarchic_data["authorizations"][str(i)]):
                 return True
         
