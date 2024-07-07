@@ -4,7 +4,7 @@ import asyncio
 from discord import AllowedMentions as AM
 from discord.ext import commands
 from utils.Database import Database
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Moderation(commands.Cog):
@@ -47,12 +47,12 @@ class Moderation(commands.Cog):
         if reason: log_reason = log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] {reason}"
         else: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] Aucune raison specifiée"
 
-        try: await ctx.guild.ban(user, reason = log_reason)
+        try: await ctx.guild.ban(user, reason = log_reason if len(log_reason) <= 512 else log_reason[:509] + "...")
         except:
             await ctx.send(f"> Une erreur s'est produite lors de la tentative de bannissement de {member.mention}.", allowed_mentions = AM.none())
             return
         
-        await ctx.send(f"> {member.mention} a été banni du serveur" + ("." if not reason else f" pour `" + reason.replace("`", "'") + "`."), allowed_mentions = AM.none()) 
+        await ctx.send(f"> {member.mention} a été banni du serveur" + ("." if not reason else f" pour `" + (reason.replace("`", "'") if len(reason) <= 500 else reason.replace("`", "'")[:497] + "...") + "`."), allowed_mentions = AM.none()) 
 
     
     @commands.command(description = "Kick un membre du serveur")
@@ -77,12 +77,80 @@ class Moderation(commands.Cog):
         if reason: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] {reason}"
         else: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] Aucune raison specifiée"
 
-        try: await member.kick(reason = log_reason)
+        try: await member.kick(reason = log_reason if len(log_reason) <= 512 else log_reason[:509] + "...")
         except:
             await ctx.send(f"> Une erreur s'est produite lors de la tentative d'expulsion de {member.mention}.", allowed_mentions = AM.none())
             return
         
-        await ctx.send(f"> {member.mention} a été expulsé du serveur" + ("." if not reason else f" pour `" + reason.replace("`", "'") + "`."), allowed_mentions = AM.none())
+        await ctx.send(f"> {member.mention} a été expulsé du serveur" + ("." if not reason else f" pour `" + (reason.replace("`", "'") if len(reason) <= 500 else reason.replace("`", "'")[:497] + "...") + "`."), allowed_mentions = AM.none())
+
+
+    @commands.command(description = "Temporairement mute un membre avec le système d'exclusion")
+    @commands.bot_has_permissions(moderate_members = True)
+    @commands.guild_only()
+    async def tempmute(self, ctx, member : discord.Member, duration : str, *, reason : str):
+        """
+        Voici des exemples d'utilisation :
+        `+tempmute @user123 3j` (mute 3 jours)
+        `+tempmute @user123 10s` (mute 10 secondes)
+        `+tempmute @user123 10jours` (mute 10 jours)
+        `+tempute @user123 10m` (mute 10 minutes)
+        `+tempmute @user123 10h` (mute 10h)
+
+        Note : La durée maximum de mute est de 28 jours.
+        """
+        if member == ctx.author:
+            await ctx.send("> Vous ne pouvez pas vous auto-tempmute.")
+            return
+        if member.guild_permissions.administrator:
+            await ctx.send("> Vous ne pouvez pas mute un utilisateur administrateur.")
+            return
+        if member.top_role.position >= ctx.author.top_role.position:
+            await ctx.send("> Vous ne pouvez pas tempmute un utilisateur qui suppérieur ou égal à vous hiérarchiquement.")
+            return
+        if member.top_role.position >= ctx.guild.me.top_role.position:
+            await ctx.send("> Je ne peux pas tempmute un utilisateur qui est suppérieur ou égal à moi hiérarchiquement.")
+            return
+
+        def find_duration(duration):
+            duration_test = duration.replace("days", "").replace("day", "").replace("jours", "").replace("jour", "").replace("d", "").replace("j", "")
+            if duration_test.isdigit():
+                return timedelta(days = int(duration_test))
+            
+            duration_test = duration.replace("hours", "").replace("hour", "").replace("hours", "").replace("hour", "").replace("h", "")
+            if duration_test.isdigit():
+                return timedelta(hours = int(duration_test))
+            
+            duration_test = duration.replace("minutes", "").replace("minute", "").replace("min", "").replace("m", "")
+            if duration_test.isdigit():
+                return timedelta(minutes = int(duration_test))
+            
+            duration_test = duration.replace("secondes", "").replace("seconde", "").replace("seconds", "").replace("second", "").replace("sec", "").replace("s", "")
+            if duration_test.isdigit():
+                return timedelta(seconds = int(duration_test))
+
+            return None
+            
+
+        duration_timedelta = find_duration(duration)
+        if not duration_timedelta:
+            await ctx.send(f"> La durée donnée est invalide, voici quelques exemples de durées valides : `5h`, `7minutes`, `3days`, `2secondes`, 7jours`.")
+            return
+        if duration_timedelta.days > 28:
+            await ctx.send("> La durée maximale de timeout discord est limitée à 28 jours, vous ne pouvez donc pas dépasser cette limite.")
+            return
+        
+        if reason: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] {reason}"
+        else: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] Aucune raison fournie"
+        
+        try:
+            await member.timeout_for(duration_timedelta, reason = log_reason if len(log_reason) <= 512 else log_reason[:509] + "...")
+        except:
+            await ctx.send(f"> Une erreur s'est produite lors de la tentative de tempmute de {member.mention}.", allowed_mentions = AM.none())
+            return
+        
+        await ctx.send(f"> {member.mention} a été tempmute `{duration}`" + (" pour " + reason.replace("`", "'") if len(reason) <= 500 else reason.replace("")))
+        
 
 
     @commands.command(description = "Ajouter un avertissement à un membre")

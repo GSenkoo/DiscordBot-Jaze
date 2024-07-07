@@ -31,7 +31,8 @@
     ],
     "2": [
         "ban",
-        "kick"
+        "kick",
+        "tempmute"
     ],
     "3": [
         "ch",
