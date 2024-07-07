@@ -88,7 +88,7 @@ class Moderation(commands.Cog):
     @commands.command(description = "Temporairement mute un membre avec le système d'exclusion")
     @commands.bot_has_permissions(moderate_members = True)
     @commands.guild_only()
-    async def tempmute(self, ctx, member : discord.Member, duration : str, *, reason : str):
+    async def tempmute(self, ctx, member : discord.Member, duration : str, *, reason : str = None):
         """
         Voici des exemples d'utilisation :
         `+tempmute @user123 3j` (mute 3 jours)
