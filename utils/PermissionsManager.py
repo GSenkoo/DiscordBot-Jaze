@@ -193,7 +193,7 @@ class PermissionsManager:
 
     async def can_use_cmd(self, ctx, bot):
         database = Database()
-        await database.connect(delete_after = 5) 
+        await database.connect(delete_after = 5)
 
         owners = await database.get_data("guild", "owners", guild_id = ctx.guild.id)
         if not owners:
@@ -202,7 +202,9 @@ class PermissionsManager:
 
         developer_cog = bot.get_cog("Developer")
         perms_hierarchic_data = json.loads(await database.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
-        current_command_perm = perms_hierarchic_data["commands"][ctx.command.name]
+        try:
+            current_command_perm = perms_hierarchic_data["commands"][ctx.command.name]
+        except: return # ça veut dire que la clée/commande n'éxiste pas
 
         # Tous le monde a accès aux commandes publique
         if current_command_perm == "0":
@@ -241,7 +243,7 @@ class PermissionsManager:
             return False
 
 
-        for i in range(1, int(current_command_perm) + 1):
+        for i in range(1, int(current_command_perm) + 1 if int(current_command_perm) <= 9 else 10):
             print(i)
             if check_permission(perms_hierarchic_data["authorizations"][str(i)]):
                 return True

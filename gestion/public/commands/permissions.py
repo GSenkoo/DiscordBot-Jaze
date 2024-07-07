@@ -752,7 +752,6 @@ class Gestion_des_Permissions(commands.Cog):
                         await interaction.response.defer()
                         await interaction.message.edit(embed = await get_switch_main_embed(), view = choose_permission_view)
 
-
                 await interaction.response.defer()
                 await interaction.message.edit(embed = await get_permission_embed(int(select.values[0])), view = EditPermissionCommands(timeout = 300))
                 
@@ -768,6 +767,7 @@ class Gestion_des_Permissions(commands.Cog):
 
         prefix = await self.bot.get_prefix(ctx.message)
         descriptions = []
+
         for index in range(12):
             commands = await perms_manager.get_perm_commands(ctx.guild.id, index)
             if commands:

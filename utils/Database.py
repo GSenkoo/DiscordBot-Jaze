@@ -54,10 +54,10 @@ class Database:
         """
         assert not self.connection
         connection = await aiomysql.connect(
-            host = "localhost",
+            host = os.getenv("MYSQL_HOST"),
             user = os.getenv("MYSQL_USER"),
             password = os.getenv("MYSQL_PASSWORD"),
-            db = "martial_gestion",
+            db = os.getenv("MYSQL_DB"),
         )
     
         self.connection = connection
@@ -101,16 +101,6 @@ class Database:
         assert os.path.isfile("config.json")
 
         warnings.simplefilter("ignore")
-        connection = await aiomysql.connect(
-            host = "localhost",
-            user = os.getenv("MYSQL_USER"),
-            password = os.getenv("MYSQL_PASSWORD"),
-        )
-        cursor = await connection.cursor()
-        await cursor.execute("CREATE DATABASE IF NOT EXISTS martial_gestion")
-        await connection.commit()
-        await cursor.close()
-        connection.close()
 
         already_on = True
         if not self.connection:

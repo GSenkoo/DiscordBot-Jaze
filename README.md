@@ -27,6 +27,8 @@ TOKEN = votre_token_ici
 
 MYSQL_USER = votre_identifiant_mysql
 MYSQL_PASSWORD = votre_mot_de_passe_mysql
+MYSQL_HOST = votre_host
+MYSQL_DB = le_nom_de_votre_db
 
 DEEPL_KEY = votre_clée_deepl
 ```
@@ -35,6 +37,8 @@ DEEPL_KEY = votre_clée_deepl
 - **`votre_identifiant_mysql`** par *[Un idenfiant de compte local mysql](https://www.youtube.com/watch?v=5h5IKUjAO24)*
 - **`votre_mot_de_passe_mysql`** par *[Le mot de passe du compte local mysql donnée](https://www.youtube.com/watch?v=5h5IKUjAO24)*
 - **`votre_clée_deepl`** par *[Une clée deepl](https://www.deepl.com/fr/pro#developer)*
+- **`votre_host`** par votre type de host mysql
+- **`le_nom_de_votre_db`** par le nom de votre base de donnée
 
 ### 2. Fichier "config.json"
 Tout en haut du fichier "config.json", vous pouvez voir une clée "developers" accompagnée en valeurs, d'une liste.
