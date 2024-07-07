@@ -16,7 +16,7 @@
         "member": {
             "primary_keys": {"guild_id": "BIGINT NOT NULL", "user_id": "BIGINT NOT NULL UNIQUE"},
             "keys": {
-                "warns": "JSON"
+                "warn": "TEXT"
             }
         },
         "user": {

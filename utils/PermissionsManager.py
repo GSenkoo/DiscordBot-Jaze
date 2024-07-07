@@ -195,22 +195,15 @@ class PermissionsManager:
         database = Database()
         await database.connect(delete_after = 5)
 
+
         owners = await database.get_data("guild", "owners", guild_id = ctx.guild.id)
         if not owners:
             owners = "[]"
         owners = json.loads(owners)
 
-        developer_cog = bot.get_cog("Developer")
-        perms_hierarchic_data = json.loads(await database.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
-        try:
-            current_command_perm = perms_hierarchic_data["commands"][ctx.command.name]
-        except: return # ça veut dire que la clée/commande n'éxiste pas
-
-        # Tous le monde a accès aux commandes publique
-        if current_command_perm == "0":
-            return True
 
         # Pour les commandes réservé aux développeurs
+        developer_cog = bot.get_cog("Developer")
         if ctx.command.name in [command.name for command in developer_cog.get_commands()]:
             with open("config.json") as file:
                 config_data = json.load(file)
@@ -219,6 +212,18 @@ class PermissionsManager:
                 return True
             return False
         
+
+        perms_hierarchic_data = json.loads(await database.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
+        try:
+            current_command_perm = perms_hierarchic_data["commands"][ctx.command.name]
+        except: return # ça veut dire que la clée/commande n'éxiste pas
+
+
+        # Tous le monde a accès aux commandes publique
+        if current_command_perm == "0":
+            return True
+        
+
         # Pour le propriétaire du serveur, tout est autorisé.
         if ctx.author == ctx.guild.owner:
             return True

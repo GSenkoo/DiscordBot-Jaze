@@ -1,4 +1,5 @@
 import discord
+from discord import AllowedMentions as AM
 from discord.ext import commands
 
 class Gestion(commands.Cog):
@@ -135,6 +136,26 @@ class Gestion(commands.Cog):
                 view = RestorePermissions(saves)
             )
 
+
+    @commands.command(description = "Recréer un salon")
+    @commands.bot_has_guild_permissions(manage_channels = True)
+    @commands.guild_only()
+    async def renew(self, ctx, channel : discord.ChannelType = None):
+        if not channel:
+            channel = ctx.channel
+
+        if channel == ctx.guild.rules_channel:
+            await ctx.send("> Le salon des règles ne peut pas être supprimé.")
+            return
+        if channel == ctx.guild.public_updates_channel:
+            await ctx.send("> Le salon de mise à jour de la communauté ne peut pas être supprimé.")
+            return
+        
+        new_channel = await channel.clone(reason = f"[{ctx.author.display_name} | {ctx.author.id}] Demande de renew")
+        await channel.delete()
+
+        await new_channel.send(f"> Le salon a était renew par {ctx.author.mention}.", allowed_mentions = AM.none(), delete_after = 10)
+            
 
 
 def setup(bot):

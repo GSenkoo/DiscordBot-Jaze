@@ -24,13 +24,13 @@ class on_command_error(commands.Cog):
             case commands.CommandOnCooldown:
                 await ctx.send(f"> Commande en cooldown, merci de réessayer dans {round(error.retry_after)} secondes.")
             case commands.MissingRequiredArgument:
-                await ctx.send(f"> Utilisation de la commande invalide, merci de donner tous les arguments (utilisation : `{await self.bot.get_prefix(ctx)}{ctx.command} {ctx.command.usage}`).")
+                await ctx.send(f"> Merci de donner un bon nombre d'arguments (utilisation : `{await self.bot.get_prefix(ctx)}{ctx.command} {ctx.command.usage if ctx.command.usage else ctx.command.signature}`).")
             case commands.BadArgument:
-                await ctx.send(f"> Utilisation de la commande invalide, véririfez vos arguments (utilisation : `{await self.bot.get_prefix(ctx)}{ctx.command} {ctx.command.usage}`).")
+                await ctx.send(f"> Merci de véririfez vos types d'arguments (utilisation : `{await self.bot.get_prefix(ctx)}{ctx.command} {ctx.command.usage if ctx.command.usage else ctx.command.signature}`).")
             case commands.PrivateMessageOnly:
                 await ctx.send("> Cette commande ne peut pas être utilisé en dehors de mes messages privés.")
             case commands.TooManyArguments:
-                await ctx.send(f"> Utilisation de la commande invalide, merci de donner un nombre d'arguments correct (utilisation : `{await self.bot.get_prefix(ctx)}{ctx.command} {ctx.command.usage}`).")
+                await ctx.send(f"> Merci de donner des arguments corrects (utilisation : `{await self.bot.get_prefix(ctx)}{ctx.command} {ctx.command.usage if ctx.command.usage else ctx.command.signature}`).")
             case commands.MessageNotFound:
                 await ctx.send(f"> Le message donné ({display(error.argument)}) est invalide.", allowed_mentions = None)
             case commands.MemberNotFound:

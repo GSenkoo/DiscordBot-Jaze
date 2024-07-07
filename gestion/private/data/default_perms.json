@@ -24,7 +24,11 @@
         "helpall",
         "help"
     ],
-    "1": [],
+    "1": [
+        "warn",
+        "warns",
+        "clear"
+    ],
     "2": [
         "ban",
         "kick"
@@ -34,7 +38,8 @@
         "chall",
         "alladmins",
         "botadmins",
-        "embed"
+        "embed",
+        "renew"
     ],
     "10": [
         "owners",
