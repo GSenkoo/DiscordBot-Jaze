@@ -215,7 +215,7 @@ class Utilitaire(commands.Cog):
                     await ctx.respond("> " + translation["> Vous n'êtes pas autorisés à intéragir avec ceci"] + ".", ephemeral = True)
                     return
                 
-                try: translation = await get_translation_async(self.text, select.values[0])
+                try: translation_deepl = await get_translation_async(self.text, select.values[0])
                 except:
                     await interaction.message.edit(
                         embed = discord.Embed(
@@ -230,7 +230,7 @@ class Utilitaire(commands.Cog):
                     color = await self.bot.get_theme(self.ctx.guild.id)
                 )
                 embed.add_field(name = translation["Texte d'origine"], value = self.text)
-                embed.add_field(name = translation["Texte traduit ([data_langage])"].replace("[data_langage]", select.values[0]), value = translation)
+                embed.add_field(name = translation["Texte traduit ([data_langage])"].replace("[data_langage]", select.values[0]), value = translation_deepl)
 
                 await interaction.message.edit(embed = embed)
                 await interaction.response.defer()
