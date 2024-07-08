@@ -40,7 +40,12 @@
         "alladmins",
         "botadmins",
         "embed",
-        "renew"
+        "renew",
+        "derank",
+        "addrole",
+        "delrole",
+        "theme",
+        "prefix"
     ],
     "10": [
         "owners",
@@ -50,6 +55,7 @@
         "perms",
         "switch",
         "customperms",
+        "customhelp",
         "guideperms"
     ],
     "11": [

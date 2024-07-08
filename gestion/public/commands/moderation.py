@@ -151,6 +151,114 @@ class Moderation(commands.Cog):
         
         await ctx.send(f"> {member.mention} a été tempmute `{duration}`" + (" pour " + reason.replace("`", "'") if len(reason) <= 500 else reason.replace("")))
         
+    
+    @commands.command(description = "Retirer tous les rôles d'un membre")
+    @commands.guild_only()
+    @commands.bot_has_permissions(manage_roles = True)
+    async def derank(self, ctx, member : discord.Member):
+        if member == ctx.author:
+            await ctx.send("> Vous ne pouvez pas vous auto-derank.")
+            return
+        if member == ctx.guild.owner:
+            await ctx.send("> Le propriétaire du serveur ne peut pas être derank.")
+            return
+        if member.top_role.position >= ctx.author.top_role.position:
+            await ctx.send("> Vous ne pouvez pas derank un utilisateur suppérieur ou égal à vous hiérarchiquement.")
+            return
+        if member.top_role.position >= ctx.guild.me.top_role.position:
+            await ctx.send("> Je ne peux pas derank un utilisateur suppérieur ou égal à moi hiérarchiquement.")
+            return
+        
+        member_roles = [role for role in member.roles if role.is_assignable()]
+
+        try: await member.remove_roles(*member_roles, reason = f"[{ctx.author.display_name} | {ctx.author.id}] Demande de derank")
+        except:
+            await ctx.send(f"> Une erreur s'est produite lors de la tentative de derank de {member.mention}.", allowed_mentions = AM.none())
+            return
+        
+        await ctx.send(f"> Le membre {member.mention} a été derank.", allowed_mentions = AM.none())
+
+
+    @commands.command(description = "Ajouter un rôle à un membre")
+    @commands.guild_only()
+    @commands.bot_has_permissions(manage_roles = True)
+    async def addrole(self, ctx, role : discord.Role, member : discord.Member = None):
+        """
+        Note: les utilisateurs avec la permission owner peuvent ajouter n'importe quel rôle si ils ont accès à la commande.
+        """
+        if not member:
+            member = ctx.author
+
+        if not role.is_assignable():
+            await ctx.send(f"> Le rôle {role.mention} n'est pas un rôle assignable.")
+            return
+        
+        if role in getattr(member, "roles", []):
+            await ctx.send("> " + ("Vous avez" if member == ctx.author else f"{member.mention} a") + f" déjà le rôle {role.mention}.", allowed_mentions = AM.none())
+            return
+
+        db = Database()
+        await db.connect()
+        owners = await db.get_data("guild", "owners", guild_id = ctx.guild.id)
+        await db.disconnect()
+
+        if owners: owners = json.loads(owners)
+        else: owners = []
+
+        if (ctx.author.id not in owners) and (ctx.author != ctx.guild.owner):
+            if ctx.author.top_role.position <= role.position:
+                await ctx.send("> Vous ne pouvez ajouter un rôle suppérieur ou égal hiérarchiquement à votre rôle le plus élevé.")
+                return
+        
+        if role.position >= ctx.guild.me.top_role.position:
+            await ctx.send("> Je ne peux pas ajouter un rôle qui est suppérieur ou égal hiérarchiquement à mon rôle le plus élevé.")
+            return
+        
+        try: await member.add_roles(role, reason = f"[{ctx.author.display_name} | {ctx.author.id}] Demande d'ajout de rôle")
+        except:
+            await ctx.send(f"> Une erreur s'est produite lors de la tentative d'ajout du rôle {role.mention}.", allowed_mentions = AM.none())
+            return
+        
+        await ctx.send(f"> Le rôle {role.mention} " + ("vous a été ajouté" if member == ctx.author else f"a été ajouté à {member.mention}") + ".", allowed_mentions = AM.none())
+        
+
+    @commands.command(description = "Retirer un rôle à un utilisateur", aliases = ["removerole"])
+    @commands.guild_only()
+    async def delrole(self, ctx, role : discord.Role, member : discord.Role = None):
+        """
+        Note: les utilisateurs avec la permission owner peuvent retirer n'importe quel rôle.
+        """
+        if not member:
+            member = ctx.author
+
+        if not role.is_assignable():
+            await ctx.send(f"> Le rôle {role.mention} ne peut pas être retiré.")
+            return
+
+        db = Database()
+        await db.connect()
+        owners = await db.get_data("guild", "owners", guild_id = ctx.guild.id)
+        await db.disconnect()
+
+        if owners: owners = json.loads(owners)
+        else: owners = []
+
+        if (ctx.author.id not in owners) and (ctx.author != ctx.guild.owner):
+            if ctx.author.top_role.position <= role.position:
+                await ctx.send("> Vous ne pouvez retirer un rôle suppérieur ou égal hiérarchiquement à votre rôle le plus élevé.")
+                return
+            
+        if role not in getattr(member, "roles", []):
+            await ctx.send("> " + ("Vous n'avez" if member == ctx.author else f"{member.mention} n'a") + f" pas le rôle {role.mention}.", allowed_mentions = AM.none())
+            return
+
+        if role.position >= ctx.guild.me.top_role.position:
+            await ctx.send("> Je ne peux pas retirer un rôle qui est suppérieur ou égal hiérarchiquement à mon rôle le plus élevé.")
+            return
+        
+        await member.remove_roles(role, reason = f"[{ctx.author.display_name} | {ctx.author.id}] Demande d'enlèvement de rôle")
+        await ctx.send(f"> Le rôle {role.mention} " + ("vous a été retiré" if member == ctx.author else f"a été retiré à {member.mention}") + ".", allowed_mentions = AM.none())
+
 
 
     @commands.command(description = "Ajouter un avertissement à un membre")

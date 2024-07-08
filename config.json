@@ -6,6 +6,7 @@
             "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
             "keys": {
                 "theme": "INTEGER DEFAULT 0xFFFFFF",
+                "prefix": "VARCHAR(5) DEFAULT '+'",
                 "langage": "VARCHAR(2) DEFAULT 'fr'",
                 "owners": "TEXT",
                 "whitelist": "TEXT",

@@ -43,7 +43,7 @@ class Gestion(commands.Cog):
         await channel.send(f"> Le salon {channel.mention} a été **{action.lower()}** par {ctx.author.mention}.", allowed_mentions = discord.AllowedMentions().none())
 
 
-    @commands.command(description = "Modifier la visiblitée/la permission d'envoi pour tous les salons\n(Ou dans une certaine catégorie, si spécifiée)", usage = "<lock/unlock/hide/unhide> [catégorie]")
+    @commands.command(description = "Modifier la visiblitée/la permission d'envoi pour tous les salons", usage = "<lock/unlock/hide/unhide> [category]")
     @commands.bot_has_permissions(manage_channels = True, send_messages = True)
     @commands.guild_only()
     async def chall(self, ctx, action : str, category : discord.CategoryChannel = None):
@@ -137,7 +137,7 @@ class Gestion(commands.Cog):
             )
 
 
-    @commands.command(description = "Recréer un salon")
+    @commands.command(description = "Duppliquer un salon et ensuite supprimer le salon initial.")
     @commands.bot_has_guild_permissions(manage_channels = True)
     @commands.guild_only()
     async def renew(self, ctx, channel : discord.ChannelType = None):

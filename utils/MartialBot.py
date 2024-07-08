@@ -38,25 +38,35 @@ class MartialBot(commands.AutoShardedBot):
 
         self.colors_save = {}
         self.langages_save = {}
+        self.prefixes_save = {}
+
+    
+    async def set_theme(self, guild_id : int, theme : int):
+        if guild_id in self.colors_save:
+            self.colors_save[guild_id] = theme
+
+        database = Database()
+        await database.connect()
+        await database.set_data("guild", "theme", theme, guild_id = guild_id)
+        await database.disconnect()
 
 
     async def get_theme(self, guild_id : int):
-        if guild_id in self.colors_save.keys():
-            return self.colors_save[guild_id]
+        if str(guild_id) in self.colors_save.keys():
+            return self.colors_save[str(guild_id)]
         
         database = Database()
-        try:
-            await database.connect()
-            theme = await database.get_data(table = "guild", column = "theme", guild_id = guild_id)
-        finally: await database.disconnect()
-        self.colors_save[guild_id] = int(theme)
+        await database.connect()
+        theme = await database.get_data(table = "guild", column = "theme", guild_id = guild_id)
+        await database.disconnect()
 
+        self.colors_save[str(guild_id)] = int(theme)
         return int(theme)
 
 
     async def get_translations_langage(self, guild_id : int):
-        if guild_id in self.langages_save:
-            return self.langages_save[guild_id]
+        if str(guild_id) in self.langages_save:
+            return self.langages_save[str(guild_id)]
         
         database = Database()
         try:
@@ -74,3 +84,26 @@ class MartialBot(commands.AutoShardedBot):
             translation_data = json.load(file)
         
         return translation_data[translation_key]
+    
+
+    async def set_prefix(self, guild_id : int, new_prefix : str):
+        if str(guild_id) in self.prefixes_save.keys():
+            self.prefixes_save[str(guild_id)] = new_prefix
+
+        database = Database()
+        await database.connect()
+        await database.set_data("guild", "prefix", new_prefix, guild_id = guild_id)
+        await database.disconnect()
+
+
+    async def get_prefix(self, message: discord.Message) -> list[str] | str:
+        if str(message.guild.id) in self.prefixes_save.keys():
+            return self.prefixes_save[str(message.guild.id)]
+        
+        database = Database()
+        await database.connect()
+        current_prefix = await database.get_data("guild", "prefix", guild_id = message.guild.id)
+        await database.disconnect()
+
+        self.prefixes_save[str(message.guild.id)] = current_prefix
+        return current_prefix

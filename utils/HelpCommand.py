@@ -72,7 +72,6 @@ class CustomHelp(commands.HelpCommand):
             data_list = descriptions,
             data_per_page = 1,
             pages_looped = True,
-            page_counter = False,
             without_button_if_onepage = False,
         )
 
