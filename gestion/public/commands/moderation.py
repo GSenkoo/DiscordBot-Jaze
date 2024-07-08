@@ -260,7 +260,6 @@ class Moderation(commands.Cog):
         await ctx.send(f"> Le rôle {role.mention} " + ("vous a été retiré" if member == ctx.author else f"a été retiré à {member.mention}") + ".", allowed_mentions = AM.none())
 
 
-
     @commands.command(description = "Ajouter un avertissement à un membre")
     @commands.guild_only()
     async def warn(self, ctx, member : discord.Member, *, reason : str = None):
