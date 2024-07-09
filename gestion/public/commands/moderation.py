@@ -15,9 +15,8 @@ class Moderation(commands.Cog):
         self.bot = bot
 
     
-    @commands.command(description = "Voir les sanctions d'un membre")
+    @commands.command(description = "Voir et gérer les sanctions d'un membre")
     @commands.guild_only()
-    @commands.bot_has_permissions()
     async def sanctions(self, ctx, user : discord.User = None):
         if not user: user = ctx.author
 
@@ -28,7 +27,7 @@ class Moderation(commands.Cog):
         sanctions = await database.get_data("member", "sanctions", guild_id = ctx.guild.id, user_id = user.id)
         await database.disconnect()
 
-        if not sanctions:
+        if not sanctions or not json.loads(sanctions):
             await ctx.send(f"> Le membre {user.mention} n'a pas de sanction.", allowed_mentions = AM.none())
             return
         
@@ -105,13 +104,13 @@ class Moderation(commands.Cog):
                         embed = discord.Embed(
                             author = discord.EmbedAuthor(name = user.display_name, icon_url = user.avatar.url if user.avatar else None),
                             color = await bot.get_theme(interaction.guild.id),
-                            description = f"*Sanction n°{select.values[0]} supprimée.*"    
+                            description = f"*Sanction n°{int(select.values[0]) + 1} supprimée.*"    
                         ),
                         view = None
                     )
                     
 
-                @discord.ui.button(label = "Tous supprimer", style = discord.ButtonStyle.danger, row = 4)
+                @discord.ui.button(label = "Tout supprimer", style = discord.ButtonStyle.danger, row = 4)
                 async def delete_all_button_callback(self, button, interaction):
                     if interaction.user != ctx.author:
                         await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
