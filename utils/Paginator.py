@@ -72,7 +72,9 @@ class PaginatorCreator:
         page_counter : bool = True,
         custom_rows : List[discord.ui.View] = None,
         without_button_if_onepage : bool = True,
-        timeout : int = 300
+        timeout : int = 300,
+        embed_thumbnail : str = None,
+        embed_author : discord.EmbedAuthor = None
     ) -> Union[CustomPaginator, list]:
         """
         Paramètres
@@ -98,7 +100,10 @@ class PaginatorCreator:
             Retirer les boutons si une seule page est générée
         timeout `int`, default `600` :
             Expiration des boutons après un certains temps d'inutilisation
-
+        embed_thumbnail `str` :
+            Le lien des thumnails des embeds des pages du paginator
+        embed_author `discord.EmbedAuthor` :
+            L'embed author des embeds des pages du paginator
         Return
         --------------------------------------------
         `Union[utils.Paginator.CustomPaginator, list]`
@@ -124,9 +129,11 @@ class PaginatorCreator:
             Page(
                 embeds = [
                     discord.Embed(
-                        title = title if type(title) == str else title[index],
+                        title = (title if type(title) == str else title[index]) if title else None,
                         description = "\n".join(data),
-                        color = embed_color
+                        color = embed_color,
+                        thumbnail = embed_thumbnail,
+                        author = embed_author
                     ).set_footer(text = f"Page {index + 1}/{len(data_list)}" if page_counter else "")
                 ],
                 custom_view = custom_rows[index] if custom_rows else None
@@ -136,9 +143,11 @@ class PaginatorCreator:
         if len(pages) <= 1 and without_button_if_onepage:
             return [
                 discord.Embed(
-                    title = title,
+                    title = title if type(title) != list else title[0],
                     description = "\n".join(data_list[0]) if data_list else no_data_message,
-                    color = embed_color
+                    color = embed_color,
+                    thumbnail = embed_thumbnail,
+                    author = embed_author
                 ).set_footer(text = f"Page 1/1" if page_counter else "")
             ]
         
@@ -147,9 +156,11 @@ class PaginatorCreator:
                 Page(
                     embeds = [
                         discord.Embed(
-                            title = title,
+                            title = title if type(title) != list else title[0],
                             description = no_data_message,
-                            color = embed_color
+                            color = embed_color,
+                            thumbnail = embed_thumbnail,
+                            author = embed_author
                         ).set_footer(text = f"Page 1/1" if page_counter else "")
                     ]
                 )

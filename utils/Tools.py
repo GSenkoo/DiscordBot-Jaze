@@ -13,7 +13,7 @@ class Tools:
         ctx : commands.Context,
         member : Union[discord.Member, discord.User],
         reason : Union[str, None],
-        time : timedelta = None
+        time : str = None
     ) -> None:
         """
         Cette fonction ajoutera une sanctions à la liste des sanctions de l'utilisateur concerné.
@@ -45,23 +45,10 @@ class Tools:
         if not user_sanctions:
             user_sanctions = "[]"
         user_sanctions = json.loads(user_sanctions)
-        
-        attrs = ["days", "hours", "minutes", "seconds"]
-        converter = {
-            "days": "jour(s)",
-            "hours": "heure(s)",
-            "minutes": "minute(s)",
-            "seconds": "seconde(s)"
-        }
-
-        for attr in attrs:
-            if getattr(time, attr, None):
-                time = str(getattr(time, attr)) + " " + converter[attr]
-                break
 
         message = \
             f"> Vous avez été {sanction_type}" \
-            + f" du serveur **{ctx.guild.name}**" \
+            + (f" du serveur **{ctx.guild.name}**" if sanction_type in ["ban", "kick"] else f" sur le serveur **{ctx.guild.name}**") \
             + (f" `{time}` " if sanction_type == "tempmute" else " ") \
             + f"par **{ctx.author.display_name}**" \
             + ("." if not reason else f" pour `" + reason.replace("`", "'") + "`.")
@@ -69,12 +56,17 @@ class Tools:
         try: await member.send(message)
         except: pass
 
-        user_sanctions.append({
+        sanction_data = {
             "type": sanction_type,
             "moderator": ctx.author.id,
             "timestamp": round(datetime.now().timestamp()),
-            "reason": (reason if len(reason) <= 500 else reason[:497] + "...") if reason else None
-        })
+            "reason": (reason.replace("`", "'") if len(reason) <= 50 else reason[:47].replace("`", "'") + "...") if reason else None
+        }
+
+        if sanction_type == "tempmute":
+            sanction_data["time"] = time
+
+        user_sanctions.append(sanction_data)
 
         await database.set_data("member", "sanctions", json.dumps(user_sanctions), guild_id = ctx.guild.id, user_id = member.id)
         await database.disconnect()

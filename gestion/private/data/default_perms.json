@@ -32,7 +32,8 @@
         "ban",
         "kick",
         "tempmute",
-        "untempmute"
+        "untempmute",
+        "sanctions"
     ],
     "3": [
         "ch",

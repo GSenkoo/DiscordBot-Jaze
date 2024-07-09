@@ -6,12 +6,146 @@ from discord.ext import commands
 from utils.Database import Database
 from utils.GPChecker import GPChecker
 from utils.Tools import Tools
+from utils.Paginator import PaginatorCreator
 from datetime import datetime, timedelta
 
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    
+    @commands.command(description = "Voir les sanctions d'un membre")
+    @commands.guild_only()
+    @commands.bot_has_permissions()
+    async def sanctions(self, ctx, user : discord.User = None):
+        if not user: user = ctx.author
+
+        database = Database()
+        paginator_creator = PaginatorCreator()
+
+        await database.connect()
+        sanctions = await database.get_data("member", "sanctions", guild_id = ctx.guild.id, user_id = user.id)
+        await database.disconnect()
+
+        if not sanctions:
+            await ctx.send(f"> Le membre {user.mention} n'a pas de sanction.", allowed_mentions = AM.none())
+            return
+        
+        """
+        Sanctions format : 
+        
+        {
+            "type": "sanction_type",
+            "moderator": moderator_id,
+            "timestamp": sanction_timestamp_id,
+            "reason": "sanction_reason"
+        }
+        """
+
+        type_converter = {
+            "warn": "Avertissement",
+            "derank": "Retrait des rôles",
+            "ban": "Bannissement",
+            "kick": "Expulsion",
+            "tempmute": "Exclusion temporaire"
+        }
+        
+        sanctions = json.loads(sanctions)
+        sanctions_formated = []
+        for index in range(len(sanctions)):
+            sanction_data = sanctions[index]
+            sanctions_formated.append(
+                f"{index + 1}. <t:{sanction_data['timestamp']}:d> : {type_converter[sanction_data['type']]} "
+                + (f"de `{sanction_data['time']}` " if sanction_data['type'] == "tempmute" else "")
+                + (f"pour `{sanction_data['reason']}`" if sanction_data['reason'] else "")
+            )
+
+        custom_select = []
+        bot = self.bot
+        for index in range(0, len(sanctions), 10):
+            class EditSanctions(discord.ui.View):
+                async def on_timeout(self) -> None:
+                    if self.to_components != self.message.components:
+                        return
+                    
+                    try: await self.message.edit(view = None)
+                    except: pass
+
+                @discord.ui.select(
+                    placeholder = "Choisir une sanction à supprimer",
+                    options = [
+                        discord.SelectOption(
+                            label = str(i + 1),
+                            emoji = "🗑",
+                            value = str(i)
+                        ) for i in range(index, index + 10 if len(sanctions) > index + 10 else len(sanctions))
+                    ]
+                )
+                async def edit_sanction_select_callback(self, select, interaction):
+                    if interaction.user != ctx.author:
+                        await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                        return
+                    
+                    database = Database()
+                    await database.connect()
+                    user_sanctions = json.loads(await database.get_data("member", "sanctions", guild_id = interaction.guild.id, user_id = user.id))
+                    
+                    if not len(user_sanctions) > int(select.values[0]):
+                        await interaction.response.send_message(f"> La sanction n°{select.values[0]} n'éxiste plus.", ephemeral = True)
+                        await database.disconnect()
+                        return
+                    
+                    user_sanctions.pop(int(select.values[0]))
+                    await database.set_data("member", "sanctions", json.dumps(user_sanctions), guild_id = interaction.guild.id, user_id = user.id)
+                    await database.disconnect()
+                    
+                    await interaction.response.defer()
+                    await interaction.message.edit(
+                        embed = discord.Embed(
+                            author = discord.EmbedAuthor(name = user.display_name, icon_url = user.avatar.url if user.avatar else None),
+                            color = await bot.get_theme(interaction.guild.id),
+                            description = f"*Sanction n°{select.values[0]} supprimée.*"    
+                        ),
+                        view = None
+                    )
+                    
+
+                @discord.ui.button(label = "Tous supprimer", style = discord.ButtonStyle.danger, row = 4)
+                async def delete_all_button_callback(self, button, interaction):
+                    if interaction.user != ctx.author:
+                        await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                        return
+                    
+                    database = Database()
+                    await database.connect()
+                    await database.set_data("member", "sanctions", json.dumps([]), guild_id = interaction.guild.id, user_id = user.id)
+                    await database.disconnect()
+
+                    await interaction.response.defer()
+                    await interaction.message.edit(
+                        embed = discord.Embed(
+                            title = "Sanctions",
+                            author = discord.EmbedAuthor(name = user.display_name, icon_url = user.avatar.url if user.avatar else None),
+                            color = await bot.get_theme(interaction.guild.id),
+                            description = f"*Sanctions supprimées par {ctx.author.mention}*"
+                        ),
+                        view = None
+                    )
+
+            custom_select.append(EditSanctions(timeout = 300))
+        
+        paginator = await paginator_creator.create_paginator(
+            title = "Sanctions",
+            embed_color = await self.bot.get_theme(ctx.guild.id),
+            data_list = sanctions_formated,
+            without_button_if_onepage = False,
+            custom_rows = custom_select,
+            timeout = 180,
+            embed_author = discord.EmbedAuthor(name = user.display_name, icon_url = user.avatar.url if user.avatar else None)
+        )
+
+        await paginator.send(ctx)
 
 
     @commands.command(description = "Bannir un membre du serveur")
@@ -115,8 +249,8 @@ class Moderation(commands.Cog):
             await ctx.send(f"> Une erreur s'est produite lors de la tentative de tempmute de {member.mention}.", allowed_mentions = AM.none())
             return
         
-        await ctx.send(f"> {member.mention} a été tempmute `{duration}`" + ((" pour " + reason.replace("`", "'") if len(reason) <= 50 else reason.replace("`", "")[:47] + "...") if reason else "."))
-        await tools.add_sanction("tempmute", ctx, member, reason, duration_timedelta)
+        await ctx.send(f"> {member.mention} a été tempmute `{duration}`" + ("." if not reason else (" pour `" + (reason if len(reason) <= 50 else reason[:47] + "...") + "`")))
+        await tools.add_sanction("tempmute", ctx, member, reason, duration)
 
 
     @commands.command(description = "Unmute un membre ayant été mute avec le système d'exclusion")
@@ -138,10 +272,10 @@ class Moderation(commands.Cog):
             await ctx.send("> Une erreur s'est produite lors de la tentive de untempmute.")
             return
         
-        await ctx.send(f"> Le membre {member.mention} a été untempmute.", allowed_mentions = AM.none())
+        await ctx.send(f"> Le membre {member.mention} a été untempmute" + ("." if not reason else " pour `" + reason.replace("`", "'") + "`.") , allowed_mentions = AM.none())
         try: await member.send(
-            f"> Vous avez été untempmute manuellement du serveur **{ctx.guild.name}** par **{member.display_name}**"
-            + ("." if not reason else " pour `" + reason.replace("`", "'") + "`.")
+            f"> Vous avez été untempmute manuellement du serveur **{ctx.guild.name}** par **{ctx.author.display_name}**"
+            + ("." if not reason else " pour `" + (reason.replace("`", "'") if len(reason) <= 50 else reason[:47] + "...") + "`.")
         )
         except: pass
 
@@ -169,7 +303,6 @@ class Moderation(commands.Cog):
         await tools.add_sanction("derank", ctx, member, reason)
 
 
-
     @commands.command(description = "Ajouter un rôle à un membre")
     @commands.guild_only()
     @commands.bot_has_permissions(manage_roles = True)
@@ -192,7 +325,7 @@ class Moderation(commands.Cog):
             return
         
         await ctx.send(f"> Le rôle {role.mention} " + ("vous a été ajouté" if member == ctx.author else f"a été ajouté à {member.mention}") + ".", allowed_mentions = AM.none())
-        
+
 
     @commands.command(description = "Retirer un rôle à un utilisateur", aliases = ["removerole"])
     @commands.bot_has_permissions(manage_roles = True)
@@ -225,7 +358,7 @@ class Moderation(commands.Cog):
             await ctx.send(check, allowed_mentions = AM.none())
             return
         
-        await ctx.send(f"> {member.mention} a été warn" + ("." if not reason else f" pour `" + (reason.replace("`", "'") if len(reason) <= 500 else reason[:497].replace("`", "'") + "...") + "`."), allowed_mentions = AM.none())
+        await ctx.send(f"> {member.mention} a été warn" + ("." if not reason else f" pour `" + (reason.replace("`", "'") if len(reason) <= 50 else reason[:47].replace("`", "'") + "...") + "`."), allowed_mentions = AM.none())
         await tools.add_sanction("warn", ctx, member, reason)
 
     
