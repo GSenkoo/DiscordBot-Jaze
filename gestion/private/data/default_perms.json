@@ -26,13 +26,13 @@
     ],
     "1": [
         "warn",
-        "warns",
         "clear"
     ],
     "2": [
         "ban",
         "kick",
-        "tempmute"
+        "tempmute",
+        "untempmute"
     ],
     "3": [
         "ch",

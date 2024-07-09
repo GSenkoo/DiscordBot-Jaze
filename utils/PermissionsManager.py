@@ -162,7 +162,7 @@ class PermissionsManager:
             guild_perm_data["commands"][command] = commands_permission[command]
 
         # ---------------- S'assurer qu'il n'y ai pas de commande en trop dans les configurations du serveur
-        for command in guild_perm_data["commands"].keys():
+        for command in list(guild_perm_data["commands"].keys()):
             if command in commands_permission.keys():
                 continue
             del guild_perm_data["commands"][command]
@@ -248,8 +248,7 @@ class PermissionsManager:
             return False
 
 
-        for i in range(1, int(current_command_perm) + 1 if int(current_command_perm) <= 9 else 10):
-            print(i)
+        for i in range(9, int(current_command_perm)-1):
             if check_permission(perms_hierarchic_data["authorizations"][str(i)]):
                 return True
         
