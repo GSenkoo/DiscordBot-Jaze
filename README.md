@@ -31,14 +31,19 @@ MYSQL_HOST = votre_host
 MYSQL_DB = le_nom_de_votre_db
 
 DEEPL_KEY = votre_clée_deepl
+GOOGLE_API_SEARCH_KEY = votre_clee_api_google
+GOOGLE_API_SEARCH_CSE = votre_clee_de_recherche
 ```
+
 **En Remplaçant :**
 - **`votre_token_ici`** par  *[Le token de votre bot](https://youtu.be/aI4OmIbkJH8?si=RyxOBtSf6JENda9P)*
 - **`votre_identifiant_mysql`** par *[Un idenfiant de compte local mysql](https://www.youtube.com/watch?v=5h5IKUjAO24)*
 - **`votre_mot_de_passe_mysql`** par *[Le mot de passe du compte local mysql donnée](https://www.youtube.com/watch?v=5h5IKUjAO24)*
 - **`votre_clée_deepl`** par *[Une clée deepl](https://www.deepl.com/fr/pro#developer)*
-- **`votre_host`** par votre type de host mysql
+- **`votre_host`** par votre host mysql (ex: localhost)
 - **`le_nom_de_votre_db`** par le nom de votre base de donnée
+- **`votre_clee_api_google`** par *[Une clée api google](https://developers.google.com/custom-search/v1/overview?hl=fr)*
+- **`votre_clee_de_recherche`** par *[Une clée de recherche google](https://programmablesearchengine.google.com/)*
 
 ### 2. Fichier "config.json"
 Tout en haut du fichier "config.json", vous pouvez voir une clée "developers" accompagnée en valeurs, d'une liste.

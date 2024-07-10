@@ -301,10 +301,10 @@ class Utilitaire(commands.Cog):
         )
 
     
-    @commands.command(description = "Rechercher une image sur google")
+    @commands.command(description = "Rechercher des images avec l'API Google")
     @commands.bot_has_permissions(embed_links = True)
     @commands.guild_only()
-    async def image(self, ctx, *, query: str):
+    async def images(self, ctx, *, query: str):
         if not len(query) <= 50:
             await ctx.send("> Votre recherche doit faire moins de 50 caractères.")
             return
