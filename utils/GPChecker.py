@@ -2,19 +2,15 @@ import discord
 import json
 from typing import Union, List
 from discord.ext import commands
-from utils.Database import Database
 
 
 class GPChecker:
-    def __init__(self, ctx):
+    def __init__(self, ctx, bot):
         self.ctx = ctx
+        self.bot = bot
 
     async def get_owners(self) -> List[int]:
-        db = Database()
-        await db.connect()
-
-        owners = await db.get_data("guild", "owners", guild_id = self.ctx.guild.id)
-        await db.disconnect()
+        owners = await self.bot.db.get_data("guild", "owners", guild_id = self.ctx.guild.id)
 
         if owners: owners = json.loads(owners)
         else: owners = []
@@ -116,5 +112,38 @@ class GPChecker:
         if member == self.ctx.guild.owner: return "> Vous ne pouvez pas warn le propriétaire du serveur."
 
         if not await self.has_higher_hierarchic(self.ctx.author, member): return "> Vous ne pouvez pas warn un membre qui est suppérieur ou égal à vous hiérarchiquement."
+
+        return True
+    
+    
+    async def we_can_blrank(self, member : discord.Member, action : str) -> Union[str, True]:
+        assert action in ["add", "del"]
+
+        if member == self.ctx.guild.me: return "> Je ne peux pas m'auto blrank."
+        if member == self.ctx.author: return "> Vous ne pouvez pas vous auto-blrank."
+        if member == self.ctx.guild.owner: return "> Vous ne pouvez pas blrank le propriétaire du serveur."
+
+        blrank_users = await self.bot.db.get_data("guild", "blrank_users", True, guild_id = self.ctx.guild.id)
+
+        if not self.has_higher_hierarchic(self.ctx.author, member): return f"> Vous n'êtes pas assez haut placé hiérarchiquement pour gérer {member.mention}."        
+
+        if (member.id in blrank_users) and (action == "add"): return f"> Le membre {member.mention} a déjà été blrank."
+        if (member.id not in blrank_users) and (action == "del"): return f"> Le membre {member.mention} n'a pas été blrank."
+
+        return True
+    
+    async def we_can_blvoc(self, member : discord.Member, action : str) -> Union[str, True]:
+        assert action in ["add", "del"]
+
+        if member == self.ctx.guild.me: return "> Je ne peux pas m'auto blvoc."
+        if member == self.ctx.author: return "> Vous ne pouvez pas vous auto-blvoc."
+        if member == self.ctx.guild.owner: return "> Vous ne pouvez pa blvoc le propriétaire du serveur."
+
+        blvoc_users = await self.bot.db.get_data("guild", "blvoc_users", True, guild_id = self.ctx.guild.id)
+
+        if not self.has_higher_hierarchic(self.ctx.author, member): return f"> Vous n'êtes pas assez haut placé hiérarchiquement pour gérer {member.mention}."        
+
+        if (member.id in blvoc_users) and (action == "add"): return f"> Le membre {member.mention} a déjà été blvoc."
+        if (member.id not in blvoc_users) and (action == "del"): return f"> Le membre {member.mention} n'a pas été blvoc."
 
         return True

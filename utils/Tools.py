@@ -3,10 +3,12 @@ import discord
 from discord.ext import commands
 from typing import Union
 from datetime import timedelta, datetime
-from utils.Database import Database
 
 
 class Tools:
+    def __init__(self, bot):
+        self.bot = bot
+
     async def add_sanction(
         self,
         sanction_type : str,
@@ -35,19 +37,17 @@ class Tools:
         if member.bot:
             return
         
-        assert sanction_type in ["derank", "ban", "kick", "warn", "tempmute"]
+        assert sanction_type in ["derank", "ban", "kick", "warn", "tempmute", "blrank", "blvoc"]
         assert not (sanction_type == "tempmute" and not time)
-        
-        database = Database()
-        await database.connect()
+    
 
-        user_sanctions = await database.get_data("member", "sanctions", guild_id = ctx.guild.id, user_id = member.id)
+        user_sanctions = await self.bot.db.get_data("member", "sanctions", guild_id = ctx.guild.id, user_id = member.id)
         if not user_sanctions:
             user_sanctions = "[]"
         user_sanctions = json.loads(user_sanctions)
 
         message = \
-            f"> Vous avez été {sanction_type}" \
+            f"> Vous avez été **{sanction_type}**" \
             + (f" du serveur **{ctx.guild.name}**" if sanction_type in ["ban", "kick"] else f" sur le serveur **{ctx.guild.name}**") \
             + (f" `{time}` " if sanction_type == "tempmute" else " ") \
             + f"par **{ctx.author.display_name}**" \
@@ -68,8 +68,7 @@ class Tools:
 
         user_sanctions.append(sanction_data)
 
-        await database.set_data("member", "sanctions", json.dumps(user_sanctions), guild_id = ctx.guild.id, user_id = member.id)
-        await database.disconnect()
+        await self.bot.db.set_data("member", "sanctions", json.dumps(user_sanctions), guild_id = ctx.guild.id, user_id = member.id)
 
 
     async def find_duration(

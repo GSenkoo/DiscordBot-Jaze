@@ -30,7 +30,6 @@ SOFTWARE.
 
 import json
 from discord.ext import commands
-from utils.Database import Database
 
 
 """
@@ -73,6 +72,9 @@ perms_custom format :
 
 
 class PermissionsManager:
+    def __init__(self, bot):
+        self.bot = bot
+
     async def _inverse_dict_cmds(self, dictionnary : dict) -> dict:
         inversed_dict = {}
         for key, value in dictionnary.items():
@@ -121,9 +123,6 @@ class PermissionsManager:
     
 
     async def reset_guild_perms(self, guild_id : int) -> None:
-        db = Database()
-        await db.connect()
-
         model = {
             "authorizations": {
                 str(index) : {
@@ -140,16 +139,13 @@ class PermissionsManager:
             "commands": {}
         }
 
-        await db.set_data("guild", "perms_hierarchic", json.dumps(model), False, guild_id = guild_id)
-        await db.set_data("guild", "perms_custom", json.dumps(model_custom), guild_id = guild_id)
+        await self.bot.db.set_data("guild", "perms_hierarchic", json.dumps(model), False, guild_id = guild_id)
+        await self.bot.db.set_data("guild", "perms_custom", json.dumps(model_custom), guild_id = guild_id)
 
 
     async def initialize_guild_perms(self, guild_id : int) -> None:
-        db = Database()
-        await db.connect()
-        
         commands_permission = await self.get_default_commands_perm()
-        guild_perm_data = await db.get_data("guild", "perms_hierarchic", guild_id = guild_id)
+        guild_perm_data = await self.bot.db.get_data("guild", "perms_hierarchic", guild_id = guild_id)
         if not guild_perm_data:
             await self.reset_guild_perms(guild_id)
             return
@@ -167,43 +163,33 @@ class PermissionsManager:
                 continue
             del guild_perm_data["commands"][command]
 
-        await db.set_data("guild", "perms_hierarchic", json.dumps(guild_perm_data), guild_id = guild_id)
+        await self.bot.db.set_data("guild", "perms_hierarchic", json.dumps(guild_perm_data), guild_id = guild_id)
 
 
     async def get_command_perm(self, guild_id : int, command_name : str):
         default_commands_perm = await self.get_default_commands_perm()
 
-        db = Database()
-        await db.connect()
-        guild_perms_data = json.loads(await db.get_data("guild", "perms_hierarchic", guild_id = guild_id))
-        await db.close()
-
+        guild_perms_data = json.loads(await self.bot.db.get_data("guild", "perms_hierarchic", guild_id = guild_id))
         return guild_perms_data["commands"].get(command_name, default_commands_perm[command_name])
 
     
     async def get_perm_commands(self, guild_id : int, permission_id : int):
-        db = Database()
-        await db.connect()
-        
-        guild_perms_data = json.loads(await db.get_data("guild", "perms_hierarchic", guild_id = guild_id))
+
+        guild_perms_data = json.loads(await self.bot.db.get_data("guild", "perms_hierarchic", guild_id = guild_id))
         commands = [command for command, perm in guild_perms_data["commands"].items() if perm == str(permission_id)]
         
         return commands
 
 
-    async def can_use_cmd(self, ctx, bot):
-        database = Database()
-        await database.connect(delete_after = 5)
-
-
-        owners = await database.get_data("guild", "owners", guild_id = ctx.guild.id)
+    async def can_use_cmd(self, ctx):
+        owners = await self.bot.db.get_data("guild", "owners", guild_id = ctx.guild.id)
         if not owners:
             owners = "[]"
         owners = json.loads(owners)
 
 
         # Pour les commandes réservé aux développeurs
-        developer_cog = bot.get_cog("Developer")
+        developer_cog = self.bot.get_cog("Developer")
         if ctx.command.name in [command.name for command in developer_cog.get_commands()]:
             with open("config.json") as file:
                 config_data = json.load(file)
@@ -213,7 +199,7 @@ class PermissionsManager:
             return False
         
 
-        perms_hierarchic_data = json.loads(await database.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
+        perms_hierarchic_data = json.loads(await self.bot.db.get_data("guild", "perms_hierarchic", guild_id = ctx.guild.id))
         try:
             current_command_perm = perms_hierarchic_data["commands"][ctx.command.name]
         except: return # ça veut dire que la clée/commande n'éxiste pas
@@ -253,7 +239,7 @@ class PermissionsManager:
                 return True
         
         # --------------- Check custom perms
-        perms_custom_data = json.loads(await database.get_data("guild", "perms_custom", guild_id = ctx.guild.id))
+        perms_custom_data = json.loads(await self.bot.db.get_data("guild", "perms_custom", guild_id = ctx.guild.id))
         command_permissions = perms_custom_data["commands"][ctx.command.name]
 
         for permission in command_permissions:

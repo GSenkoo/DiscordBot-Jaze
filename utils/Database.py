@@ -43,45 +43,37 @@ class Database:
     --------------------------------------------
     """
     def __init__(self):
-        self.connection = None
+        self.pool = None
 
+    async def create_pool(self):
+        """
+        Créer un pool
+        """
+        assert not self.pool
 
-    async def connect(self, delete_after : int = None):
-        """
-        Créer une connection
-        --------------------------------------------
-        Cette connection sera supprimmée après 60 secondes si ceci n'a pas été fait.
-        """
-        assert not self.connection
-        connection = await aiomysql.connect(
+        pool = await aiomysql.create_pool(
             host = os.getenv("MYSQL_HOST"),
             user = os.getenv("MYSQL_USER"),
             password = os.getenv("MYSQL_PASSWORD"),
             db = os.getenv("MYSQL_DB"),
+            minsize = 1,
+            maxsize = 10
         )
     
-        self.connection = connection
-
-        def end_connection():
-            time.sleep(60 if not delete_after else delete_after)
-            if self.connection:
-                self.connection.close()
-                self.connection = None
-
-        connection_task = threading.Thread(target = end_connection)
-        connection_task.start()
-
-        return self.connection
+        self.pool = pool
 
 
-    async def disconnect(self):
+    async def close_pool(self):
         """
         Supprimer la connection actuelle.
         --------------------------------------------
         """
-        assert self.connection
-        self.connection.close()
-        self.connection = None
+        assert self.pool
+
+        self.pool.close()
+        await self.pool.wait_closed()
+        
+        self.pool = None
 
 
     async def intialize(self, intialize_tables : list = []) -> None:
@@ -102,78 +94,65 @@ class Database:
 
         warnings.simplefilter("ignore")
 
-        already_on = True
-        if not self.connection:
-            await self.connect()
-            already_on = False
-
-        cursor = await self.connection.cursor()
-        with open("config.json", encoding = "utf-8") as file:
-            config_data = json.load(file)
-            tables_data = config_data["tables"]
+        async with self.pool.acquire() as connection:
+            async with connection.cursor() as cursor:
+                with open("config.json", encoding = "utf-8") as file:
+                    config_data = json.load(file)
+                    tables_data = config_data["tables"]
 
 
-        for table_name, table_data in tables_data.items():
-            assert table_data
-            assert table_data.get("primary_keys", None)
-            assert table_data.get("keys", None)
+                for table_name, table_data in tables_data.items():
+                    assert table_data
+                    assert table_data.get("primary_keys", None)
+                    assert table_data.get("keys", None)
 
-            if table_name in intialize_tables:
-                await cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+                    if table_name in intialize_tables:
+                        await cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
 
-# --------------------- Ajouter les tables concernés si elles ne sont pas présentes --------------------- #
-            keys_values = ",\n".join([
-                f"{keys} {info}" for keys, info in {**table_data["primary_keys"], **table_data["keys"]}.items()
-            ])
-            keys_values += f",\nPRIMARY KEY ({', '.join(table_data['primary_keys'].keys())})"
-            await cursor.execute(f"CREATE TABLE IF NOT EXISTS {table_name} (\n{keys_values}\n)")
+        # --------------------- Ajouter les tables concernés si elles ne sont pas présentes --------------------- #
+                    keys_values = ",\n".join([
+                        f"{keys} {info}" for keys, info in {**table_data["primary_keys"], **table_data["keys"]}.items()
+                    ])
+                    keys_values += f",\nPRIMARY KEY ({', '.join(table_data['primary_keys'].keys())})"
+                    await cursor.execute(f"CREATE TABLE IF NOT EXISTS {table_name} (\n{keys_values}\n)")
 
-# --------------------- Créer/Supprimer une colonne si nécessaire --------------------- #
-            await cursor.execute(f"SHOW COLUMNS FROM {table_name}")
-            columns_data = await cursor.fetchall()
-            columns_in_table = []
-            table_official_columns = list(table_data["primary_keys"].keys()) + list(table_data["keys"].keys())
-            
-            for column_data in columns_data:
-                column_name = column_data[0]
-                columns_in_table.append(column_name)
-                if column_name not in table_official_columns:
-                    await cursor.execute(f"ALTER TABLE {table_name} DROP COLUMN {column_name}")
-            
-            for column_name in table_official_columns:
-                if column_name not in columns_in_table:
-                    if column_name in table_data["primary_keys"].keys():
-                        await cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {table_data['primary_keys'][column_name]}")
-                    else:
-                        await cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {table_data['keys'][column_name]}")
+        # --------------------- Créer/Supprimer une colonne si nécessaire --------------------- #
+                    await cursor.execute(f"SHOW COLUMNS FROM {table_name}")
+                    columns_data = await cursor.fetchall()
+                    columns_in_table = []
+                    table_official_columns = list(table_data["primary_keys"].keys()) + list(table_data["keys"].keys())
+                    
+                    for column_data in columns_data:
+                        column_name = column_data[0]
+                        columns_in_table.append(column_name)
+                        if column_name not in table_official_columns:
+                            await cursor.execute(f"ALTER TABLE {table_name} DROP COLUMN {column_name}")
+                    
+                    for column_name in table_official_columns:
+                        if column_name not in columns_in_table:
+                            if column_name in table_data["primary_keys"].keys():
+                                await cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {table_data['primary_keys'][column_name]}")
+                            else:
+                                await cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {table_data['keys'][column_name]}")
 
-# --------------------- Supprimmer les tables inutiles --------------------- #
-        await cursor.execute("SHOW TABLES")
-        result = await cursor.fetchall()
-        result = [x[0] for x in result]
-        for table_name_into in result:
-            if table_name_into not in tables_data.keys():
-                await cursor.execute(f"DROP TABLE {table_name_into}")
+        # --------------------- Supprimmer les tables inutiles --------------------- #
+                await cursor.execute("SHOW TABLES")
+                result = await cursor.fetchall()
+                result = [x[0] for x in result]
+                for table_name_into in result:
+                    if table_name_into not in tables_data.keys():
+                        await cursor.execute(f"DROP TABLE {table_name_into}")
 
-        await self.connection.commit()
-        await cursor.close()
-
-        if not already_on:
-            await self.disconnect()
+            await connection.commit()
 
     
     async def execute(self, code : str, data : tuple = None, fetch : bool = False, commit : bool = True):
-        cursor = await self.connection.cursor()
-        await cursor.execute(code, data)
-        
-        if commit:
-            await self.connection.commit()
-
-        if fetch:
-            result = await cursor.fetchall()
-            await cursor.close()
-            return result
-        await cursor.close()
+        async with self.pool.acquire() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(code, data)
+                if fetch:
+                    result = await cursor.fetchall()
+                    return result
 
 
     async def set_data(self, table : str, column : str, new_value, commit : bool = True, **keys_indicator) -> None:
@@ -202,19 +181,18 @@ class Database:
         await set_data("guild", "theme", 0xFFFFFF, guild_id = 123)
         ```
         """
-        cursor = await self.connection.cursor()
+        async with self.pool.acquire() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    f"INSERT INTO {table}({', '.join(keys_indicator.keys())}, {column}) VALUES ({'%s, ' * len(keys_indicator.keys())}%s)"
+                    + f"ON DUPLICATE KEY UPDATE {column} = %s",
+                    tuple([value for value in keys_indicator.values()] + [new_value, new_value])
+                )
+            if commit:
+                await connection.commit()
 
-        await cursor.execute(
-            f"INSERT INTO {table}({', '.join(keys_indicator.keys())}, {column}) VALUES ({'%s, ' * len(keys_indicator.keys())}%s)"
-            + f"ON DUPLICATE KEY UPDATE {column} = %s",
-            tuple([value for value in keys_indicator.values()] + [new_value, new_value])
-        )
-        if commit:
-            await self.connection.commit()
-        await cursor.close()
 
-
-    async def get_data(self, table : str, column : str, **keys_indication):
+    async def get_data(self, table : str, column : str, list_value : bool = False, dict_value : bool = False, **keys_indication):
         """
         Obtenir une donnée. Si la donnée n'éxiste pas, alors la valeur par défaut de la colonne sera renvoyée.
 
@@ -237,27 +215,40 @@ class Database:
         await get_data("guild", "theme", guild_id = 123)
         ```
         """
-        cursor = await self.connection.cursor()
+        assert not (list_value and dict_value)
 
-        await cursor.execute(
-            f"SELECT {column} FROM {table} WHERE {' AND '.join([f'{key} = %s' for key in keys_indication.keys()])}", 
-            tuple([value for value in keys_indication.values()])
-        )
-        result = await cursor.fetchone()
-        if result:
-            await cursor.close()
-            return result[0]
-        
-        await cursor.execute(f"SHOW COLUMNS FROM {table}")
-        columns_data = await cursor.fetchall()
-        await cursor.close()
-        for column_data in columns_data:
-            if column_data[0] == column:
-                return column_data[4]
+        async with self.pool.acquire() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    f"SELECT {column} FROM {table} WHERE {' AND '.join([f'{key} = %s' for key in keys_indication.keys()])}", 
+                    tuple([value for value in keys_indication.values()])
+                )
+                result = await cursor.fetchone()
+                if result:
+                    await cursor.close()
+                    response = result[0]
+                else:
+                    await cursor.execute(f"SHOW COLUMNS FROM {table}")
+                    columns_data = await cursor.fetchall()
+                    await cursor.close()
+                    for column_data in columns_data:
+                        if column_data[0] == column:
+                            response = column_data[4]
+                
+                if list_value:
+                    if not response: response = "[]"
+                    return json.loads(response)
+                if dict_value:
+                    if not response: response = "{}"
+                    return json.loads(response)
+                return response
+
 
     async def get_table_columns(self, table : str) -> list:
-        cursor = await self.connection.cursor()
-        await cursor.execute(f"SHOW COLUMNS FROM {table}")
-        columns = [column_data[0] for column_data in await cursor.fetchall()]
-        await cursor.close()
-        return columns
+        async with self.pool.acquire() as connection:
+            async with connection.cursor() as cursor:  
+                await cursor.execute(f"SHOW COLUMNS FROM {table}")
+                columns = [column_data[0] for column_data in await cursor.fetchall()]
+                await cursor.close()
+                
+                return columns

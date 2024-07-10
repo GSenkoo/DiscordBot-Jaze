@@ -12,16 +12,20 @@ class on_ready(commands.Cog):
     async def on_ready(self):
         print(f"[OnReady] The bot {self.bot.user.name}#{self.bot.user.discriminator} has connected")
         print(f"[Database] Configuration de la base de donnée en cours...")
-        db = Database()
-        await db.intialize(intialize_tables = ["snipe"])
+
+        await self.bot.create_db()
+        await self.bot.db.intialize(intialize_tables = ["snipe"])
         print("[Database] Configuration de la base de donnée terminée.")
 
+
         print("[PermissionManager] Initialisation des permissions des serveurs en cours...")
-        permission_manager = PermissionsManager()
+        permission_manager = PermissionsManager(self.bot)
+
         for guild in self.bot.guilds:
             await permission_manager.initialize_guild_perms(guild.id)
             print(f"[PermissionManager] Le serveur {guild.name} a été intialisé avec succès.")
         print("[PermissionManager] Initialisation des serveurs terminés.")
+
 
 def setup(bot):
     bot.add_cog(on_ready(bot))

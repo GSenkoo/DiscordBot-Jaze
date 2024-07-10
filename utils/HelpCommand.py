@@ -32,19 +32,12 @@ import discord
 import json
 from discord.ext import commands
 from utils.Paginator import PaginatorCreator
-from utils.Database import Database
-
-
-async def get_theme(guild_id : int):
-    database = Database()
-    try:
-        await database.connect()
-        theme = await database.get_data(table = "guild", column = "theme", guild_id = guild_id)
-    finally: await database.disconnect()
-    return int(theme)
 
 
 class CustomHelp(commands.HelpCommand):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def get_command_signature(self, command):
         return f"**`{self.context.clean_prefix}{command.name}{' ' if command.signature else ''}{command.signature}`**\n{command.description}"
     
@@ -68,7 +61,7 @@ class CustomHelp(commands.HelpCommand):
         paginator_creator = PaginatorCreator()
         paginator = await paginator_creator.create_paginator(
             title = titles,
-            embed_color = await get_theme(self.context.guild.id),
+            embed_color = await self.context.bot.get_theme(self.context.guild.id),
             data_list = descriptions,
             data_per_page = 1,
             pages_looped = True,
@@ -108,7 +101,7 @@ class CustomHelp(commands.HelpCommand):
     async def send_command_help(self, command):
         embed = discord.Embed(
             title = f"Commande {command}",
-            color = await get_theme(self.context.guild.id)
+            color = await self.context.bot.get_theme(self.context.guild.id)
         ).add_field(
             name = "Description",
             value = f"{command.description}",
@@ -151,7 +144,7 @@ class CustomHelp(commands.HelpCommand):
             description = f"*Utilisez des espaces pour séparer vos arguments, mettez les entre guillemets `\"\"` si vos arguments comportent des espaces. "
                 + "Les arguments sous forme `<...>` sont obligatoires, tandis que les arguments sous forme `[...]` sont facultatifs.*\n\n"
                 + "\n\n".join(cog_commands_signatures),
-            color = await get_theme(self.context.guild.id)
+            color = await self.context.bot.get_theme(self.context.guild.id)
         )
 
         await self.get_destination().send(embed = embed)

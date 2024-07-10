@@ -3,7 +3,6 @@ import json
 import asyncio
 from discord import AllowedMentions as AM
 from discord.ext import commands
-from utils.Database import Database
 from utils.GPChecker import GPChecker
 from utils.Tools import Tools
 from utils.Paginator import PaginatorCreator
@@ -20,12 +19,9 @@ class Moderation(commands.Cog):
     async def sanctions(self, ctx, user : discord.User = None):
         if not user: user = ctx.author
 
-        database = Database()
         paginator_creator = PaginatorCreator()
 
-        await database.connect()
-        sanctions = await database.get_data("member", "sanctions", guild_id = ctx.guild.id, user_id = user.id)
-        await database.disconnect()
+        sanctions = await self.bot.db.get_data("member", "sanctions", guild_id = ctx.guild.id, user_id = user.id)
 
         if not sanctions or not json.loads(sanctions):
             await ctx.send(f"> Le membre {user.mention} n'a pas de sanction.", allowed_mentions = AM.none())
@@ -47,7 +43,9 @@ class Moderation(commands.Cog):
             "derank": "Retrait des rôles",
             "ban": "Bannissement",
             "kick": "Expulsion",
-            "tempmute": "Exclusion temporaire"
+            "tempmute": "Exclusion temporaire",
+            "blrank": "Blrank",
+            "blvoc": "Blvoc"
         }
         
         sanctions = json.loads(sanctions)
@@ -57,6 +55,7 @@ class Moderation(commands.Cog):
             sanctions_formated.append(
                 f"{index + 1}. <t:{sanction_data['timestamp']}:d> : {type_converter[sanction_data['type']]} "
                 + (f"de `{sanction_data['time']}` " if sanction_data['type'] == "tempmute" else "")
+                + f" par <@{sanction_data['moderator']}> "
                 + (f"pour `{sanction_data['reason']}`" if sanction_data['reason'] else "")
             )
 
@@ -86,18 +85,14 @@ class Moderation(commands.Cog):
                         await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                         return
                     
-                    database = Database()
-                    await database.connect()
-                    user_sanctions = json.loads(await database.get_data("member", "sanctions", guild_id = interaction.guild.id, user_id = user.id))
+                    user_sanctions = json.loads(await bot.db.get_data("member", "sanctions", guild_id = interaction.guild.id, user_id = user.id))
                     
                     if not len(user_sanctions) > int(select.values[0]):
                         await interaction.response.send_message(f"> La sanction n°{select.values[0]} n'éxiste plus.", ephemeral = True)
-                        await database.disconnect()
                         return
                     
                     user_sanctions.pop(int(select.values[0]))
-                    await database.set_data("member", "sanctions", json.dumps(user_sanctions), guild_id = interaction.guild.id, user_id = user.id)
-                    await database.disconnect()
+                    await bot.db.set_data("member", "sanctions", json.dumps(user_sanctions), guild_id = interaction.guild.id, user_id = user.id)
                     
                     await interaction.response.defer()
                     await interaction.message.edit(
@@ -116,10 +111,7 @@ class Moderation(commands.Cog):
                         await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                         return
                     
-                    database = Database()
-                    await database.connect()
-                    await database.set_data("member", "sanctions", json.dumps([]), guild_id = interaction.guild.id, user_id = user.id)
-                    await database.disconnect()
+                    await bot.db.set_data("member", "sanctions", json.dumps([]), guild_id = interaction.guild.id, user_id = user.id)
 
                     await interaction.response.defer()
                     await interaction.message.edit(
@@ -152,8 +144,8 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(ban_members = True)
     @commands.guild_only()
     async def ban(self, ctx, user : discord.User, *, reason = None):
-        checker = GPChecker(ctx)
-        tools = Tools()
+        checker = GPChecker(ctx, self.bot)
+        tools = Tools(self.bot)
 
         try:
             member = await ctx.guild.fetch_member(user.id)
@@ -172,8 +164,8 @@ class Moderation(commands.Cog):
             await ctx.send(f"> **{user.display_name}** est déjà banni du serveur.", allowed_mentions = AM.none())
             return
         
-        if reason: log_reason = log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] {reason}"
-        else: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] Aucune raison specifiée"
+        if reason: log_reason = log_reason = f"[{ctx.author.display_name} - {ctx.author.id}] {reason}"
+        else: log_reason = f"[{ctx.author.display_name} - {ctx.author.id}] Aucune raison specifiée"
 
         try: await ctx.guild.ban(user, reason = log_reason if len(log_reason) <= 50 else log_reason[:47] + "...")
         except:
@@ -189,16 +181,16 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(kick_members = True)
     @commands.guild_only()
     async def kick(self, ctx, member : discord.Member, *, reason = None):
-        checker = GPChecker(ctx)
-        tools = Tools()
+        checker = GPChecker(ctx, self.bot)
+        tools = Tools(self.bot)
 
         check = await checker.we_can_kick(member)
         if check != True:
             await ctx.send(check, allowed_mentions = AM.none())
             return
         
-        if reason: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] {reason}"
-        else: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] Aucune raison specifiée"
+        if reason: log_reason = f"[{ctx.author.display_name} - {ctx.author.id}] {reason}"
+        else: log_reason = f"[{ctx.author.display_name} - {ctx.author.id}] Aucune raison specifiée"
 
         try: await member.kick(reason = log_reason if len(log_reason) <= 50 else log_reason[:50] + "...")
         except:
@@ -223,8 +215,8 @@ class Moderation(commands.Cog):
 
         Note : La durée maximum de mute est de 28 jours.
         """
-        checker = GPChecker(ctx)
-        tools = Tools()
+        checker = GPChecker(ctx, self.bot)
+        tools = Tools(self.bot)
 
         check = await checker.we_can_tempmute(member)
         if check != True:
@@ -239,8 +231,8 @@ class Moderation(commands.Cog):
             await ctx.send("> La durée maximale de timeout discord est limitée à 28 jours, vous ne pouvez donc pas dépasser cette limite.")
             return
         
-        if reason: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] {reason}"
-        else: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] Aucune raison fournie"
+        if reason: log_reason = f"[{ctx.author.display_name} - {ctx.author.id}] {reason}"
+        else: log_reason = f"[{ctx.author.display_name} - {ctx.author.id}] Aucune raison fournie"
         
         try:
             await member.timeout_for(duration_timedelta, reason = log_reason if len(log_reason) <= 50 else log_reason[:47] + "...")
@@ -256,15 +248,15 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(moderate_members = True)
     @commands.guild_only()
     async def untempmute(self, ctx, member : discord.Member, reason : str = None):
-        checker = GPChecker(ctx)
+        checker = GPChecker(ctx, self.bot)
 
         check = await checker.we_can_untempmute(member)
         if check != True:
             await ctx.send(check, allowed_mentions = AM.none())
             return
         
-        if reason: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] {reason}"
-        else: log_reason = f"[{ctx.author.display_name} | {ctx.author.id}] Aucune raison fournie"
+        if reason: log_reason = f"[{ctx.author.display_name} - {ctx.author.id}] {reason}"
+        else: log_reason = f"[{ctx.author.display_name} - {ctx.author.id}] Aucune raison fournie"
 
         try: await member.remove_timeout(reason = log_reason)
         except:
@@ -283,17 +275,23 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @commands.bot_has_permissions(manage_roles = True)
     async def derank(self, ctx, member : discord.Member, *, reason : str = None):
-        checker = GPChecker(ctx)
-        tools = Tools()
+        checker = GPChecker(ctx, self.bot)
+        tools = Tools(self.bot)
 
         check = await checker.we_can_derank(member)
         if check != True:
             await ctx.send(check, allowed_mentions = AM.none())
             return
-        
-        member_roles = [role for role in member.roles if role.is_assignable()]
 
-        try: await member.remove_roles(*member_roles, reason = f"[{ctx.author.display_name} | {ctx.author.id}] Demande de derank")
+        noderank_roles = await self.bot.db.get_data("guild", "noderank_roles", guild_id = ctx.guild.id)
+        if not noderank_roles:
+            noderank_roles = "[]"
+        noderank_roles = json.loads(noderank_roles)
+
+
+        member_roles = [role for role in member.roles if (role.is_assignable()) and (role.id not in noderank_roles)]
+
+        try: await member.remove_roles(*member_roles, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de derank")
         except:
             await ctx.send(f"> Une erreur s'est produite lors de la tentative de derank de {member.mention}.", allowed_mentions = AM.none())
             return
@@ -312,13 +310,13 @@ class Moderation(commands.Cog):
         if not member:
             member = ctx.author
 
-        checker = GPChecker(ctx)
+        checker = GPChecker(ctx, self.bot)
         check = await checker.we_can_add_role(member, role)
         if check != True:
             await ctx.send(check, allowed_mentions = AM.none())
             return
         
-        try: await member.add_roles(role, reason = f"[{ctx.author.display_name} | {ctx.author.id}] Demande d'ajout de rôle")
+        try: await member.add_roles(role, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande d'ajout de rôle")
         except:
             await ctx.send(f"> Une erreur s'est produite lors de la tentative d'ajout du rôle {role.mention}.", allowed_mentions = AM.none())
             return
@@ -336,21 +334,21 @@ class Moderation(commands.Cog):
         if not member:
             member = ctx.author
 
-        checker = GPChecker(ctx)
+        checker = GPChecker(ctx, self.bot)
         check = await checker.we_can_remove_role(member, role)
         if check != True:
             await ctx.send(check, allowed_mentions = AM.none())
             return
         
-        await member.remove_roles(role, reason = f"[{ctx.author.display_name} | {ctx.author.id}] Demande d'enlèvement de rôle")
+        await member.remove_roles(role, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande d'enlèvement de rôle")
         await ctx.send(f"> Le rôle {role.mention} " + ("vous a été retiré" if member == ctx.author else f"a été retiré à {member.mention}") + ".", allowed_mentions = AM.none())
 
 
     @commands.command(description = "Ajouter un avertissement à un membre")
     @commands.guild_only()
     async def warn(self, ctx, member : discord.Member, *, reason : str = None):
-        checker = GPChecker(ctx)
-        tools = Tools()
+        checker = GPChecker(ctx, self.bot)
+        tools = Tools(self.bot)
 
         check = await checker.we_can_warn(member)
         if check != True:
@@ -365,8 +363,10 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(manage_messages = True)
     @commands.guild_only()
     async def clear(self, ctx, count : int, member : discord.Member = None):
-        if not 1 <= count <= 1000:
-            await ctx.send("> Votre nombre de message à supprimer doit être entre 1 et 1000.")
+        clear_limit = await self.bot.db.get_data("guild", "clear_limit", guild_id = ctx.guild.id)
+
+        if not 1 <= count <= clear_limit:
+            await ctx.send(f"> Votre nombre de message à supprimer doit être entre 1 et {clear_limit}.")
             return
         
         await ctx.message.delete()
@@ -377,8 +377,171 @@ class Moderation(commands.Cog):
         await ctx.channel.purge(
             limit = count,
             check = message_check,
-            reason = f"[{ctx.author.display_name} | {ctx.author.id}] Suppression de {count} messages" + (f" appartenants à {member.display_name}" if member else "")
+            reason = f"[{ctx.author.display_name} - {ctx.author.id}] Suppression de {count} messages" + (f" appartenants à {member.display_name}" if member else "")
         )
+
+    
+    @commands.command(description = "Déconnecter un membre d'un salon vocal")
+    @commands.bot_has_guild_permissions(move_members = True)
+    async def deco(self, ctx, member : discord.Member):
+        if not member.voice:
+            await ctx.send("> " + (f"{member.mention} n'est" if member != ctx.author else "Vous n'êtes") + " pas dans un salon vocal.", allowed_mentions = AM.none())
+            return
+
+        await member.move_to(None, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de deco")
+        await ctx.send("> " + (f"Le membre {member.mention} a" if member != ctx.author else "Vous avez") + " été déconnecté.", allowed_mentions = AM.none())
+
+    
+    @commands.command(description = "Déplacer un membre dans un salon vocal")
+    @commands.bot_has_guild_permissions(move_members = True)
+    async def bring(self, ctx, member : discord.Member, channel : discord.VoiceChannel):
+        if not member.voice:
+            await ctx.send("> " + (f"{member.mention} n'est" if member != ctx.author else "Vous n'êtes") + " pas dans un salon vocal.")
+            return
+        if member.voice.channel == channel:
+            await ctx.send("> " + (f"{member.mention} est" if member != ctx.author else "Vous êtes") + f" déjà dans le salon {channel.mention}.")
+            return
+        
+        await member.move_to(channel, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de bring vers le salon #{channel.name}")
+        await ctx.send("> " + (f"Le membre {member.mention} a" if member != ctx.author else "Vous avez") + f" été déplacé vers le salon {channel.mention}.", allowed_mentions = AM.none())        
+
+    
+    @commands.command(description = "Déplacer tous les membres en vocals vers un salon vocal")
+    @commands.bot_has_guild_permissions(move_members = True)
+    async def bringall(self, ctx, channel : discord.VoiceChannel):
+        moved_members = 0
+        for _channel in ctx.guild.channels:
+            if type(_channel) != discord.VoiceChannel: continue
+            if not _channel.members: continue
+            if _channel == channel: continue
+
+            for member in _channel.members:
+                try:
+                    await member.move_to(channel, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de bringall vers le salon #{channel.name}")
+                    moved_members += 1
+                except: pass
+
+        if not moved_members:
+            await ctx.send("> Il n'y aucun membre actuellement dans un salon vocal.")
+            return
+        
+        if moved_members != 1: await ctx.send(f"> Un total de **{moved_members}** membres ont étés déplacé vers le salon {channel.mention}.")
+        else: await ctx.send(f"> Un membre a été déplacé vers le salon {channel.mention}.")
+
+
+    @commands.command(description = "Empêcher un membre de recevoir des rôles qui ne sont pas noderank", usage = "<add/del/view> [member] [reason]")
+    @commands.guild_only()
+    @commands.bot_has_guild_permissions(manage_roles = True)
+    async def blrank(self, ctx, action, member : discord.Member = None, *, reason : str = None):
+        checker = GPChecker(ctx, self.bot)
+        paginator_creator = PaginatorCreator()
+        tools = Tools(self.bot)
+
+        if action not in ["add", "del", "view"]:
+            await ctx.send(f"> Action invalide, voici un rappel d'utilisation : `{await self.bot.get_prefix(ctx.message)}blrank <add/del/view> [member] [reason]`.")
+            return
+        
+        if (action != "view") and (not member):
+            await ctx.send("> Si votre action n'est pas \"view\", alors le paramètre `member` devient obligatoire.")
+            return
+
+        blrank_users = await self.bot.db.get_data("guild", "blrank_users", True, guild_id = ctx.guild.id)
+
+        if action == "view":
+            blrank_users = [f"<@{user}>" for user in blrank_users]
+
+            paginator = await paginator_creator.create_paginator(
+                title = "Membres blrank",
+                embed_color = await self.bot.get_theme(ctx.guild.id),
+                data_list = blrank_users,
+                no_data_message = "*Aucun utilisateur blrank*"
+            )
+
+            if type(paginator) == list: await ctx.send(embed = paginator[0])
+            else: await paginator.send(ctx)
+            
+            return
+        
+        check = await checker.we_can_blrank(member, action)
+        if check != True:
+            await ctx.send(check, allowed_mentions = AM.none())
+            return
+
+        if action == "add": blrank_users.append(member.id)
+        else: blrank_users.remove(member.id)
+
+        await ctx.send(f"> Le membre {member.mention} " + ("ne pourras désormais plus recevoir de rôle n'étant pas noderank" if action == "add" else "pourra désormais recevoir n'importe quel rôle") + ("." if not reason else " pour `" + (reason if len(reason) <= 50 else reason[:47] + "...") + "`" + "."), allowed_mentions = AM.none())
+        await self.bot.db.set_data("guild", "blrank_users", json.dumps(blrank_users), guild_id = ctx.guild.id)
+
+        # ------------------ Deletes the roles
+        if action != "add": 
+            return
+
+        noderank_roles = await self.bot.db.get_data("guild", "noderank_roles", True, guild_id = ctx.guild.id)
+
+        roles_to_remove = [role for role in member.roles if (not role.is_assignable()) or (role.id in noderank_roles)]
+        for role in roles_to_remove:
+            try: member.remove_roles(role, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de blrank")
+            except: pass
+
+        # ------------------ Add sanctions
+        await tools.add_sanction("blrank", ctx, member, reason)
+
+
+
+    @commands.command(description = "Empêcher un membre de recevoir des rôles qui ne sont pas noderank", usage = "<add/del/view> [member] [reason]")
+    @commands.guild_only()
+    @commands.bot_has_guild_permissions(manage_roles = True)
+    async def blvoc(self, ctx, action, member : discord.Member = None, *, reason : str = None):
+        checker = GPChecker(ctx, self.bot)
+        paginator_creator = PaginatorCreator()
+        tools = Tools(self.bot)
+
+        if action not in ["add", "del", "view"]:
+            await ctx.send(f"> Action invalide, voici un rappel d'utilisation : `{await self.bot.get_prefix(ctx.message)}blvoc <add/del/view> [member] [reason]`.")
+            return
+        
+        if (action != "view") and (not member):
+            await ctx.send("> Si votre action n'est pas \"view\", alors le paramètre `member` devient obligatoire.")
+            return
+
+        blvoc_users = await self.bot.db.get_data("guild", "blvoc_users", True, guild_id = ctx.guild.id)
+
+        if action == "view":
+            blvoc_users = [f"<@{user}>" for user in blvoc_users]
+
+            paginator = await paginator_creator.create_paginator(
+                title = "Membres blvoc",
+                embed_color = await self.bot.get_theme(ctx.guild.id),
+                data_list = blvoc_users,
+                no_data_message = "*Aucun utilisateur blvoc*"
+            )
+
+            if type(paginator) == list: await ctx.send(embed = paginator[0])
+            else: await paginator.send(ctx)
+            
+            return
+
+        check = await checker.we_can_blvoc(member, action)
+        if check != True:
+            await ctx.send(check, allowed_mentions = AM.none())
+            return
+
+        if action == "add": blvoc_users.append(member.id)
+        else: blvoc_users.remove(member.id)
+
+        await ctx.send(f"> Le membre {member.mention} " + ("ne pourras désormais plus rejoindre de salon vocal" if action == "add" else "pourra désormais rejoindre n'import quel salon vocal") + (("." if not reason else " pour `" + (reason if len(reason) <= 50 else reason[:47] + "...") + "`" + ".") if action == "add" else "."), allowed_mentions = AM.none())
+        await self.bot.db.set_data("guild", "blvoc_users", json.dumps(blvoc_users), guild_id = ctx.guild.id)
+
+        # ------------------ Remove from voice
+        if action != "add": 
+            return
+        
+        if member.voice:
+            await member.move_to(None, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de blvoc")
+
+        # ------------------ Add sanctions
+        await tools.add_sanction("blvoc", ctx, member, reason)
 
 
 def setup(bot):

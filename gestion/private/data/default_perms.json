@@ -18,6 +18,7 @@
         "calc",
         "wiki",
         "translate",
+        "image",
         "snipe",
         "speed",
         "invite",
@@ -29,11 +30,13 @@
         "clear"
     ],
     "2": [
+        "sanctions",
         "ban",
         "kick",
         "tempmute",
         "untempmute",
-        "sanctions"
+        "deco",
+        "bring"
     ],
     "3": [
         "ch",
@@ -43,10 +46,13 @@
         "embed",
         "renew",
         "derank",
+        "noderank",
         "addrole",
         "delrole",
         "theme",
-        "prefix"
+        "prefix",
+        "clearlimit",
+        "bringall"
     ],
     "10": [
         "owners",
@@ -57,7 +63,9 @@
         "switch",
         "customperms",
         "customhelp",
-        "guideperms"
+        "guideperms",
+        "blrank",
+        "blvoc"
     ],
     "11": [
         "owner",

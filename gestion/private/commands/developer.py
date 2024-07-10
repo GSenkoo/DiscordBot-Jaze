@@ -1,6 +1,8 @@
 import discord
 import json
 import asyncio
+import os
+import sys
 from discord.ext import commands
 from utils.FilesManager import manage_files
 
@@ -32,8 +34,33 @@ class Developer(commands.Cog):
         if ctx.author.id not in config_data["developers"]:
             return
         
-        await ctx.send("> Bot déconnecté.")
+        await ctx.send("> `[Database] Déconnection de la base de donnée en cours...`")
+
+        print("[Database] Déconnection de la base de donnée en cours...")
+        await self.bot.db.close_pool()
+        print("[Database] Déconnection de la base de donnée effectuée avec succès.")
+
+        await ctx.send("> `[Database] Déconnection de la base de donnée effectuée, bot déconnecté.`")
         await self.bot.close()
+
+    @commands.command(description = "Redémarrer le bot")
+    @commands.guild_only()
+    async def restart(self, ctx):
+        with open("config.json") as file:
+            config_data = json.load(file)
+        
+        if ctx.author.id not in config_data["developers"]:
+            return
+        
+        await ctx.send("> `[Database] Déconnection de la base de donnée en cours...`")
+
+        print("[Database] Déconnection de la base de donnée en cours...")
+        await self.bot.db.close_pool()
+        print("[Database] Déconnection de la base de donnée effectuée avec succès, redémarrage lancé.")
+
+        await ctx.send("> `[Database] Déconnection de la base de donnée effectuée, redémarrage lancé.`")
+        os.system("python main.py")        
+
 
 def setup(bot):
     bot.add_cog(Developer(bot))

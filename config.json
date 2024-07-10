@@ -11,7 +11,11 @@
                 "owners": "TEXT",
                 "whitelist": "TEXT",
                 "perms_hierarchic": "TEXT",
-                "perms_custom": "TEXT"
+                "perms_custom": "TEXT",
+                "noderank_roles": "TEXT",
+                "clear_limit": "INTEGER DEFAULT 100",
+                "blrank_users": "TEXT",
+                "blvoc_users": "TEXT"
             }
         },
         "member": {
@@ -29,11 +33,11 @@
         "snipe": {
             "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL UNIQUE"},
             "keys": {
-                "author_id": "BIGINT",
-                "author_name": "VARCHAR(50)",
-                "author_avatar": "VARCHAR(255)",
-                "message_content": "VARCHAR(2000)",
-                "message_datetime": "TIMESTAMP"
+                "author_id": "BIGINT DEFAULT 0",
+                "author_name": "VARCHAR(50) DEFAULT 'No data'",
+                "author_avatar": "VARCHAR(255) DEFAULT 'No data'",
+                "message_content": "VARCHAR(2000) DEFAULT 'No data'",
+                "message_datetime": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
             }
         },
         "giveaway": {

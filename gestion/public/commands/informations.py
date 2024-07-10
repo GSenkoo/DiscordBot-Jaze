@@ -37,7 +37,6 @@ from datetime import datetime
 from typing import Union
 from discord.ext import commands
 from utils.Paginator import PaginatorCreator
-from utils.Database import Database
 
 class Informations(commands.Cog):
     def __init__(self, bot):
