@@ -21,6 +21,8 @@ class on_command_error(commands.Cog):
                 pass
             case commands.NotOwner:
                 pass
+            case commands.CheckFailure:
+                pass # L'utilisateur ne peut pas utiliser la commande
             case commands.CommandOnCooldown:
                 await ctx.send(f"> Commande en cooldown, merci de réessayer dans {round(error.retry_after)} secondes.")
             case commands.MissingRequiredArgument:
