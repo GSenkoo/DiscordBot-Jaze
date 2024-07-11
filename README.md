@@ -33,6 +33,7 @@ MYSQL_DB = le_nom_de_votre_db
 DEEPL_KEY = votre_clée_deepl
 GOOGLE_API_SEARCH_KEY = votre_clee_api_google
 GOOGLE_API_SEARCH_CSE = votre_clee_de_recherche
+BLAGUE_API_KEY = votre_clee_de_blague_api
 ```
 
 **En Remplaçant :**
@@ -44,6 +45,7 @@ GOOGLE_API_SEARCH_CSE = votre_clee_de_recherche
 - **`le_nom_de_votre_db`** par le nom de votre base de donnée
 - **`votre_clee_api_google`** par *[Une clée api google](https://developers.google.com/custom-search/v1/overview?hl=fr)*
 - **`votre_clee_de_recherche`** par *[Une clée de recherche google](https://programmablesearchengine.google.com/)*
+- **`votre_clee_de_blague_api`** par *[Une clée de blague API](https://www.blagues-api.fr/)*
 
 ### 2. Fichier "config.json"
 Tout en haut du fichier "config.json", vous pouvez voir une clée "developers" accompagnée en valeurs, d'une liste.

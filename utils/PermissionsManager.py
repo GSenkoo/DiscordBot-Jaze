@@ -183,7 +183,6 @@ class PermissionsManager:
     async def can_use_cmd(self, ctx):
         owners = await self.bot.db.get_data("guild", "owners", True, guild_id = ctx.guild.id)
 
-
         # Pour les commandes réservé aux développeurs
         developer_cog = self.bot.get_cog("Developer")
 
@@ -244,3 +243,44 @@ class PermissionsManager:
                 return True
 
         return False
+    
+
+
+# ------------------------------------------- CUSTOM PERMS PART -------------------------------------------
+
+    async def create_custom_permission(self, permission_name, ctx):
+        perms_custom_data = await self.bot.db.get_data("guild", "perms_custom", False, True, guild_id = ctx.guild.id)
+
+        assert permission_name not in perms_custom_data["authorizations"].keys()
+
+        perms_custom_data["authorizations"][permission_name] = {"roles": [], "users": [], "guildpermissions": []}
+        await self.bot.db.set_data("guild", "perms_custom", json.dumps(perms_custom_data), guild_id = ctx.guild.id)
+
+
+    async def delete_custom_permission(self, permission_name, ctx):
+        perms_custom_data = await self.bot.db.get_data("guild", "perms_custom", False, True, guild_id = ctx.guild.id)
+
+        assert permission_name in perms_custom_data["authorizations"].keys()
+
+        # -------------- Supprimer les autorisations de la permission
+        del perms_custom_data["authorizations"][permission_name]
+
+        # -------------- Retirer les commandes de la permission
+        for name, current_permissions in perms_custom_data["commands"].items():
+            if permission_name in current_permissions:
+                perms_custom_data["commands"][name].remove(permission_name)
+
+        await self.bot.db.set_data("guild", "perms_custom", json.dumps(perms_custom_data), guild_id = ctx.guild.id)
+
+
+    async def get_custom_perm_commands(self, permission_name, ctx):
+        perms_custom_data = await self.bot.db.get_data("guild", "perms_custom", False, True, guild_id = ctx.guild.id)
+
+        assert permission_name in perms_custom_data["authorizations"].keys()
+        
+        commands = []
+        for command, permissions in perms_custom_data["commands"].items():
+            if permission_name in permissions:
+                commands.append(command)
+
+        return commands
