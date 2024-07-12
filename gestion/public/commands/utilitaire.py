@@ -449,7 +449,8 @@ class Utilitaire(commands.Cog):
                 self.embeds_backup_of_backup = []
 
             async def on_timeout(self):
-                if self.message: await self.message.edit(view = None)
+                try: await self.message.edit(view = None)
+                except: pass
             
             @discord.ui.select(
                 placeholder = "Modifier l'embed",
@@ -809,7 +810,8 @@ class Utilitaire(commands.Cog):
                         super().__init__(*args, **kwargs)
 
                     async def on_timeout(self):
-                        if self.message: self.message.edit(view = None)
+                        try: self.message.edit(view = None)
+                        except: pass
 
                     @discord.ui.button(
                         label = "Envoyer dans un salon",

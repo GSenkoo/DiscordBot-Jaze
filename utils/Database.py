@@ -26,7 +26,8 @@ class Database:
             password = os.getenv("MYSQL_PASSWORD"),
             db = os.getenv("MYSQL_DB"),
             minsize = 1,
-            maxsize = 10
+            maxsize = 10,
+        
         )
     
         self.pool = pool

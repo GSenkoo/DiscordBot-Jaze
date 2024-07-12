@@ -24,7 +24,8 @@
         "invite",
         "helpall",
         "help",
-        "joke"
+        "joke",
+        "pfc"
     ],
     "1": [
         "warn",
@@ -54,7 +55,8 @@
         "theme",
         "prefix",
         "clearlimit",
-        "bringall"
+        "bringall",
+        "bingo"
     ],
     "10": [
         "owners",

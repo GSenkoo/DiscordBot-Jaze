@@ -13,20 +13,10 @@ class CustomPaginator(Paginator):
         return True
     
     async def on_timeout(self) -> None:
-        try:
-            if self.disable_on_timeout:
-                for item in self.children:
-                    item.disabled = True
-
-                page = self.pages[self.current_page]
-                page = self.get_page_content(page)
-                files = page.update_files()
-
-                await self.message.edit(
-                    view = None,
-                    files = files or [],
-                    attachments = [],
-                )
+        if not self.disable_on_timeout:
+            return
+        
+        try: await self.message.edit(view = None)
         except: pass
 
 
@@ -137,8 +127,8 @@ class PaginatorCreator:
             )
 
         buttons = [
-            PaginatorButton("prev", label="◀", style=discord.ButtonStyle.primary, row = 4),
-            PaginatorButton("next", label="▶", style=discord.ButtonStyle.primary, row = 4),
+            PaginatorButton("prev", label = "◀", style = discord.ButtonStyle.primary, row = 4),
+            PaginatorButton("next", label = "▶", style = discord.ButtonStyle.primary, row = 4),
         ]
 
         paginator = CustomPaginator(
