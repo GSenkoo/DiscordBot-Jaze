@@ -175,6 +175,27 @@ class Moderation(commands.Cog):
         await tools.add_sanction("ban", ctx, user, reason)
         await ctx.send(f"> {member.mention} a été banni du serveur" + ("." if not reason else f" pour `" + (reason.replace("`", "'") if len(reason) <= 50 else reason.replace("`", "'")[:47] + "...") + "`."), allowed_mentions = AM.none()) 
 
+
+    @commands.command(description = "Débannir un membre du serveur")
+    @commands.guild_only()
+    @commands.bot_has_permissions(ban_members = True)
+    @commands.cooldown(rate = 5, per = 60)
+    async def unban(self, ctx, user : discord.User):
+        banned_users = []
+        async for banned in ctx.guild.bans():
+            banned_users.append(banned.user)
+        
+        if user not in banned_users:
+            await ctx.send(f"> L'utilisateur **{user.display_name}** n'est pas banni du serveur.", allowed_mentions = AM.none())
+            return
+        
+        try: await ctx.guild.unban(user, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de débannissement")
+        except:
+            await ctx.send(f"> Une erreur s'est produite lors de la tentative de débannissement, merci de réessayer.")
+            return
+        
+        await ctx.send(f"> L'utilisateur **{user.display_name}** a été débanni du serveur.")
+
     
     @commands.command(description = "Kick un membre du serveur")
     @commands.cooldown(rate = 5, per = 60)

@@ -135,8 +135,8 @@ class Utilitaire(commands.Cog):
         
         params = {
             "q": query,
-            "cx":google_api_cse,
             "key": google_api_key,
+            "cx":google_api_cse,
             "searchType": "image",
             "imgSize": "huge"
         }
@@ -149,10 +149,10 @@ class Utilitaire(commands.Cog):
                     return
                 
                 data = await response.json()
-                if not data["items"]:
+                if not data.get("items", None):
                     await ctx.send(f"> Requête aboutie, mais aucun résultats pour `" + query.replace("`", "'") + "`.")
                     return
-
+                
                 pages = []
 
                 for item in data["items"]:

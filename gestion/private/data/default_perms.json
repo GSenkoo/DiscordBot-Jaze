@@ -33,6 +33,7 @@
     "2": [
         "sanctions",
         "ban",
+        "unban",
         "kick",
         "tempmute",
         "untempmute",
