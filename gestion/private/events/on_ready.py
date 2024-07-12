@@ -14,7 +14,7 @@ class on_ready(commands.Cog):
         print(f"[Database] Configuration de la base de donnée en cours...")
 
         await self.bot.create_db()
-        await self.bot.db.intialize(intialize_tables = ["snipe"])
+        await self.bot.db.intialize(intialize_tables = ["snipe", "snipe_edit"])
         print("[Database] Configuration de la base de donnée terminée.")
 
 

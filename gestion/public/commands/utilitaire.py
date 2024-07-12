@@ -123,6 +123,67 @@ class Utilitaire(commands.Cog):
         )
 
 
+    @commands.command(description = "Rechercher des images avec l'API Google")
+    @commands.bot_has_permissions(embed_links = True)
+    @commands.guild_only()
+    async def images(self, ctx, *, query: str):
+        if not len(query) <= 50:
+            await ctx.send("> Votre recherche doit faire moins de 50 caractères.")
+            return
+        
+        message = await ctx.send("> Recherche de l'image en cours...")
+        
+        params = {
+            "q": query,
+            "cx":google_api_cse,
+            "key": google_api_key,
+            "searchType": "image",
+            "imgSize": "huge"
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://customsearch.googleapis.com/customsearch/v1", params = params) as response:
+                await message.edit("> Recherche terminée.", delete_after = 3)
+                
+                if response.status != 200:
+                    await ctx.send("> Une erreur s'est produite lors de la requête, merci de reéssayer plus tards.")
+                    return
+                
+                data = await response.json()
+                if not data["items"]:
+                    await ctx.send(f"> Requête aboutie, mais aucun résultats pour `" + query.replace("`", "'") + "`.")
+                    return
+
+                pages = []
+
+                for item in data["items"]:
+                    view = discord.ui.View()
+                    view.add_item(discord.ui.Button(style = discord.ButtonStyle.link, url = "https://" + item["displayLink"], label = "Source"))
+
+                    pages.append(
+                        Page(
+                            embeds = [
+                                discord.Embed(
+                                    title = item["title"],
+                                    color = await self.bot.get_theme(ctx.guild.id)
+                                ).set_image(url = item["link"])
+                            ],
+                            custom_view = view
+                        )
+                    )
+
+                buttons = [
+                    PaginatorButton("prev", label="◀", style=discord.ButtonStyle.primary),
+                    PaginatorButton("next", label="▶", style=discord.ButtonStyle.primary),
+                ]
+                paginator = CustomPaginator(
+                    pages = pages,
+                    custom_buttons = buttons,
+                    use_default_buttons = False
+                )
+
+                await paginator.send(ctx)
+
+
     @commands.command(usage = "<text>", description = "Traduir un texte dans un langage que vous choisirez sur un menu", aliases = ["tsl"])
     @commands.guild_only()
     @commands.cooldown(rate = 5, per = 60)
@@ -230,10 +291,38 @@ class Utilitaire(commands.Cog):
         
         embed = discord.Embed(
             author = discord.EmbedAuthor(name = author_name, icon_url = author_avatar, url = "https://discord.com/users/" + str(author_id)),
-            description = (message_content if len(message_content) < 2000 else message_content[:1500]),
+            description = message_content,
             color = await self.bot.get_theme(ctx.guild.id),
             timestamp = message_datetime
         )
+
+        await ctx.send(embed = embed)
+
+    
+    @commands.command(description = "Voir le dernier message modifié du salon")
+    @commands.guild_only()
+    async def esnipe(self, ctx):
+        translation = await self.bot.get_translation("esnipe", ctx.guild.id)
+
+        author_id = await self.bot.db.get_data("snipe_edit", "author_id", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
+        author_name = await self.bot.db.get_data("snipe_edit", "author_name", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
+        author_avatar = await self.bot.db.get_data("snipe_edit", "author_avatar", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
+        message_content_before = await self.bot.db.get_data("snipe_edit", "message_content_before", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
+        message_content_after = await self.bot.db.get_data("snipe_edit", "message_content_after", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
+        message_datetime = await self.bot.db.get_data("snipe_edit", "message_datetime", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
+
+        if not author_id:
+            await ctx.send(f"> " + translation["Aucun récent message modifié n'a été enregistré"] + ".")
+            return
+        
+        embed = discord.Embed(
+            author = discord.EmbedAuthor(name = author_name, icon_url = author_avatar, url = "https://discord.com/users/" + str(author_id)),
+            color = await self.bot.get_theme(ctx.guild.id),
+            timestamp = message_datetime
+        )
+
+        embed.add_field(name = "Précédent contenu", value = message_content_before)
+        embed.add_field(name = "Nouveau contenu", value = message_content_after, inline = False)
 
         await ctx.send(embed = embed)
 
@@ -271,66 +360,6 @@ class Utilitaire(commands.Cog):
             view = view
         )
 
-    
-    @commands.command(description = "Rechercher des images avec l'API Google")
-    @commands.bot_has_permissions(embed_links = True)
-    @commands.guild_only()
-    async def images(self, ctx, *, query: str):
-        if not len(query) <= 50:
-            await ctx.send("> Votre recherche doit faire moins de 50 caractères.")
-            return
-        
-        message = await ctx.send("> Recherche de l'image en cours...")
-        
-        params = {
-            "q": query,
-            "cx":google_api_cse,
-            "key": google_api_key,
-            "searchType": "image",
-            "imgSize": "huge"
-        }
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://customsearch.googleapis.com/customsearch/v1", params = params) as response:
-                await message.edit("> Recherche terminée.", delete_after = 3)
-                
-                if response.status != 200:
-                    await ctx.send("> Une erreur s'est produite lors de la requête, merci de reéssayer plus tards.")
-                    return
-                
-                data = await response.json()
-                if not data["items"]:
-                    await ctx.send(f"> Requête aboutie, mais aucun résultats pour `" + query.replace("`", "'") + "`.")
-                    return
-
-                pages = []
-
-                for item in data["items"]:
-                    view = discord.ui.View()
-                    view.add_item(discord.ui.Button(style = discord.ButtonStyle.link, url = "https://" + item["displayLink"], label = "Source"))
-
-                    pages.append(
-                        Page(
-                            embeds = [
-                                discord.Embed(
-                                    title = item["title"],
-                                    color = await self.bot.get_theme(ctx.guild.id)
-                                ).set_image(url = item["link"])
-                            ],
-                            custom_view = view
-                        )
-                    )
-
-                buttons = [
-                    PaginatorButton("prev", label="◀", style=discord.ButtonStyle.primary),
-                    PaginatorButton("next", label="▶", style=discord.ButtonStyle.primary),
-                ]
-                paginator = CustomPaginator(
-                    pages = pages,
-                    custom_buttons = buttons,
-                    use_default_buttons = False
-                )
-
-                await paginator.send(ctx)
 
     @commands.command(description = "Afficher un menu intéractif pour créer et envoyer un embed")
     @commands.bot_has_permissions(embed_links = True, manage_messages = True, read_messages = True)

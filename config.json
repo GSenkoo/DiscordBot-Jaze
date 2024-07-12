@@ -40,6 +40,17 @@
                 "message_datetime": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
             }
         },
+        "snipe_edit": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "author_id": "BIGINT DEFAULT 0",
+                "author_name": "VARCHAR(50) DEFAULT 'No data'",
+                "author_avatar": "VARCHAR(255) DEFAULT 'No data'",
+                "message_content_before": "VARCHAR(1024) DEFAULT 'No data'",
+                "message_content_after": "VARCHAR(1024) DEFAULT 'No data'",
+                "message_datetime": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+            }
+        },
         "giveaway": {
             "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL", "message_id": "BIGINT NOT NULL UNIQUE"},
             "keys": {

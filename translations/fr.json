@@ -184,6 +184,9 @@
     "snipe": {
         "Aucun récent message supprimé n'a été enregistré": "Aucun récent message supprimé n'a été enregistré"
     },
+    "esnipe": {
+        "Aucun récent message modifié n'a été enregistré": "Aucun récent message modifié n'a été enregistré"
+    },
     "invite": {
         "Inviter [data_user]": "Inviter [data_user]",
         "Utilisez le bouton ci-dessous pour m'inviter": "Utilisez le bouton ci-dessous pour m'inviter"

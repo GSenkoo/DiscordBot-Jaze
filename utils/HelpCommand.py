@@ -91,7 +91,7 @@ class CustomHelp(commands.HelpCommand):
                 name = "Aide",
                 value = f"{command.help}"
             )
-
+            
 
         channel = self.get_destination()
         await channel.send(embed = embed)
