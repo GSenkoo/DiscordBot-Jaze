@@ -14,10 +14,17 @@ Le bot discord Martial est l'un des bots discord tout en un les plus sophistiqu�
 - Commandes personnalisées
 Et bien plus encore! À vous de le découvrir 😎.
 
-# À noter
-Afin d'utiliser ce code source, vous êtes soumis à **des conditions**.
-Dans toutes vos copies vous devrez citer : 
-`"This software includes work by GSenkoo (github)"`
+# Points à savoir sur la license
+
+### Conditions
+- En distribuant ce code source ou ses modifications, vous devez rendre le code source disponible.
+- Vous devez inclure les avis de licence et de droit d'auteur d'origine dans toutes les copies du logiciel.
+- Si vous modifiez et redistribuez le logiciel, vous devez le faire sous la même licence GPLv3.
+- Vous devez indiquer clairement les modifications que vous avez apportées au logiciel d'origine.
+
+### Limitations
+- Si le logiciel cause des dommages, les auteurs ne peuvent pas être tenus responsables.
+- Le logiciel est fourni "tel quel", sans garantie de fonctionnement.
 
 # Guide de configuration
 ### 1. Fichier ".env"
@@ -76,6 +83,7 @@ Ou alors, regardez les requirements ci-dessous et installez les manuellements.
  - psutil (version suppérieur ou égal à `6.0.0`)
  - wikipedia (version suppérieur ou égal à `1.4.0`)
  - deepl (version suppérieur ou égal à `1.18.0`)
+ - blagues-api (version suppérieur ou égal à `1.0.3`)
 
 # Lancer votre bot (Visual Studio Code)
 Vous devez vous rendre dans le fichier `main.py`, ensuite, dans le menu tout en haut, utilisez `Run > Start Debugging`

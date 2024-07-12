@@ -84,6 +84,5 @@ class Jeux(commands.Cog):
         )
 
 
-
 def setup(bot):
     bot.add_cog(Jeux(bot))
