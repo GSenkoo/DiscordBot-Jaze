@@ -11,12 +11,14 @@ class Proprietaire(commands.Cog):
     @commands.command(description = "Ajouter la permission owner à un utilisateur")
     @commands.guild_only()
     async def owner(self, ctx, user : discord.User):
-        data_owner = await self.bot.db.get_data("guild", "owners", guild_id = ctx.guild.id)
-        if not data_owner: data_owner = "[]"
-        current_owners = json.loads(data_owner)
+        current_owners = await self.bot.db.get_data("guild", "owners", True, guild_id = ctx.guild.id)
+
+        if user == ctx.author:
+            await ctx.send("> Vous n'avez pas besoin des permissions owners.")
+            return
 
         if user.id in current_owners:
-            await ctx.send(f"> **{user.display_name}** a déjà la permission owner")
+            await ctx.send(f"> **{user.display_name}** a déjà la permission owner.")
             return
         
         current_owners.append(user.id)
@@ -29,12 +31,10 @@ class Proprietaire(commands.Cog):
     @commands.command(description = "Retirer la permission owner à un utilisateur")
     @commands.guild_only()
     async def unowner(self, ctx, user : discord.User):
-        data_owner = await self.bot.db.get_data("guild", "owners", guild_id = ctx.guild.id)
-        if not data_owner: data_owner = "[]"
-        current_owners = json.loads(data_owner)
+        current_owners = await self.bot.db.get_data("guild", "owners", True, guild_id = ctx.guild.id)
 
         if user.id not in current_owners:
-            await ctx.send(f"> **{user.display_name}** n'a pas les permissions owners")
+            await ctx.send(f"> **{user.display_name}** n'a pas les permissions owners.")
             return
         
         current_owners.remove(user.id)
@@ -43,12 +43,23 @@ class Proprietaire(commands.Cog):
         await ctx.send(f"> **{user.display_name}** n'a désormais plus la permission owner.")
 
 
+    @commands.command(description = "Retirer la permission owner à tous les utilisateurs la possédant", aliases = ["dlow"])
+    @commands.guild_only()
+    async def delowners(self, ctx):
+        current_owners = await self.bot.db.get_data("guild", "owners", True, guild_id = ctx.guild.id)
+
+        if len(current_owners) == 0:
+            await ctx.send("> Il n'y aucun utilisateur avec la permission owner.")
+            return
+
+        await self.bot.db.set_data("guild", "owners", json.dumps([]), guild_id = ctx.guild.id)
+        await ctx.send(f"> La permission owner a été retiré à un total de {len(current_owners)} utilisateurs.")
+
+
     @commands.command(description = "Voir les utilisateurs possédant la permission owner")
     @commands.guild_only()
     async def owners(self, ctx):
-        data_owner = await self.bot.db.get_data("guild", "owners", guild_id = ctx.guild.id)
-        if not data_owner: data_owner = "[]"
-        current_owners = json.loads(data_owner)
+        current_owners = await self.bot.db.get_data("guild", "owners", True, guild_id = ctx.guild.id)
         
 
         paginator_creator = PaginatorCreator()

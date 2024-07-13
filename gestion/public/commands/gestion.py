@@ -1,6 +1,13 @@
 import discord
+import json
+import asyncio
+import emoji
+
+from datetime import timedelta
 from discord import AllowedMentions as AM
 from discord.ext import commands
+from utils.Tools import Tools
+from utils.Searcher import Searcher
 
 class Gestion(commands.Cog):
     def __init__(self, bot):
@@ -156,6 +163,236 @@ class Gestion(commands.Cog):
 
         await new_channel.send(f"> Le salon a était renew par {ctx.author.mention}.", allowed_mentions = AM.none(), delete_after = 10)
             
+
+    @commands.command(description = "Lancer un giveaway")
+    @commands.guild_only()
+    async def giveaway(self, ctx):
+        tools = Tools(self.bot)
+        searcher = Searcher(self.bot, ctx)
+
+        async def get_giveaway_embed(data) -> discord.Embed:
+            embed = discord.Embed(
+                title = "Giveaway",
+                color = await self.bot.get_theme(ctx.guild.id)
+            )
+
+            embed.add_field(name = "Récompense", value = data["reward"])
+            embed.add_field(name = "Durée", value = data["end_at"])
+            embed.add_field(name = "Salon", value = f'<#{data["channel"]}>')
+            embed.add_field(name = "Emoji", value = data["emoji"])
+            embed.add_field(name = "Type d'intéraction", value = data["interaction_type"].capitalize())
+            embed.add_field(name = "Couleur (Bouton)", value = data["button_color"].capitalize())
+            embed.add_field(name = "Texte (Button)", value = data["button_text"])
+            embed.add_field(name = "Nombre de gagnants", value = str(data["winners_count"]))
+            embed.add_field(name = "Gagnant imposé", value = f"<@{data['imposed_winner']}>" if data["imposed_winner"] else "*Aucun gagnant imposé*")
+            embed.add_field(name = "Rôles requis", value = "<@&" + f">\n<@&".join(data["required_roles"]) if data["required_roles"] else "*Aucun rôles*")
+            embed.add_field(name = "Rôles interdits", value = "<@&" + f">\n<@&".join(data["prohibited_roles"]) if data["prohibited_roles"] else "*Aucun rôles*")
+            embed.add_field(name = "Imposer la présence en vocal", value = "Oui" if data["in_vocal_required"] else "Non")
+
+            return embed
+
+
+        giveaway_data = {
+            "reward": "Exemple de récompense",
+            "end_at": "2h",
+            "channel": ctx.channel.id,
+            "emoji": "🎉",
+            "interaction_type": "button",
+            "button_color": "blue", # blue, green, gray or red
+            "button_text": "Participer",
+            "winners_count": 1,
+            "imposed_winner": 0,
+            "required_roles": [],
+            "prohibited_roles": [],
+            "in_vocal_required": False
+        }
+
+        bot = self.bot
+        class ManageGiveaway(discord.ui.View):
+            def __init__(self, giveaway_data : dict):
+                super().__init__(timeout = 180)
+                self.giveaway_data = giveaway_data
+
+            async def on_timeout(self) -> None:
+                try: await self.message.edit(view = None)
+                except: pass
+
+            @discord.ui.select(
+                placeholder = "Modifier une valeur",
+                options = [
+                    discord.SelectOption(label = "Récompense", value = "reward", emoji = "🎁"),
+                    discord.SelectOption(label = "Durée", value = "end_at", emoji = "⏱️"),
+                    discord.SelectOption(label = "Salon", value = "channel", emoji = "🏷"),
+                    discord.SelectOption(label = "Emoji", value = "emoji", emoji = "⚪"),
+                    discord.SelectOption(label = "Type d'intéraction", value = "interaction_type", emoji = "💥"),
+                    discord.SelectOption(label = "Couleur (Bouton)", value = "button_color", emoji = "🎨"),
+                    discord.SelectOption(label = "Texte (Bouton)", value = "button_text", emoji = "📝"),
+                    discord.SelectOption(label = "Nombre de gagnant", value = "winners_count", emoji = "👥"),
+                    discord.SelectOption(label = "Gagnants imposés", value = "imposed_winner", emoji = "👤"),
+                    discord.SelectOption(label = "Rôles requis", value = "allowed_roles", emoji = "⛓"),
+                    discord.SelectOption(label = "Rôles interdits", value = "prohibited_roles", emoji = "🚫"),
+                    discord.SelectOption(label = "Imposition de la présence en vocal", value = "in_vocal_required", emoji = "🔊")
+                ]
+            )
+            async def edit_giveaway_select_callback(self, select, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                async def delete_message(message):
+                    try: await message.delete()
+                    except: pass
+
+                async def get_emoji(query):
+                    if emoji.is_emoji(query):
+                        return query
+                    
+                    query = query.split(":")
+                    if len(query) != 3:
+                        return None
+                    
+                    query = query[2].replace(">", "")
+                    try: query = bot.get_emoji(int(query))
+                    except Exception as e:
+                        print(e)
+                        return None
+                    return query
+
+                async def get_option_name(option_id):
+                    for option in select.options:
+                        if option.value == option_id:
+                            return option.label
+                    return None
+                
+                async def check_message_validity(message):
+                    return (message.channel == ctx.channel) and (message.author == ctx.author) and (message.content)
+                
+                await interaction.response.defer()
+
+                # ----------------------------- Obtention d'une réponse
+                notes = {
+                    "end_at": "Voici quelques exemple de temps valides : `1jours`, `3d`, `4h` , `5minutes`. Maximum 30 jours.",
+                    "interaction_type": "Types d'intéractions disponibles : `bouton` et `réaction`",
+                    "button_color": "Couleurs disponibles : `bleu`, `rouge`, `vert` et `gris`"
+                }
+
+                ask_message = await ctx.send(
+                    f"> Quel **{await get_option_name(select.values[0])}** souhaitez-vous définir à votre giveaway?"
+                    + (f"\n{notes[select.values[0]]}" if select.values[0] in list(notes.keys()) else "")
+                )
+
+                try: response_message = await bot.wait_for("message", timeout = 60, check = check_message_validity)
+                except asyncio.TimeoutError:
+                    await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
+                    return
+                finally: await delete_message(ask_message)
+                await delete_message(response_message)
+
+
+                # ----------------------------- S'occuper de la valeur
+                if select.values[0] == "reward":
+                    if len(response_message.content) > 100:
+                        await ctx.send("> Action annulée, votre nom de récompense est trop long (plus de 100 caractères).", delete_after = 2)
+                        return
+                    
+                    self.giveaway_data["reward"] = response_message.content
+
+                if select.values[0] == "end_at":
+                    time = await tools.find_duration(response_message.content)
+
+                    if not time:
+                        await ctx.send("> Action annulée, durée invalide.", delete_after = 2)
+                        return
+                    if time > timedelta(days = 30):
+                        await ctx.send("> Action annulée, durée trop longue. Vous ne pouvez pas définir une durée suppérieure à 30 jours.", delete_after = 2)
+                        return
+                    
+                    self.giveaway_data["end_at"] = response_message.content
+
+                if select.values[0] == "channel":
+                    channel = await searcher.search_channel(response_message.content)
+
+                    if not channel:
+                        await ctx.send("> Action annulée, salon invalide.", delete_after = 2)
+                        return
+                    
+                    self.giveaway_data["channel"] = channel.id
+
+                if select.values[0] == "emoji":
+                    found_emoji = await get_emoji(response_message.content)
+
+                    if not found_emoji:
+                        await ctx.send("> Emoji invalide, merci de donner un emoji valide.", delete_after = 2)
+                        return
+                    
+                    self.giveaway_data["emoji"] = found_emoji
+
+                if select.values[0] == "interaction_type":
+                    if response_message.content.lower() in ["button", "buttons", "bouton", "boutons"]: self.giveaway_data["interaction_type"] = "button"
+                    elif response_message.content.lower() in ["reaction", "reactions", "réaction", "réactions"]: self.giveaway_data["interaction_type"] = "reaction"
+                    else:
+                        await ctx.send("> Action annulée, type d'intéraction invalide.", delete_after = 2)
+                        return
+
+                if select.values[0] == "button_color":
+                    if response_message.content.lower() in ["blue", "bleu"]: self.giveaway_data["button_color"] = "blue"
+                    elif response_message.content.lower() in ["green", "vert"]: self.giveaway_data["button_color"] = "green"
+                    elif response_message.content.lower() in ["red", "rouge"]: self.giveaway_data["button_color"] = "red"
+                    elif response_message.content.lower() in ["gray", "gris"]: self.giveaway_data["button_color"] = "grey"
+                    else:
+                        await ctx.send("> Action annulée, couleur invalide.", delete_after = 2)
+                        return
+
+                if select.values[0] == "button_text":
+                    if len(response_message.content) > 80:
+                        await ctx.send("> Action annulée, vous ne pouvez pas définir un texte de bouton de plus de 80 caractères.", delete_after = 2)
+                        return
+                    
+                    self.giveaway_data["button_text"] = response_message.content
+
+                if select.values[0] == "winners_count":
+                    if not response_message.content.isdigit():
+                        await ctx.send("> Action annulée, vous n'avez pas donner de nombre valide.", delete_after = 2)
+                        return
+                    if not 1 <= int(response_message.content) <= 100:
+                        await ctx.send("> Action annulée, votre nombre de gagnant doit être entre 1 et 100.", delete_after = 2)
+                        return
+                    
+                    self.giveaway_data["winners_count"] = int(response_message.content)
+                 
+
+                # ----------------------------- Mettre à jours le message de giveaway
+                await interaction.message.edit(embed = await get_giveaway_embed(self.giveaway_data))
+
+
+
+
+            
+            @discord.ui.button(label = "Envoyer", emoji = "✅")
+            async def send_giveaway_button_callback(self, button, interaction):
+                ...
+
+
+        await ctx.send(view = ManageGiveaway(giveaway_data), embed = await get_giveaway_embed(giveaway_data))
+
+        """
+        "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL", "message_id": "BIGINT NOT NULL UNIQUE"},
+        "keys": {
+            "reward": "VARCHAR(255) DEFAULT 'Acune récompense'",
+            "end_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            "channel": "BIGINT DEFAULT 0",
+            "emoji": "VARCHAR(10)",
+            "interaction_type": "VARCHAR(10) DEFAULT 'reaction'",
+            "button_color": "VARCHAR(10) DEFAULT 'blue'",
+            "button_text": "VARCHAR(80) DEFAULT 'Participer'",
+            "winners_count": "INTEGER DEFAULT 1",
+            "participations": "MEDIUMTEXT",
+            "imposed_winner": "BIGINT DEFAULT 0",
+            "required_roles": "BIGINT DEFAULT 0",
+            "prohibited_role": "BIGINT DEFAULT 0",
+            "in_vocal_required": "BOOLEAN DEFAULT 0"
+        }
+        """
 
 
 def setup(bot):

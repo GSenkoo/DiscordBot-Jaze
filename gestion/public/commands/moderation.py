@@ -383,7 +383,7 @@ class Moderation(commands.Cog):
     @commands.command(description = "Supprimer un certains nombre de message")
     @commands.bot_has_permissions(manage_messages = True)
     @commands.guild_only()
-    async def clear(self, ctx, count : int, member : discord.Member = None):
+    async def clear(self, ctx, count : int, user : discord.User = None):
         clear_limit = await self.bot.db.get_data("guild", "clear_limit", guild_id = ctx.guild.id)
 
         if not 1 <= count <= clear_limit:
@@ -392,13 +392,13 @@ class Moderation(commands.Cog):
         
         await ctx.message.delete()
         def message_check(message):
-            if member: return message.author == member
+            if user: return message.author == user
             return True
         
         await ctx.channel.purge(
             limit = count,
             check = message_check,
-            reason = f"[{ctx.author.display_name} - {ctx.author.id}] Suppression de {count} messages" + (f" appartenants à {member.display_name}" if member else "")
+            reason = f"[{ctx.author.display_name} - {ctx.author.id}] Suppression de {count} messages" + (f" appartenants à {user.display_name}" if user else "")
         )
 
     

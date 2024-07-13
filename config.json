@@ -54,10 +54,19 @@
         "giveaway": {
             "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL", "message_id": "BIGINT NOT NULL UNIQUE"},
             "keys": {
-                "giveaway_reward": "VARCHAR(255) DEFAULT 'Acune récompense'",
-                "giveaway_winners_count": "INTEGER DEFAULT 1",
-                "giveaway_participants": "JSON",
-                "giveaway_end_date": "TIMESTAMP"
+                "reward": "VARCHAR(255) DEFAULT 'Acune récompense'",
+                "end_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+                "channel": "BIGINT DEFAULT 0",
+                "emoji": "VARCHAR(10)",
+                "interaction_type": "VARCHAR(10) DEFAULT 'reaction'",
+                "button_color": "VARCHAR(10) DEFAULT 'blue'",
+                "button_text": "VARCHAR(80) DEFAULT 'Participer'",
+                "winners_count": "INTEGER DEFAULT 1",
+                "participations": "MEDIUMTEXT",
+                "imposed_winner": "BIGINT DEFAULT 0",
+                "required_roles": "TEXT",
+                "prohibited_roles": "TEXT",
+                "in_vocal_required": "BOOLEAN DEFAULT 0"
             }
         }
     }

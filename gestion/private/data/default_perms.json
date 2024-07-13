@@ -25,7 +25,8 @@
         "helpall",
         "help",
         "joke",
-        "pfc"
+        "pfc",
+        "bingo"
     ],
     "1": [
         "warn",
@@ -56,13 +57,14 @@
         "prefix",
         "clearlimit",
         "bringall",
-        "bingo"
+        "giveaway"
     ],
     "10": [
         "owners",
         "wl",
         "unwl",
         "wls",
+        "delwls",
         "perms",
         "switch",
         "customperms",
@@ -73,6 +75,7 @@
     ],
     "11": [
         "owner",
-        "unowner"
+        "unowner",
+        "delowners"
     ]
 }

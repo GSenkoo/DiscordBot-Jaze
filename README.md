@@ -84,6 +84,7 @@ Ou alors, regardez les requirements ci-dessous et installez les manuellements.
  - wikipedia (version suppérieur ou égal à `1.4.0`)
  - deepl (version suppérieur ou égal à `1.18.0`)
  - blagues-api (version suppérieur ou égal à `1.0.3`)
+ - emoji (version suppérieur ou égal à `2.12.1`)
 
 # Lancer votre bot (Visual Studio Code)
 Vous devez vous rendre dans le fichier `main.py`, ensuite, dans le menu tout en haut, utilisez `Run > Start Debugging`

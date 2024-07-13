@@ -244,12 +244,16 @@ class Utilitaire(commands.Cog):
                         emoji = values[1],
                         value = values[0]
                     ) for langage, values in langages_dict.items()
-                ]
+                ],
+                custom_id = "translate"
             )
             async def select_callback(self, select, interaction):
                 if interaction.user != self.ctx.author:
                     await ctx.respond("> " + translation["> Vous n'êtes pas autorisés à intéragir avec ceci"] + ".", ephemeral = True)
                     return
+                
+                for option in self.get_item("translate").options:
+                    option.default = (select.values[0] == option.value)
                 
                 try: translation_deepl = await get_translation_async(self.text, select.values[0])
                 except:
@@ -268,7 +272,7 @@ class Utilitaire(commands.Cog):
                 embed.add_field(name = translation["Texte d'origine"], value = self.text)
                 embed.add_field(name = translation["Texte traduit ([data_langage])"].replace("[data_langage]", select.values[0]), value = translation_deepl)
 
-                await interaction.message.edit(embed = embed)
+                await interaction.message.edit(embed = embed, view = self)
                 await interaction.response.defer()
 
         await ctx.send(embed = embed, view = ChooseLangage(self.bot, ctx, text, translator))
