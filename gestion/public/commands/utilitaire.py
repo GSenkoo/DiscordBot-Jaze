@@ -8,7 +8,9 @@ import dotenv
 import os
 import json
 import aiohttp
+import random
 
+from discord import AllowedMentions as AM
 from discord.ext.pages import Page, PaginatorButton
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -1061,6 +1063,32 @@ class Utilitaire(commands.Cog):
                 await interaction.message.edit(embed = formate_embed(self.embed), view = self)
 
         await ctx.send(embed = embed, view = EmbedCreator())
+
+    @commands.command(description = "Obtenir des/un utilisateur(s) choisi au hasard")
+    @commands.guild_only()
+    async def randommember(self, ctx, count : int = None):
+        if count is None: count = 1
+
+        if not 1 <= count <= 50:
+            await ctx.send("> Merci de donner un nombre d'utilisateur choisis au hasard à mentionner entre 1 et 50.")
+            return
+        
+        if count > len(ctx.guild.members):
+            await ctx.send("> Votre nombre d'utilisateur choisi au hasard à mentionner ne peut pas être suppérieur à votre nombre de membres.")
+            return
+        
+        if count == 1:
+            await ctx.send(f"> Utilisateur choisi au hasard : {random.choice(ctx.guild.members).mention}", allowed_mentions = AM.none())
+            return
+        
+        members = ctx.guild.members
+        choosed_members = []
+        for i in range(count):
+            choice = random.choice(members)
+            choosed_members.append(choice.mention)
+            members.remove(choice)
+
+        await ctx.send(f"> Voici une liste de {count} utilisateurs choisi au hasard :\n\n{', '.join(choosed_members)}", allowed_mentions = AM.none())
 
 
 def setup(bot):

@@ -64,8 +64,8 @@
                 "winners_count": "INTEGER DEFAULT 1",
                 "participations": "MEDIUMTEXT",
                 "imposed_winner": "BIGINT DEFAULT 0",
-                "required_roles": "TEXT",
-                "prohibited_roles": "TEXT",
+                "required_role": "BIGINT DEFAULT 0",
+                "prohibited_role": "BIGINT DEFAULT 0",
                 "in_vocal_required": "BOOLEAN DEFAULT 0"
             }
         }

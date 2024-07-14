@@ -57,7 +57,8 @@
         "prefix",
         "clearlimit",
         "bringall",
-        "giveaway"
+        "giveaway",
+        "randommember"
     ],
     "10": [
         "owners",

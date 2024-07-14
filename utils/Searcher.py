@@ -92,7 +92,7 @@ class Searcher():
         """
         if not guild: guild = self.ctx.guild
         
-        for role in self.ctx.guild.fetch_roles():
+        for role in await self.ctx.guild.fetch_roles():
             if role.name == query:
                 return role
             if query.replace("<@&", "").replace("<@", "").replace(">", "").isdigit():
@@ -137,6 +137,7 @@ class Searcher():
         if not guild: guild = self.ctx.guild
         
         query_rmention = query.replace("<#", "").replace(">", "")
+        channel = None
         if query_rmention.isdigit():
             try: channel = await guild.fetch_channel(int(query_rmention))
             except: pass

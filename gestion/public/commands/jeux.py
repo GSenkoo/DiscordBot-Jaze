@@ -132,7 +132,7 @@ class Jeux(commands.Cog):
             return
         
         rules = {
-            "pierre": "ciseau",
+            "pierre": "ciseaux",
             "papier": "pierre",
             "ciseaux": "papier"
         }
@@ -186,6 +186,9 @@ class Jeux(commands.Cog):
                 self.oponent_move = None
 
             async def on_timeout(self):
+                if not self.message.components:
+                    return
+                
                 try:
                     await self.message.edit(
                         view = None,
