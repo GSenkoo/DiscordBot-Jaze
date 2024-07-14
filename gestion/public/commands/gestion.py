@@ -231,7 +231,8 @@ class Gestion(commands.Cog):
                     discord.SelectOption(label = "Gagnant imposé", value = "imposed_winner", emoji = "👤"),
                     discord.SelectOption(label = "Rôle requis", value = "required_role", emoji = "⛓"),
                     discord.SelectOption(label = "Rôle interdits", value = "prohibited_role", emoji = "🚫"),
-                    discord.SelectOption(label = "Imposition de la présence en vocal", value = "in_vocal_required", emoji = "🔊")
+                    discord.SelectOption(label = "Imposition de la présence en vocal", value = "in_vocal_required", emoji = "🔊"),
+                    discord.SelectOption(label = "Retirer une option", value = "remove_option", emoji = "❌")
                 ]
             )
             async def edit_giveaway_select_callback(self, select, interaction):
@@ -274,7 +275,8 @@ class Gestion(commands.Cog):
                     "end_at": "Voici quelques exemple de temps valides : `1jours`, `3d`, `4h` , `5minutes`. Maximum 30 jours.",
                     "interaction_type": "Types d'intéractions disponibles : `bouton` et `réaction`",
                     "button_color": "Couleurs disponibles : `bleu`, `rouge`, `vert` et `gris`",
-                    "in_vocal_required": "Réponses possibles : `oui` et `non`"
+                    "in_vocal_required": "Réponses possibles : `oui` et `non`",
+                    "remove_option": "Les options qui peuvent être retiré sont : `gagnant imposé`, `rôle requis` et `rôle interdit`"
                 }
 
                 ask_message = await ctx.send(
@@ -365,8 +367,11 @@ class Gestion(commands.Cog):
                     if not response_message.content.isdigit():
                         await ctx.send("> Action annulée, vous n'avez pas donner de nombre valide.", delete_after = 2)
                         return
-                    if not 1 <= int(response_message.content) <= 100:
-                        await ctx.send("> Action annulée, votre nombre de gagnant doit être entre 1 et 100.", delete_after = 2)
+                    if not 1 <= int(response_message.content) <= 50:
+                        await ctx.send("> Action annulée, votre nombre de gagnant doit être entre 1 et 50.", delete_after = 2)
+                        return
+                    if self.giveaway_data["imposed_winner"]:
+                        await ctx.send("> Action annulée, votre nombre de gagnant doit forcément être définis à 1 si vous prédéfinissez un gagnant.", delete_after = 2)
                         return
                     
                     self.giveaway_data["winners_count"] = int(response_message.content)
@@ -378,6 +383,7 @@ class Gestion(commands.Cog):
                         return
 
                     self.giveaway_data["imposed_winner"] = user.id
+                    self.giveaway_data["winners_count"] = 1
 
                 if select.values[0] in ["required_role", "prohibited_role"]:
                     role = await searcher.search_role(response_message.content)
@@ -401,6 +407,18 @@ class Gestion(commands.Cog):
                         return
                     
                     self.giveaway_data = new_def                 
+
+                if select.values[0] == "remove_option":
+                    if ["le requi", "ired role"] in response_message.content.lower():
+                        self.giveaway_data["required_role"] = None
+                    elif ["le obligatoir", "bited rol"] in response_message.content.lower():
+                        self.giveaway_data["prohibited_role"] = None
+                    elif ["gagn", "winner"] in response_message.content.lower():
+                        self.giveaway_data["imposed_winner"] = None
+                    else:
+                        await ctx.send("> Action annulée, réponse invalide.", delete_after = 2)
+                        return
+
 
                 # ----------------------------- Mettre à jours le message de giveaway
                 await interaction.message.edit(embed = await get_giveaway_embed(self.giveaway_data))
@@ -438,7 +456,12 @@ class Gestion(commands.Cog):
                 if giveaway_data["interaction_type"] == "reaction":
                     await message.add_reaction(giveaway_data["emoji"])
 
-
+                for data, value in giveaway_data.items():
+                    if data == "end_at":
+                        value = datetime.now() + await tools.find_duration(value)
+                        value = value.strftime("%Y-%m-%d %H:%M:%S")
+                    await bot.db.set_data("giveaway", data, value, guild_id = ctx.guild.id, channel_id = ctx.guild.id, message_id = message.id)
+                await bot.db.set_data("giveaway", "participations", json.dumps([]), guild_id = ctx.guild.id, channel_id = ctx.guild.id, message_id = message.id)
         await ctx.send(view = ManageGiveaway(giveaway_data), embed = await get_giveaway_embed(giveaway_data))
 
         """
@@ -455,7 +478,7 @@ class Gestion(commands.Cog):
             "participations": "MEDIUMTEXT",
             "imposed_winner": "BIGINT DEFAULT 0",
             "required_role": "BIGINT DEFAULT 0",
-            "prohibited_rol": "BIGINT DEFAULT 0",
+            "prohibited_role": "BIGINT DEFAULT 0",
             "in_vocal_required": "BOOLEAN DEFAULT 0"
         }
         """

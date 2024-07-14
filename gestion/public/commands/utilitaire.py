@@ -79,6 +79,41 @@ class Utilitaire(commands.Cog):
         await ctx.send(embed = embed)
 
 
+    @commands.command(aliases = ["ping"], description = "Voir la vitesse actuel du bot")
+    @commands.guild_only()
+    async def speed(self, ctx):
+        await ctx.send(
+            embed = discord.Embed(
+                title = "Vitesse du bot",
+                description = "**`" + str(round(self.bot.latency * 1000)) + "ms`**",
+                color = await self.bot.get_theme(ctx.guild.id),
+            )
+        )
+
+
+    @commands.command(description = "Afficher un bouton pour inviter le bot")
+    @commands.guild_only()
+    async def invite(self, ctx):
+        translation = await self.bot.get_translation("invite", ctx.guild.id)
+
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(
+            style = discord.ButtonStyle.link,
+            label = translation["Inviter [data_user]"].replace("[data_user]", self.bot.user.display_name),
+            url = f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=8&scope=bot+applications.commands"
+        ))
+
+        await ctx.send(
+            embed = discord.Embed(
+                author = discord.EmbedAuthor(name = self.bot.user.display_name, icon_url = self.bot.user.avatar.url),
+                description = translation["Utilisez le bouton ci-dessous pour m'inviter"],
+                color = await self.bot.get_theme(ctx.guild.id)
+            ),
+            view = view
+        )
+
+
+
     @commands.command(usage = "<search>", description = "Faire une recherche wikipedia", aliases = ["wikipedia", "wkp"])
     @commands.guild_only()
     async def wiki(self, ctx, *, search):
@@ -331,40 +366,6 @@ class Utilitaire(commands.Cog):
         embed.add_field(name = "Nouveau contenu", value = message_content_after, inline = False)
 
         await ctx.send(embed = embed)
-
-
-    @commands.command(aliases = ["ping"], description = "Voir la vitesse actuel du bot")
-    @commands.guild_only()
-    async def speed(self, ctx):
-        await ctx.send(
-            embed = discord.Embed(
-                title = "Vitesse du bot",
-                description = "**`" + str(round(self.bot.latency * 1000)) + "ms`**",
-                color = await self.bot.get_theme(ctx.guild.id),
-            )
-        )
-
-
-    @commands.command(description = "Afficher un bouton pour inviter le bot")
-    @commands.guild_only()
-    async def invite(self, ctx):
-        translation = await self.bot.get_translation("invite", ctx.guild.id)
-
-        view = discord.ui.View()
-        view.add_item(discord.ui.Button(
-            style = discord.ButtonStyle.link,
-            label = translation["Inviter [data_user]"].replace("[data_user]", self.bot.user.display_name),
-            url = f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=8&scope=bot+applications.commands"
-        ))
-
-        await ctx.send(
-            embed = discord.Embed(
-                author = discord.EmbedAuthor(name = self.bot.user.display_name, icon_url = self.bot.user.avatar.url),
-                description = translation["Utilisez le bouton ci-dessous pour m'inviter"],
-                color = await self.bot.get_theme(ctx.guild.id)
-            ),
-            view = view
-        )
 
 
     @commands.command(description = "Afficher un menu intéractif pour créer et envoyer un embed")

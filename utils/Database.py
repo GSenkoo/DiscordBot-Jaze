@@ -120,9 +120,12 @@ class Database:
         async with self.pool.acquire() as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute(code, data)
+                if commit:
+                    await connection.commit()
                 if fetch:
                     result = await cursor.fetchall()
                     return result
+                
 
 
     async def set_data(self, table : str, column : str, new_value, commit : bool = True, **keys_indicator) -> None:
