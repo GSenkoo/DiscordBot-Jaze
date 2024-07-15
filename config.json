@@ -56,7 +56,6 @@
             "keys": {
                 "reward": "VARCHAR(255) DEFAULT 'Acune récompense'",
                 "end_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-                "channel": "BIGINT DEFAULT 0",
                 "emoji": "VARCHAR(10)",
                 "interaction_type": "VARCHAR(10) DEFAULT 'reaction'",
                 "button_color": "VARCHAR(10) DEFAULT 'blue'",
@@ -66,7 +65,8 @@
                 "imposed_winner": "BIGINT DEFAULT 0",
                 "required_role": "BIGINT DEFAULT 0",
                 "prohibited_role": "BIGINT DEFAULT 0",
-                "in_vocal_required": "BOOLEAN DEFAULT 0"
+                "in_vocal_required": "BOOLEAN DEFAULT 0",
+                "ended": "BOOLEAN DEFAULT 0"
             }
         }
     }

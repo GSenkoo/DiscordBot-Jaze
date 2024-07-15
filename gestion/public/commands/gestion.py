@@ -2,12 +2,14 @@ import discord
 import json
 import asyncio
 import emoji
+import random
 
 from datetime import timedelta, datetime
 from discord import AllowedMentions as AM
 from discord.ext import commands
 from utils.Tools import Tools
 from utils.Searcher import Searcher
+from utils.Paginator import PaginatorCreator
 
 class Gestion(commands.Cog):
     def __init__(self, bot):
@@ -164,7 +166,7 @@ class Gestion(commands.Cog):
         await new_channel.send(f"> Le salon a était renew par {ctx.author.mention}.", allowed_mentions = AM.none(), delete_after = 10)
             
 
-    @commands.command(description = "Lancer un giveaway")
+    @commands.command(description = "Configurer et ensuite lancer un giveaway")
     @commands.guild_only()
     async def giveaway(self, ctx):
         tools = Tools(self.bot)
@@ -178,7 +180,7 @@ class Gestion(commands.Cog):
 
             embed.add_field(name = "Récompense", value = data["reward"])
             embed.add_field(name = "Durée", value = data["end_at"])
-            embed.add_field(name = "Salon", value = f'<#{data["channel"]}>')
+            embed.add_field(name = "Salon", value = f'<#{data["channel_id"]}>')
             embed.add_field(name = "Emoji", value = data["emoji"])
             embed.add_field(name = "Type d'intéraction", value = data["interaction_type"].capitalize())
             embed.add_field(name = "Couleur (Bouton)", value = data["button_color"].capitalize())
@@ -195,7 +197,7 @@ class Gestion(commands.Cog):
         giveaway_data = {
             "reward": "Exemple de récompense",
             "end_at": "2h",
-            "channel": ctx.channel.id,
+            "channel_id": ctx.channel.id,
             "emoji": "🎉",
             "interaction_type": "button",
             "button_color": "grey", # blue, green, gray or red
@@ -230,7 +232,7 @@ class Gestion(commands.Cog):
                     discord.SelectOption(label = "Nombre de gagnant", value = "winners_count", emoji = "👥"),
                     discord.SelectOption(label = "Gagnant imposé", value = "imposed_winner", emoji = "👤"),
                     discord.SelectOption(label = "Rôle requis", value = "required_role", emoji = "⛓"),
-                    discord.SelectOption(label = "Rôle interdits", value = "prohibited_role", emoji = "🚫"),
+                    discord.SelectOption(label = "Rôle interdit", value = "prohibited_role", emoji = "🚫"),
                     discord.SelectOption(label = "Imposition de la présence en vocal", value = "in_vocal_required", emoji = "🔊"),
                     discord.SelectOption(label = "Retirer une option", value = "remove_option", emoji = "❌")
                 ]
@@ -265,7 +267,7 @@ class Gestion(commands.Cog):
                             return option.label
                     return None
                 
-                async def check_message_validity(message):
+                def check_message_validity(message):
                     return (message.channel == ctx.channel) and (message.author == ctx.author) and (message.content)
                 
                 await interaction.response.defer()
@@ -323,7 +325,7 @@ class Gestion(commands.Cog):
                         await ctx.send("> Action annulée, salon invalide.", delete_after = 2)
                         return
                     
-                    self.giveaway_data["channel"] = channel.id
+                    self.giveaway_data["channel_id"] = channel.id
 
                 if select.values[0] == "emoji":
                     found_emoji = await get_emoji(response_message.content)
@@ -406,14 +408,14 @@ class Gestion(commands.Cog):
                         await ctx.send("> Action annulée, réponse invalide.", delete_after = 2)
                         return
                     
-                    self.giveaway_data = new_def                 
+                    self.giveaway_data["in_vocal_required"] = new_def                 
 
                 if select.values[0] == "remove_option":
-                    if ["le requi", "ired role"] in response_message.content.lower():
+                    if response_message.content.lower() in ["rôle requis", "role requis", "rôle requi", "role requi", "required roles", "required role"]:
                         self.giveaway_data["required_role"] = None
-                    elif ["le obligatoir", "bited rol"] in response_message.content.lower():
+                    elif response_message.content.lower() in ["rôle interdit", "role interdit", "rôle interdits", "rôle interdit", "prohibited role", "prohibited roles"]:
                         self.giveaway_data["prohibited_role"] = None
-                    elif ["gagn", "winner"] in response_message.content.lower():
+                    elif response_message.content.lower() in ["gagnant imposé", "gagnant impose", "gagnants imposé", "gagnants impose", "imposed winner", "imposed winners"]:
                         self.giveaway_data["imposed_winner"] = None
                     else:
                         await ctx.send("> Action annulée, réponse invalide.", delete_after = 2)
@@ -429,8 +431,6 @@ class Gestion(commands.Cog):
                 if interaction.user != ctx.author:
                     await ctx.send("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
-                
-                await interaction.response.defer()
 
                 time = await tools.find_duration(giveaway_data["end_at"]) + datetime.now()
                 giveaway_embed = discord.Embed(
@@ -450,38 +450,102 @@ class Gestion(commands.Cog):
                     async def callback(self, button, interaction):
                         pass
                 
-                channel : discord.Channel = await interaction.guild.fetch_channel(giveaway_data["channel"])
+                channel : discord.Channel = await interaction.guild.fetch_channel(giveaway_data["channel_id"])
                 message : discord.Message = await channel.send(embed = giveaway_embed, view = GiveawayButton(timeout = None) if giveaway_data["interaction_type"] == "button" else None)
 
                 if giveaway_data["interaction_type"] == "reaction":
                     await message.add_reaction(giveaway_data["emoji"])
 
                 for data, value in giveaway_data.items():
+                    if data == "channel_id":
+                        continue
                     if data == "end_at":
                         value = datetime.now() + await tools.find_duration(value)
                         value = value.strftime("%Y-%m-%d %H:%M:%S")
-                    await bot.db.set_data("giveaway", data, value, guild_id = ctx.guild.id, channel_id = ctx.guild.id, message_id = message.id)
+                    await bot.db.set_data("giveaway", data, value, guild_id = ctx.guild.id, channel_id = ctx.channel.id, message_id = message.id)
                 await bot.db.set_data("giveaway", "participations", json.dumps([]), guild_id = ctx.guild.id, channel_id = ctx.guild.id, message_id = message.id)
+                await interaction.response.send_message(f"> Votre giveaway **{self.giveaway_data['reward']}** a bien été envoyé dans le salon <#{self.giveaway_data['channel_id']}>.", ephemeral = True)
+        
         await ctx.send(view = ManageGiveaway(giveaway_data), embed = await get_giveaway_embed(giveaway_data))
 
-        """
-        "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL", "message_id": "BIGINT NOT NULL UNIQUE"},
-        "keys": {
-            "reward": "VARCHAR(255) DEFAULT 'Acune récompense'",
-            "end_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-            "channel": "BIGINT DEFAULT 0",
-            "emoji": "VARCHAR(10)",
-            "interaction_type": "VARCHAR(10) DEFAULT 'reaction'",
-            "button_color": "VARCHAR(10) DEFAULT 'blue'",
-            "button_text": "VARCHAR(80) DEFAULT 'Participer'",
-            "winners_count": "INTEGER DEFAULT 1",
-            "participations": "MEDIUMTEXT",
-            "imposed_winner": "BIGINT DEFAULT 0",
-            "required_role": "BIGINT DEFAULT 0",
-            "prohibited_role": "BIGINT DEFAULT 0",
-            "in_vocal_required": "BOOLEAN DEFAULT 0"
-        }
-        """
+
+    @commands.command(description = "Reroll un giveaway toujours actif", usage = "<message>")
+    @commands.guild_only()
+    async def reroll(self, ctx, giveaway_message : discord.Message):
+        giveaway_data = await self.bot.db.execute(f"SELECT * FROM giveaway WHERE guild_id = {ctx.guild.id} AND message_id = {giveaway_message.id}", fetch = True)
+
+        if not giveaway_data:
+            await ctx.send(f"> Aucun giveaway trouvé pour `" + giveaway_message.replace("`", "'") + "`.")
+            return
+        
+        giveaway_table_columns = await self.bot.db.get_table_columns("giveaway")
+        giveaway = dict(set(zip(giveaway_table_columns, giveaway_data[0])))
+        giveaway_link = f"[giveaway {giveaway['reward']}](https://discord.com/channels/{giveaway['guild_id']}/{giveaway['channel_id']}/{giveaway['message_id']})"
+
+        if not giveaway["ended"]:
+            await ctx.send(f"> Le {giveaway_link} n'est pas encore terminé.")
+            return
+        
+        if giveaway["channel_id"] != ctx.channel:
+            channel = ctx.guild.get_channel(giveaway["channel_id"])
+            if not channel:
+                await ctx.send(f"> Le salon du {giveaway_link} n'existe plus ou je ne peux pas y accéder.")
+                return
+        else: channel = ctx.channel
+
+        try:
+            message = self.bot.get_message(giveaway["message_id"])
+            if not message:
+                message = await channel.fetch_message(giveaway["message_id"])
+        except:
+            await ctx.send(f"> Le message du {giveaway_link} n'existe plus ou je ne peux pas y accéder.")
+            return
+        
+        participants = json.loads(giveaway["participations"])
+        if (giveaway["winners_count"] == 1) or (giveaway["imposed_winner"]) or (len(participants) == 1):
+            await message.reply(f"> Giveaway reroll, le gagnant du giveaway **{giveaway['reward']}** est <@" + str(participants[0] if not giveaway["imposed_winner"] else giveaway["imposed_winner"]) + ">")
+        else:
+            if len(participants) <= giveaway["winners_count"]:
+                winners = [f"<@{user}>" for user in participants]
+            else:
+                winners = []
+                for i in range(giveaway["winners_count"]):
+                    winner = random.choice(participants)
+                    winners.append(f"<@{winner}>")
+                    participants.remove(winner)
+            
+
+            await message.reply(f"> Giveaway reroll, les gagnants du giveaway **{giveaway['reward']}** sont : " + ", ".join(winners[:-1]) + " et " + winners[-1])
+
+        
+    @commands.command(description = "Voir les giveaways actuellements actifs sur le serveur")
+    @commands.guild_only()
+    async def giveaways(self, ctx):
+        paginator_creator = PaginatorCreator()
+        giveaways = await self.bot.db.execute(f"SELECT * FROM giveaway WHERE guild_id = {ctx.guild.id} ORDER BY end_at DESC", fetch = True)
+
+        if not giveaways:
+            await ctx.send("> Il n'y a aucun giveaways actifs sur ce serveur.")
+            return
+        
+        giveaways_columns = await self.bot.db.get_table_columns("giveaway")
+        giveaways = [dict(set(zip(giveaways_columns, giveaway_data))) for giveaway_data in giveaways]
+        giveaways_text_data = []
+
+        for giveaway in giveaways:
+            giveaway_link = f"[Giveaway {giveaway['reward']}](https://discord.com/channels/{giveaway['guild_id']}/{giveaway['channel_id']}/{giveaway['message_id']}) ({'Se termine' if giveaway['end_at'] > datetime.now() else 'Terminé'} <t:{round(giveaway['end_at'].timestamp())}:R>)"
+            giveaways_text_data.append(giveaway_link)
+        
+        paginator = await paginator_creator.create_paginator(
+            title = "Giveaways actifs",
+            embed_color = await self.bot.get_theme(ctx.guild.id),
+            data_list = giveaways_text_data,
+            comment = "*Les données d'un giveaway restent accessibles jusqu'à 3h après sa fin.\nDonc vous pouvez le reroll uniquements durant ce délai.*"
+        )
+
+        if type(paginator) == list: await ctx.send(embed = paginator[0])
+        else: await paginator.send(ctx)
+
 
 
 def setup(bot):

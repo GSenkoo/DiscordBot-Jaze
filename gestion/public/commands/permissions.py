@@ -41,6 +41,10 @@ custom_names = {
     "11": "Propriéataire"
 }
 
+async def delete_message(message):
+    try: await message.delete()
+    except: pass
+
 class Gestion_des_Permissions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -226,8 +230,7 @@ class Gestion_des_Permissions(commands.Cog):
                             if len(permission_data["roles"]) >= 15:
                                 await interaction.response.send_message("> Vous ne pouvez pas ajouter plus de 15 rôles autorisés.", ephemeral = True)
                                 return
-                            
-                            
+
                             
                             class AddRole(MyViewClass):
                                 @discord.ui.select(
@@ -1360,14 +1363,14 @@ class Gestion_des_Permissions(commands.Cog):
 
                 def check_message(message):
                     return (message.channel == ctx.channel) and (message.author == ctx.author) and (message.content)
-                
+
                 message = await ctx.send("Quel sera le **nom** de votre permission personnalisée? Envoyez `cancel` pour annuler.")
                 try: response = await bot.wait_for("message", check = check_message, timeout = 60)
                 except asyncio.TimeoutError:
                     await ctx.send("> Action annulé, 1 minute écoulée.", delete_after = 2)
                     return
-                finally: await message.delete()
-                await response.delete()
+                finally: await delete_message(message)
+                await delete_message(response)
 
                 if response.content.lower() == "cancel":
                     await ctx.send("> Action annulé.", delete_after = 2)

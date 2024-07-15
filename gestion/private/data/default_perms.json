@@ -58,6 +58,8 @@
         "clearlimit",
         "bringall",
         "giveaway",
+        "giveaways",
+        "reroll",
         "randommember"
     ],
     "10": [

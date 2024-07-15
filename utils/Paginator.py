@@ -34,7 +34,8 @@ class PaginatorCreator:
         without_button_if_onepage : bool = True,
         timeout : int = 300,
         embed_thumbnail : str = None,
-        embed_author : discord.EmbedAuthor = None
+        embed_author : discord.EmbedAuthor = None,
+        comment : str = None
     ) -> Union[CustomPaginator, list]:
         """
         Paramètres
@@ -64,6 +65,9 @@ class PaginatorCreator:
             Le lien des thumnails des embeds des pages du paginator
         embed_author `discord.EmbedAuthor` :
             L'embed author des embeds des pages du paginator
+        comment `str` :
+            Un commentaire à ajouter tout en haut de chaques description d'embed de chaques pages
+
         Return
         --------------------------------------------
         `Union[utils.Paginator.CustomPaginator, list]`
@@ -90,7 +94,7 @@ class PaginatorCreator:
                 embeds = [
                     discord.Embed(
                         title = (title if type(title) == str else title[index]) if title else None,
-                        description = "\n".join(data),
+                        description = (comment + "\n\n" if comment else "") + "\n".join(data),
                         color = embed_color,
                         thumbnail = embed_thumbnail,
                         author = embed_author
@@ -104,7 +108,7 @@ class PaginatorCreator:
             return [
                 discord.Embed(
                     title = title if type(title) != list else title[0],
-                    description = "\n".join(data_list[0]) if data_list else no_data_message,
+                    description = (comment + "\n\n" if comment else "") + "\n".join(data_list[0]) if data_list else no_data_message,
                     color = embed_color,
                     thumbnail = embed_thumbnail,
                     author = embed_author
@@ -117,7 +121,7 @@ class PaginatorCreator:
                     embeds = [
                         discord.Embed(
                             title = title if type(title) != list else title[0],
-                            description = no_data_message,
+                            description = (comment + "\n\n" if comment else "") + no_data_message,
                             color = embed_color,
                             thumbnail = embed_thumbnail,
                             author = embed_author
