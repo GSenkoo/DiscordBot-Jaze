@@ -14,7 +14,7 @@ class Developer(commands.Cog):
     @commands.command(description = "Mettre à jour les commandes, évènements et tâches en arrière plan du bot", aliases = ["up"])
     @commands.guild_only()
     async def update(self, ctx):
-        with open("config.json") as file:
+        with open("config.json", encoding = "utf-8") as file:
             config_data = json.load(file)
         
         if ctx.author.id not in config_data["developers"]:
@@ -28,7 +28,7 @@ class Developer(commands.Cog):
     @commands.command(description = "Arrêter le bot")
     @commands.guild_only()
     async def stop(self, ctx):
-        with open("config.json") as file:
+        with open("config.json", encoding = "utf-8") as file:
             config_data = json.load(file)
         
         if ctx.author.id not in config_data["developers"]:
@@ -46,7 +46,7 @@ class Developer(commands.Cog):
     @commands.command(description = "Redémarrer le bot")
     @commands.guild_only()
     async def restart(self, ctx):
-        with open("config.json") as file:
+        with open("config.json", encoding = "utf-8") as file:
             config_data = json.load(file)
         
         if ctx.author.id not in config_data["developers"]:

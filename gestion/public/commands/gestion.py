@@ -462,8 +462,8 @@ class Gestion(commands.Cog):
                     if data == "end_at":
                         value = datetime.now() + await tools.find_duration(value)
                         value = value.strftime("%Y-%m-%d %H:%M:%S")
-                    await bot.db.set_data("giveaway", data, value, guild_id = ctx.guild.id, channel_id = ctx.channel.id, message_id = message.id)
-                await bot.db.set_data("giveaway", "participations", json.dumps([]), guild_id = ctx.guild.id, channel_id = ctx.guild.id, message_id = message.id)
+                    await bot.db.set_data("giveaway", data, value, guild_id = ctx.guild.id, channel_id = channel.id, message_id = message.id)
+                await bot.db.set_data("giveaway", "participations", json.dumps([]), guild_id = ctx.guild.id, channel_id = channel.id, message_id = message.id)
                 await interaction.response.send_message(f"> Votre giveaway **{self.giveaway_data['reward']}** a bien été envoyé dans le salon <#{self.giveaway_data['channel_id']}>.", ephemeral = True)
         
         await ctx.send(view = ManageGiveaway(giveaway_data), embed = await get_giveaway_embed(giveaway_data))
@@ -475,7 +475,7 @@ class Gestion(commands.Cog):
         giveaway_data = await self.bot.db.execute(f"SELECT * FROM giveaway WHERE guild_id = {ctx.guild.id} AND message_id = {giveaway_message.id}", fetch = True)
 
         if not giveaway_data:
-            await ctx.send(f"> Aucun giveaway trouvé pour `" + giveaway_message.replace("`", "'") + "`.")
+            await ctx.send(f"> Aucun giveaway actif **dans ce salon** ne possède l'identifiant `{giveaway_message.id}`, si vous souhaitez reroll un giveaway depuis un salon différent de celui du giveaway, donnez le lien du message.")
             return
         
         giveaway_table_columns = await self.bot.db.get_table_columns("giveaway")
@@ -503,7 +503,7 @@ class Gestion(commands.Cog):
         
         participants = json.loads(giveaway["participations"])
         if (giveaway["winners_count"] == 1) or (giveaway["imposed_winner"]) or (len(participants) == 1):
-            await message.reply(f"> Giveaway reroll, le gagnant du giveaway **{giveaway['reward']}** est <@" + str(participants[0] if not giveaway["imposed_winner"] else giveaway["imposed_winner"]) + ">")
+            await message.reply(f"> Giveaway reroll, le gagnant du giveaway **{giveaway['reward']}** est <@" + str(random.choice(participants) if not giveaway["imposed_winner"] else giveaway["imposed_winner"]) + ">")
         else:
             if len(participants) <= giveaway["winners_count"]:
                 winners = [f"<@{user}>" for user in participants]
@@ -516,8 +516,10 @@ class Gestion(commands.Cog):
             
 
             await message.reply(f"> Giveaway reroll, les gagnants du giveaway **{giveaway['reward']}** sont : " + ", ".join(winners[:-1]) + " et " + winners[-1])
+        if message.channel != ctx.channel:
+            await ctx.send(f"> Le giveaway **{giveaway['reward']}** a été reroll dans le salon {channel.mention}.")
 
-        
+
     @commands.command(description = "Voir les giveaways actuellements actifs sur le serveur")
     @commands.guild_only()
     async def giveaways(self, ctx):

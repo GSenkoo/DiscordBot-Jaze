@@ -60,7 +60,6 @@ class Proprietaire(commands.Cog):
     @commands.guild_only()
     async def owners(self, ctx):
         current_owners = await self.bot.db.get_data("guild", "owners", True, guild_id = ctx.guild.id)
-        
 
         paginator_creator = PaginatorCreator()
         paginator = await paginator_creator.create_paginator(

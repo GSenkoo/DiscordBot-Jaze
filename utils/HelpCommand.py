@@ -12,7 +12,9 @@ class CustomHelp(commands.HelpCommand):
         return f"**`{self.context.clean_prefix}{command.name}{' ' if command.signature else ''}{command.signature}`**\n{command.description}"
     
     async def send_bot_help(self, mapping):
-        titles, descriptions = [], []
+        titles, descriptions, select = [], [], []
+        help_type = await self.context.bot.db.get_data("guild", "help_type", guild_id = self.context.guild.id)
+
         for cog, commands in mapping.items():
             if not getattr(cog, "qualified_name", None) or getattr(cog, "qualified_name", None) == "Developer":
                 continue
@@ -28,19 +30,66 @@ class CustomHelp(commands.HelpCommand):
                 + "\n\n".join(commands_signatures)
             )
 
-        paginator_creator = PaginatorCreator()
-        paginator = await paginator_creator.create_paginator(
-            title = titles,
-            embed_color = await self.context.bot.get_theme(self.context.guild.id),
-            data_list = descriptions,
-            data_per_page = 1,
-            pages_looped = True,
-            without_button_if_onepage = False,
-        )
+        if help_type == "s":
+            class HelpView(discord.ui.View):
+                def __init__(self, context):
+                    super().__init__()
+                    self.context = context
 
-        await paginator.send(self.context)
+                async def on_timeout(self) -> None:
+                    try: await self.message.edit(view = None)
+                    except: pass
+
+                @discord.ui.select(
+                    placeholder = "Choisir une catégorie",
+                    options = [discord.SelectOption(label = title, value = str(index)) for index, title in enumerate(titles)],
+                    custom_id = "select"
+                )
+                async def select_callback(self, select, interaction):
+                    if interaction.user != self.context.author:
+                        await interaction.response.send_message("Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                        return
+                    
+                    for option in self.get_item("select").options:
+                        option.default = (option.value == select.values[0])
+                    
+                    await interaction.response.defer()
+                    await interaction.message.edit(
+                        embed = discord.Embed(
+                            title = titles[int(select.values[0])],
+                            description = descriptions[int(select.values[0])],
+                            color = await self.context.bot.get_theme(self.context.guild.id)
+                        ),
+                        view = self
+                    )
+
+            await self.context.send(
+                embed = discord.Embed(
+                    title = titles[0],
+                    description = descriptions[0],
+                    color = await self.context.bot.get_theme(self.context.guild.id)
+                ),
+                view = HelpView(context = self.context)
+            )
+
+        else:
+            paginator_creator = PaginatorCreator()
+            paginator = await paginator_creator.create_paginator(
+                title = titles,
+                embed_color = await self.context.bot.get_theme(self.context.guild.id),
+                data_list = descriptions,
+                data_per_page = 1,
+                pages_looped = True,
+                without_button_if_onepage = False,
+            )
+
+            await paginator.send(self.context)
+
+    def subcommand_not_found(self, command, string):
+        return f"> Aucune commande appelée \"{string if len(string) <= 30 else string[:30] + '...'}\" n'éxiste."
 
 
+    
     def command_not_found(self, string):
         mapping, propositions = self.get_bot_mapping(), []
         
@@ -67,7 +116,7 @@ class CustomHelp(commands.HelpCommand):
                 if (str(command) in string) or (string in str(command)) or has_aliases_comparison(command, string):
                     propositions.append(self.context.clean_prefix + f"help {command}")
 
-        return f"Aucune commande appelée \"{string if len(string) <= 30 else string[:30] + '...'}\" n'éxiste" + (", voici quelques recommendations : \n`" + "`\n`".join(propositions) + "`" if propositions else ".")
+        return f"> Aucune commande appelée \"{string if len(string) <= 30 else string[:30] + '...'}\" n'éxiste" + (", voici quelques recommendations : \n`" + "`\n`".join(propositions) + "`" if propositions else ".")
     
 
     async def send_command_help(self, command):
@@ -109,7 +158,7 @@ class CustomHelp(commands.HelpCommand):
 
         if (not cog_name) or (not cog_commands) or (cog_name == "Developer" and self.context.author.id not in developers):
             return
-        
+
         cog_commands_signatures = [self.get_command_signature(command) for command in cog_commands]
         embed = discord.Embed(
             title = cog_name,

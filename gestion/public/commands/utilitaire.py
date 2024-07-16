@@ -417,6 +417,14 @@ class Utilitaire(commands.Cog):
             current_self.add_item(restaure)
 
             return current_self
+        
+        async def delete_message(message):
+            async def task(message):
+                await message.delete()
+            loop = asyncio.get_event_loop()
+            try: loop.create_task(task(message))
+            except: pass
+
 
         max_sizes = {
             "title": 256,
@@ -495,15 +503,15 @@ class Utilitaire(commands.Cog):
                     # Attendre la réponse de l'utilisateur, après 60 secondes d'attente, l'action est annulée
                     try: response = await bot.wait_for('message', timeout = 60, check = response_check)
                     except asyncio.TimeoutError:
-                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
+                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 3)
                         return
                     finally:
-                        await message.delete()
-                    await response.delete()
+                        await delete_message(message)
+                    await delete_message(response)
 
                     # @Check Annulation
                     if response.content.lower() == "cancel":
-                        await ctx.send("> Action annulée.", delete_after = 2)
+                        await ctx.send("> Action annulée.", delete_after = 3)
                         return
                 
 
@@ -513,13 +521,13 @@ class Utilitaire(commands.Cog):
                         await ctx.send(f"> Votre {select.values[0]} ne peut pas être vide.")
                         return
                     if len(response.content) > max_sizes[select.values[0]]:
-                        await ctx.send(f"> Vous ne pouvez pas dépasser {max_sizes[select.values[0]]} caractères pour votre **{select.values[0]}**.", delete_after = 2)
+                        await ctx.send(f"> Vous ne pouvez pas dépasser {max_sizes[select.values[0]]} caractères pour votre **{select.values[0]}**.", delete_after = 3)
                         return
                     
                     # @Check total embed < 6000 caractères
                     temporary_data[select.values[0]] = response.content
                     if get_total_characters(temporary_data) > 6000:
-                        await ctx.send("> Le nombre total de charactère dans votre embed ne doit pas dépasser les 6000 caractères.", delete_after = 2)
+                        await ctx.send("> Le nombre total de charactère dans votre embed ne doit pas dépasser les 6000 caractères.", delete_after = 3)
                         return
 
                     temporary_data[select.values[0]] = response.content
@@ -529,7 +537,7 @@ class Utilitaire(commands.Cog):
                 # ---------------------------- IMAGE & THUMBNAIL ----------------------------
                 if select.values[0] in ["image", "thumbnail"]:
                     if not response.content.startswith(("https://", "http://")) or " " in response.content:
-                        await ctx.send("> Action annulée, lien d'image invalide.", delete_after = 2)
+                        await ctx.send("> Action annulée, lien d'image invalide.", delete_after = 3)
                         return
                     
                     temporary_data[select.values[0]] = response.content
@@ -539,7 +547,7 @@ class Utilitaire(commands.Cog):
                 if select.values[0] == "color":
                     try: temporary_data["color"] = int(response.content.removeprefix("#"), 16)
                     except:
-                        await ctx.send("> La couleur HEX (exemple : `#FF12F4`) donnée est invalide.", delete_after = 2)
+                        await ctx.send("> La couleur HEX (exemple : `#FF12F4`) donnée est invalide.", delete_after = 3)
                         return
 
                     self.embed = temporary_data.copy()
@@ -552,11 +560,11 @@ class Utilitaire(commands.Cog):
                     
                     try: response = await bot.wait_for("message", timeout = 60, check = response_check)
                     except asyncio.TimeoutError:
-                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
+                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 3)
                         return
                     finally:
-                        await message1.delete()
-                    await response.delete()
+                        await delete_message(message1)
+                    await delete_message(response)
 
                     # @Check pas vide
                     if not response.content:
@@ -565,12 +573,12 @@ class Utilitaire(commands.Cog):
 
                     # @Check annulation
                     if response.content.lower() == "cancel":
-                        await ctx.send("> Action annulée.", delete_after = 2)
+                        await ctx.send("> Action annulée.", delete_after = 3)
                         return
                      
                     # @Check taille footer text < max(taille_footer_text)
                     if len(response.content) > max_sizes["footer_text"]:
-                        await ctx.send(f"> Vous ne pouvez pas dépasser {max_sizes['footer_text']} caractères pour votre **footer**.", delete_after = 2)
+                        await ctx.send(f"> Vous ne pouvez pas dépasser {max_sizes['footer_text']} caractères pour votre **footer**.", delete_after = 3)
                         return
                     
                     # Pour éviter les bug dans la liste des données d'embed self.embed_backups (car le dictionnaire footer est considéré comme le même objet PARTOUT)
@@ -579,17 +587,17 @@ class Utilitaire(commands.Cog):
                     # @Check total embed < 6000 caractères
                     temporary_data["footer"]["text"] = response.content
                     if get_total_characters(temporary_data) > 6000:
-                        await ctx.send(f"> Le nombre total de charactère dans votre embed ne doit pas dépasser les 6000 caractères.", delete_after = 2)
+                        await ctx.send(f"> Le nombre total de charactère dans votre embed ne doit pas dépasser les 6000 caractères.", delete_after = 3)
 
                     # -------------- FOOTER / ICON
                     message2 = await ctx.send("Quel sera l'**icône** du **footer** (un lien)? Envoyez `skip` pour ne pas modifier et `delete` pour retirer.")
                     try: response : discord.Message = await bot.wait_for("message", timeout = 60, check = response_check)
                     except asyncio.TimeoutError:
-                        await ctx.send("> Action annulée.", delete_after = 2)
+                        await ctx.send("> Action annulée.", delete_after = 3)
                         return
                     finally:
-                        await message2.delete()
-                    await response.delete()
+                        await delete_message(message2)
+                    await delete_message(response)
 
                     if not response.content:
                         await ctx.send("> Action annulée, vous n'avez pas donné de réponse.", delete_fater = 2)
@@ -616,16 +624,16 @@ class Utilitaire(commands.Cog):
                     try:
                         response = await bot.wait_for("message", check = response_check, timeout = 60)
                     except asyncio.TimeoutError:
-                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
+                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 3)
                         return
                     finally:
-                        await message1.delete()
-                    await response.delete()
+                        await delete_message(message1)
+                    await delete_message(response)
 
                     if response.content.lower() != "now":
                         try: date = datetime.strptime(response.content, '%d/%m/%Y %H:%M')
                         except:
-                            await ctx.send("> Action annulée, durée invalide.", delete_after = 2)
+                            await ctx.send("> Action annulée, durée invalide.", delete_after = 3)
                             return
                     else: date = datetime.now()
                     temporary_data["timestamp"] = date
@@ -640,34 +648,34 @@ class Utilitaire(commands.Cog):
                     try:
                         response = await bot.wait_for("message", timeout = 60, check = response_check)
                     except asyncio.TimeoutError:
-                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
+                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 3)
                         return
-                    finally: await message1.delete()
-                    await response.delete()
+                    finally: await delete_message(message1)
+                    await delete_message(response)
 
                     if not response.content:
                         await ctx.send("> Action annulée, vous n'avez pas donné de réponse.", delete_fater = 2)
                         return
                     if response.content.lower() == "cancel":
-                        await ctx.send("> Action annulée.", delete_after = 2)
+                        await ctx.send("> Action annulée.", delete_after = 3)
                         return
                     if len(response.content) > max_sizes["author_name"]:
-                        await ctx.send(f"> Action annulée, nom d'auteur trop long (plus de {max_sizes['author_name']} caractères).", delete_after = 2)
+                        await ctx.send(f"> Action annulée, nom d'auteur trop long (plus de {max_sizes['author_name']} caractères).", delete_after = 3)
                         return
                     
                     temporary_data["author"]["name"] = response.content
                     if get_total_characters(temporary_data) > 6000:
-                        await ctx.send(f"> Action annulée, le nombre total de caractère dans votre embed ne doit pas dépasser 6000 caractères.", delete_after = 2)
+                        await ctx.send(f"> Action annulée, le nombre total de caractère dans votre embed ne doit pas dépasser 6000 caractères.", delete_after = 3)
                         return
                     
                     # -------------- AUTHOR / ICON_URL
                     message2 = await ctx.send("Quel sera l'**icône** de l'auteur? Envoyez `skip` pour ne pas en mettre ou `delete` pour supprimer celle actuelle.")
                     try: response = await bot.wait_for("message", timeout = 60, check = response_check)
                     except asyncio.TimeoutError:
-                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
+                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 3)
                         return
-                    finally: await message2.delete()
-                    await response.delete()
+                    finally: await delete_message(message2)
+                    await delete_message(response)
 
                     if not response.content:
                         await ctx.send("> Action annulée, vous n'avez pas donné de réponse.", delete_fater = 2)
@@ -676,7 +684,7 @@ class Utilitaire(commands.Cog):
                         temporary_data["author"]["icon_url"] = None
                     if response.content.lower() not in ["skip", "delete"]:
                         if not response.content.startswith(("https://", "http://")) or " " in response.content:
-                            await ctx.send("> Action annulée, image invalide.", delete_after = 2)
+                            await ctx.send("> Action annulée, image invalide.", delete_after = 3)
                             return
                         temporary_data["author"]["icon_url"] = response.content
 
@@ -684,11 +692,11 @@ class Utilitaire(commands.Cog):
                     message3 = await ctx.send("Quel sera l'**url** vers lequel sera redirigé les utilisateurs qui appuiyeront sur le nom de l'auteur? Envoyez `skip` pour ne pas en mettre ou `delete` pour supprimer celui actuel.")
                     try: response = await bot.wait_for("message", timeout = 60, check = response_check)
                     except asyncio.TimeoutError:
-                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
+                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 3)
                         return
                     finally:
-                        await message3.delete()
-                    await response.delete()
+                        await delete_message(message3)
+                    await delete_message(response)
 
                     if not response.content:
                         await ctx.send("> Action annulée, vous n'avez pas donné de réponse.", delete_fater = 2)
@@ -697,7 +705,7 @@ class Utilitaire(commands.Cog):
                         temporary_data["author"]["url"] = None
                     if response.content.lower() not in ["delete", "skip"]:
                         if not response.content.startswith(("https://", "http://")) or " " in response.content:
-                            await ctx.send("> Action annulée, lien invalide.", delete_after = 2)
+                            await ctx.send("> Action annulée, lien invalide.", delete_after = 3)
                             return
                         
                         temporary_data["author"]["url"] = response.content
@@ -715,19 +723,19 @@ class Utilitaire(commands.Cog):
                         message = await ctx.send(f"Quel sera la valeur de votre **{data_type}** de field? Envoyez `cancel` pour annuler.")
                         try: response = await bot.wait_for("message", timeout = 60, check = response_check)
                         except asyncio.TimeoutError:
-                            await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
+                            await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 3)
                             return
-                        finally: await message.delete()
-                        await response.delete()
+                        finally: await delete_message(message)
+                        await delete_message(response)
 
                         if not response.content:
                             await ctx.send("> Action annulée, vous n'avez pas donné de réponse.", delete_fater = 2)
                             return
                         if response.content.lower() == "cancel":
-                            await ctx.send("> Action annulée.", delete_after = 2)
+                            await ctx.send("> Action annulée.", delete_after = 3)
                             return
                         if len(response.content) > max_sizes["field_name"]:
-                            await ctx.send(f"> Action annulée, la valeur de vote {data_type} peut pas dépasser {max_sizes[data_type]} caractères.", delete_after = 2)
+                            await ctx.send(f"> Action annulée, la valeur de vote {data_type} peut pas dépasser {max_sizes[data_type]} caractères.", delete_after = 3)
                             return
                         
                         if data_type == "name":
@@ -737,17 +745,17 @@ class Utilitaire(commands.Cog):
                         else: temporary_data["fields"][-1]["value"] = response.content
                         
                         if get_total_characters(temporary_data) > 6000:
-                            await ctx.send("> Action annulée, votre embed ne peut pas faire plus de 6000 caractères.", delete_after = 2)
+                            await ctx.send("> Action annulée, votre embed ne peut pas faire plus de 6000 caractères.", delete_after = 3)
                             return
 
                     # -------------- FIELD INLINE OR NOT
                     message = await ctx.send("Souhaitez-vous que votre field soit aligné avec les autres fields (Répondez par `Oui` ou par `Non`)?")
                     try: response = await bot.wait_for("message", timeout = 60, check = response_check)
                     except asyncio.TimeoutError:
-                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
+                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 3)
                         return
-                    finally: await message.delete()
-                    await response.delete()
+                    finally: await delete_message(message)
+                    await delete_message(response)
                     
                     if response.content.lower() in ["yes", "oui"]: temporary_data["fields"][-1]["inline"] = True
                     else: temporary_data["fields"][-1]["inline"] = False
@@ -758,21 +766,21 @@ class Utilitaire(commands.Cog):
                 # ---------------------------- REMOVE FIELD ----------------------------
                 if select.values[0] == "field_remove":
                     if not len(self.embed["fields"]):
-                        await ctx.send("> Aucun field n'a été créé.", delete_after = 2)
+                        await ctx.send("> Aucun field n'a été créé.", delete_after = 3)
                         return
 
                     message = await ctx.send("Quel est la **position** du field (avec un chiffre de 1 à 25) ou alors le nom du field (chaîne de cractère)?")
                     try: response = await bot.wait_for("message", timeout = 60, check = response_check)
                     except asyncio.TimeoutError:
-                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
+                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 3)
                         return
-                    finally: await message.delete()
-                    await response.delete()
+                    finally: await delete_message(message)
+                    await delete_message(response)
 
                     if response.content.isdigit():
                         index = int(response.content)
                         if not 1 <= index <= len(self.embed["fields"]):
-                            await ctx.send("> Action annulé, position de field inéxistant.", delete_after = 2)
+                            await ctx.send("> Action annulé, position de field inéxistant.", delete_after = 3)
                             return
                         
                         index -= 1
@@ -780,12 +788,12 @@ class Utilitaire(commands.Cog):
                     else:
                         field_names = [field_data["name"].lower() for field_data in self.embed["fields"]]
                         if response.content.lower() not in field_names:
-                            await ctx.send("> Action annulée, nom de field invalide.", delete_after = 2)
+                            await ctx.send("> Action annulée, nom de field invalide.", delete_after = 3)
                             return
                         self.embed["fields"] = [field_data for field_data in self.embed["fields"] if field_data["name"].lower() != response.content.lower()]
 
 
-                await ctx.send(f"Votre **embed** a été mis à jours.", delete_after = 2)
+                await ctx.send(f"Votre **embed** a été mis à jours.", delete_after = 3)
 
                 # Mettre à jour les backups
                 self.embeds_backup.append(previous_embed_copy.copy())
@@ -837,10 +845,10 @@ class Utilitaire(commands.Cog):
                         msg = await interaction.channel.send("Dans quel salon souhaitez-vous envoyer l'embed?")
                         try: response = await bot.wait_for("message", check = response_check, timeout = 60)
                         except asyncio.TimeoutError:
-                            await interaction.channel.send("> Action annulée, 1 minute dépassée.", delete_after = 2)
+                            await interaction.channel.send("> Action annulée, 1 minute dépassée.", delete_after = 3)
                             return
                         finally:
-                            await msg.delete()
+                            await delete_message(msg)
 
                         searcher = Searcher(bot, interaction)
                         channel = await searcher.search_channel(response.content)
@@ -851,7 +859,7 @@ class Utilitaire(commands.Cog):
                         
                         try: await channel.send(embed = formate_embed(embed_to_send))
                         except:
-                            await interaction.channel.send("> Impossible d'envoyer l'embed dans le salon demandé, vérifiez mes permissions.", delete_after = 2)
+                            await interaction.channel.send("> Impossible d'envoyer l'embed dans le salon demandé, vérifiez mes permissions.", delete_after = 3)
                             return
                         
                         await interaction.message.edit(
@@ -882,39 +890,39 @@ class Utilitaire(commands.Cog):
                         msg = await interaction.channel.send("Quel est le **lien** du message?")
                         try: response = await bot.wait_for("message", timeout = 60, check = response_check)
                         except asyncio.TimeoutError:
-                            await interaction.channel.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 2)
+                            await interaction.channel.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                             return
-                        finally: await msg.delete()
-                        await response.delete()
+                        finally: await delete_message(msg)
+                        await delete_message(response)
 
                         result = response.content.removeprefix(f"https://discord.com/channels/{interaction.guild.id}/")
                         result = result.split("/")
 
                         if len(result) != 2:
-                            await interaction.channel.send_message("> Lien de message invalide.", delete_after = 2)
+                            await interaction.channel.send_message("> Lien de message invalide.", delete_after = 3)
                             return
                         for number in result:
                             if not number.isdigit():
-                                await interaction.channel.send_message("> Lien de message invalide.", delete_after = 2)
+                                await interaction.channel.send_message("> Lien de message invalide.", delete_after = 3)
                                 return
 
                         try: channel = await interaction.guild.fetch_channel(int(result[0]))
                         except:
-                            await interaction.channel.send_message("> Lien de message invalide.", delete_after = 2)
+                            await interaction.channel.send_message("> Lien de message invalide.", delete_after = 3)
                             return
 
                         try: message = await channel.fetch_message(int(result[1]))
                         except:
-                            await interaction.channel.send_message("> Lien de message invalide.", delete_after = 2)
+                            await interaction.channel.send_message("> Lien de message invalide.", delete_after = 3)
                             return
                         
                         if message.author != bot.user:
-                            await interaction.channel.send("> Je ne suis pas l'auteur du message donné.", delete_after = 2)
+                            await interaction.channel.send("> Je ne suis pas l'auteur du message donné.", delete_after = 3)
                             return
                         
                         try: await message.edit(embed = formate_embed(embed_to_send))
                         except:
-                            await interaction.channel.send("> Impossible de modifier le message, vérifiez que j'ai les permissions nécessaires pour le faire.", delete_after = 2)
+                            await interaction.channel.send("> Impossible de modifier le message, vérifiez que j'ai les permissions nécessaires pour le faire.", delete_after = 3)
                             return
 
                         await interaction.message.edit(
@@ -944,21 +952,21 @@ class Utilitaire(commands.Cog):
                         msg = await interaction.channel.send("Quel sera l'**utilisateur** qui recevra le message?")
                         try: response = await bot.wait_for("message", timeout = 60, check = response_check)
                         except asyncio.TimeoutError:
-                            await interaction.channel.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
+                            await interaction.channel.send("> Action annulée, 1 minute écoulée.", delete_after = 3)
                             return
-                        finally: await msg.delete()
-                        await response.delete()
+                        finally: await delete_message(msg)
+                        await delete_message(response)
 
                         searcher = Searcher(bot, ctx)
                         user = await searcher.search_user(response.content)
 
                         if not user:
-                            await ctx.send("> Utilisateur invalide.", delete_after = 2)
+                            await ctx.send("> Utilisateur invalide.", delete_after = 3)
                             return
                         
                         try: await user.send(embed = formate_embed(embed_to_send))
                         except:
-                            await interaction.channel.send(f"> Impossible d'envoyer l'embed à {user.mention}, vérifiez l'autorisation des messages privés avec le bot.", allowed_mentions = None, delete_after = 2)
+                            await interaction.channel.send(f"> Impossible d'envoyer l'embed à {user.mention}, vérifiez l'autorisation des messages privés avec le bot.", allowed_mentions = None, delete_after = 3)
                             return
                         
                         await interaction.message.edit(
@@ -1023,7 +1031,7 @@ class Utilitaire(commands.Cog):
                     return
                 
                 await interaction.response.defer()
-                await interaction.message.delete()
+                await delete_message(interaction.message)
 
             @discord.ui.button(label = "Revenir en arrière", emoji = "↩", style = discord.ButtonStyle.secondary, row = 2, custom_id = "back", disabled = True)
             async def back(self, button, interaction):

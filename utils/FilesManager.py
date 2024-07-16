@@ -17,8 +17,8 @@ def manage_files(
         L'instance du bot
     action `str` :
         L'action que vous souhaitez accomplir ("load" pour charger les cogs, "unload" pour les décharger)
-    command_folder `str`, default `"gestion"` : 
-        Le dossier dans lequel est situé vos fichiers (valeur par défaut : "gestion")
+    command_folder `str`, default `"src"` : 
+        Le dossier dans lequel est situé vos fichiers (valeur par défaut : "src")
     ignored_files_names `list`, default `[]` :
         Fichiers qui seront ignorés lors du chargement/déchargement des cogs (default [])
 

@@ -30,7 +30,9 @@
     ],
     "1": [
         "warn",
-        "clear"
+        "clear",
+        "deco",
+        "bring"
     ],
     "2": [
         "sanctions",
@@ -39,8 +41,9 @@
         "kick",
         "tempmute",
         "untempmute",
-        "deco",
-        "bring"
+        "derank",
+        "addrole",
+        "delrole"
     ],
     "3": [
         "ch",
@@ -49,10 +52,7 @@
         "botadmins",
         "embed",
         "renew",
-        "derank",
         "noderank",
-        "addrole",
-        "delrole",
         "theme",
         "prefix",
         "clearlimit",
@@ -60,7 +60,11 @@
         "giveaway",
         "giveaways",
         "reroll",
-        "randommember"
+        "randommember",
+        "joins",
+        "leaves",
+        "ghostping",
+        "joinrole"
     ],
     "10": [
         "owners",

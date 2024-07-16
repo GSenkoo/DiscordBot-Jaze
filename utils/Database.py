@@ -3,6 +3,7 @@ import os
 import dotenv
 import json
 import warnings
+import asyncio
 
 dotenv.load_dotenv()
 
@@ -27,7 +28,7 @@ class Database:
             db = os.getenv("MYSQL_DB"),
             minsize = 1,
             maxsize = 10,
-        
+            autocommit = True
         )
     
         self.pool = pool

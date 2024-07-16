@@ -15,7 +15,10 @@
                 "noderank_roles": "TEXT",
                 "clear_limit": "INTEGER DEFAULT 100",
                 "blrank_users": "TEXT",
-                "blvoc_users": "TEXT"
+                "blvoc_users": "TEXT",
+                "help_type": "VARCHAR(1) DEFAULT 'b'",
+                "ghostping_channels": "VARCHAR(237)",
+                "join_roles": "VARCHAR(237)"
             }
         },
         "member": {
@@ -67,6 +70,29 @@
                 "prohibited_role": "BIGINT DEFAULT 0",
                 "in_vocal_required": "BOOLEAN DEFAULT 0",
                 "ended": "BOOLEAN DEFAULT 0"
+            }
+        },
+        "join_settings": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "channel": "BIGINT DEFAULT 0",
+                "enabled": "BOOLEAN DEFAULT false",
+                "message": "VARCHAR(2000) DEFAULT 'Bienvenue {MemberName} sur le serveur {ServerName}.'",
+                "message_dm_enabled": "BOOLEAN DEFAULT false",
+                "message_dm": "VARCHAR(2000) DEFAULT 'Bienvenue sur {ServerName}'",
+                "send_after_captcha": "BOOLEAN DEFAULT false"
+            }
+        },
+        "suggestions": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "channel": "BIGINT DEFAULT 0",
+                "confirm_channel": "BIGINT DEFAULT 0",
+                "denied_channel": "BIGINT DEFAULT 0",
+                "moderator_roles": "VARCHAR(237) DEFAULT '[]'",
+                "enabled": "BOOLEAN DEFAULT false",
+                "for_emoji": "VARCHAR(5) DEFAULT '✅'",
+                "against_emoji": "VARCHAR(5) DEFAULT '❌'"
             }
         }
     }

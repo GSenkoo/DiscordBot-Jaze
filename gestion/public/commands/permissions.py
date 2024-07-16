@@ -45,7 +45,7 @@ async def delete_message(message):
     try: await message.delete()
     except: pass
 
-class Gestion_des_Permissions(commands.Cog):
+class Permissions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -69,15 +69,16 @@ class Gestion_des_Permissions(commands.Cog):
                     discord.SelectOption(label = "3. Gérer les commandes de vos permissions", value = "config_commands"),
                     discord.SelectOption(label = "4. Gérer les autorisations de vos permissions", value = "manage_perms_of_perms"),
                     discord.SelectOption(label = "5. Les limites de configurations", value = "config_limit")
-                ]
+                ],
+                custom_id = "select"
             )
             async def select_callback(self, select, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
 
-                for option in select.options:
-                    option.default = option.value == select.values[0]
+                for option in self.get_item("select").options:
+                    option.default = (option.value == select.values[0])
 
                 if select.values[0] == "perms_hp":
                     await interaction.message.edit(
@@ -103,14 +104,49 @@ class Gestion_des_Permissions(commands.Cog):
                     )
                     await interaction.response.defer()
 
-                if select.values == "perms_hp2":
+                if select.values[0] == "perms_hp2":
                     await interaction.message.edit(
                         embed = discord.Embed(
                             color = await bot.get_theme(ctx.guild.id),
-                            description = textwrap.dedent()
-                        )
+                            description = textwrap.dedent("""
+                                ## Explications plus détaillées
+                                La première partie, qui explique la différence entre les permissions hiérarchiques et les permissions personnalisées, est bien sûr très floue. Nous allons ici plonger un peu plus dans les détails.
+
+                                ## Configurations par défauts
+                                Dans un premier temps, parlons des configurations par défaut.
+
+                                Les permissions hiérarchiques sont par défaut configurées de cette manière :
+                                - La **permission public** (tout le monde y a accès) pour les commandes d'informations non sensibles, les petits jeux et quelques petites commandes utilitaires (ex : `+pic`, `+pfc`, `+help`).
+                                - La **permission 1** pour les commandes de modération faible (ex : `+warn`, `+clear`).
+                                - La **permission 2** pour les commandes de modération complète (ex : `+ban`, `+sanctions`, `+tempmute`).
+                                - La **permission 3** pour une gestion assez complète des paramètres et des commandes du bot (ex : `+joins`, `+clearlimit`, `+bringall`).
+                                - La **permission owner** pour les commandes haut placées et un avantage hiérarchique par rapport aux autres membres (ex : `+perms`, `+blrank`, `+wl`).
+                                - La **permission propriétaire** pour le propriétaire du serveur disposant de commandes réservées au propriétaire, ces commandes sont non transférables (ex : `+owner`, `+delowners`).
+
+                                Pour ce qui est des permissions personnalisées, il n'y a pas de configuration par défaut.
+                                C'est à vous de créer vos propres permissions personnalisées selon vos besoins. Les permissions personnalisées sont des permissions indépendantes des autres, c'est-à-dire qu'elles ont leurs propres autorisations (rôles, utilisateurs et permissions de serveur) mais aussi leurs propres commandes.
+                                Si un utilisateur dispose d'une permission personnalisée, cet utilisateur aura bien accès aux commandes de cette permission, mais à aucune autre si vous ne lui donnez pas l'accès.
+
+                                ## Comment configurer ?
+                                Ça dépend de ce que vous voulez configurer. Si vous voulez configurer vos permissions hiérarchiques, alors utilisez la commande `+perms` pour configurer les autorisations de vos permissions hiérarchiques, `+switch` pour déplacer des commandes de permission hiérarchique à permission hiérarchique et `+helpall` pour voir vos commandes par permission hiérarchique.
+                                Si vous voulez configurer vos permissions personnalisées, alors utilisez la commande `+customperms` pour configurer les autorisations et les commandes de vos permissions personnalisées et `+customhelp` pour voir vos commandes par permission personnalisée.
+                            """)
+                        ),
+                        view = self
                     )
                     await interaction.response.defer()
+
+                if select.values[0] == "understand_config":
+                    await interaction.message.edit(
+                        embed = discord.Embed(
+                            color = await bot.get_theme(ctx.guild.id),
+                            description = textwrap.dedent("""
+                                
+                            """)
+                        ),
+                        view = self
+                    )
+                    await interaction.response.defer()  
 
         current_date = datetime.now()
         await ctx.send(
@@ -920,7 +956,7 @@ class Gestion_des_Permissions(commands.Cog):
                 
                 perms_custom = await bot.db.get_data("guild", "perms_custom", False, True, guild_id = interaction.guild.id)
                 if not perms_custom["authorizations"].get(select.values[0], None):
-                    await interaction.response.send_message(f"> La permission personnalisée **{select.values[0]}** n'éxiste plus.")
+                    await interaction.response.send_message(f"> La permission personnalisée **{select.values[0]}** n'éxiste plus.", ephemeral = True)
                     return
 
                 manage_custom_perm_view = self
@@ -949,7 +985,7 @@ class Gestion_des_Permissions(commands.Cog):
                         permissions_data = await bot.db.get_data("guild", "perms_custom", False, True, guild_id = interaction.guild.id)
 
                         if original_permission not in permissions_data["authorizations"].keys():
-                            await interaction.response.send_message(f"> La permission personnalisée **{original_permission}** n'éxiste plus.")
+                            await interaction.response.send_message(f"> La permission personnalisée **{original_permission}** n'éxiste plus.", ephemeral = True)
                             return
 
                         permission_data = permissions_data["authorizations"][original_permission]
@@ -1447,7 +1483,7 @@ class Gestion_des_Permissions(commands.Cog):
 
                         choose_custom_perm_select = previous_view.get_item("choose_custom_perms")
                         choose_custom_perm_select.options = await get_main_select_options_customperms()
-
+    
                         await interaction.message.edit(embed = await get_main_embed_customperms(), view = previous_view)
                         await interaction.response.defer()
 
@@ -1521,4 +1557,4 @@ class Gestion_des_Permissions(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Gestion_des_Permissions(bot))
+    bot.add_cog(Permissions(bot))

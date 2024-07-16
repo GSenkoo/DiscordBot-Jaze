@@ -99,7 +99,8 @@ class on_interaction_giveaway(commands.Cog):
                 if previous_participant != len(participations):
                     message_embed = interaction.message.embeds[0]
                     message_embed.set_footer(text = f"{len(participations)} participants")
-                    await interaction.message.edit(embed = message_embed)
+                    try: await interaction.message.edit(embed = message_embed)
+                    except: pass
                 previous_participant = len(participations)
             
                 await asyncio.sleep(5)

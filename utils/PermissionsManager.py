@@ -63,7 +63,7 @@ class PermissionsManager:
         }
         ```
         """
-        with open("gestion/private/data/default_perms.json") as file:
+        with open("gestion/private/data/default_perms.json", encoding = "utf-8") as file:
             return json.load(file)
 
 
@@ -156,7 +156,7 @@ class PermissionsManager:
         # Pour les commandes réservé aux développeurs
         developer_cog = self.bot.get_cog("Developer")
 
-        with open("config.json") as file:
+        with open("config.json", encoding = "utf-8") as file:
             config_data = json.load(file)
         if ctx.author.id in config_data["developers"]:
             return True
@@ -213,8 +213,6 @@ class PermissionsManager:
                 return True
 
         return False
-    
-
 
 # ------------------------------------------- CUSTOM PERMS PART -------------------------------------------
 

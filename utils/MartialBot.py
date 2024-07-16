@@ -18,9 +18,9 @@ class MartialBot(commands.AutoShardedBot):
         await database.create_pool()
         self.db = database
     
+
     async def set_theme(self, guild_id : int, theme : int):
-        if guild_id in self.colors_save:
-            self.colors_save[guild_id] = theme
+        self.colors_save[str(guild_id)] = theme
 
         await self.db.set_data("guild", "theme", theme, guild_id = guild_id)
 
@@ -60,6 +60,9 @@ class MartialBot(commands.AutoShardedBot):
 
 
     async def get_prefix(self, message: discord.Message) -> list[str] | str:
+        if not message.guild:
+            return "+"
+        
         if str(message.guild.id) in self.prefixes_save.keys():
             return self.prefixes_save[str(message.guild.id)]
         
