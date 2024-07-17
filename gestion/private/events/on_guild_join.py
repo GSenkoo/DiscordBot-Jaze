@@ -9,7 +9,7 @@ class on_guild_join(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        permission_manager = PermissionsManager()
+        permission_manager = PermissionsManager(self.bot)
         await permission_manager.initialize_guild_perms(guild.id)
     
 def setup(bot):
