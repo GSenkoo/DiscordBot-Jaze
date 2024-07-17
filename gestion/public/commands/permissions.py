@@ -104,7 +104,7 @@ class Permissions(commands.Cog):
                     )
                     await interaction.response.defer()
 
-                if select.values[0] == "perms_hp2":
+                elif select.values[0] == "perms_hp2":
                     await interaction.message.edit(
                         embed = discord.Embed(
                             color = await bot.get_theme(ctx.guild.id),
@@ -136,17 +136,8 @@ class Permissions(commands.Cog):
                     )
                     await interaction.response.defer()
 
-                if select.values[0] == "understand_config":
-                    await interaction.message.edit(
-                        embed = discord.Embed(
-                            color = await bot.get_theme(ctx.guild.id),
-                            description = textwrap.dedent("""
-                                
-                            """)
-                        ),
-                        view = self
-                    )
-                    await interaction.response.defer()  
+                else:
+                    await interaction.response.send_message("> Cette partie n'a pas encore été rédigée.", ephemeral = True)
 
         current_date = datetime.now()
         await ctx.send(
