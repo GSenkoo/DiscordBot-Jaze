@@ -18,6 +18,15 @@ class on_member_join(commands.Cog):
                 channel = member.guild.get_channel(channel_id)
                 await channel.send(member.mention, delete_after = 3)
 
+        # ----------------------------------- JOIN ROLES
+        join_roles = await self.bot.db.get_data("guild", "join_roles", True, guild_id = member.guild.id)
+        if join_roles:
+            for role_id in join_roles:
+                role = member.guild.get_role(role_id)
+                if not role: continue
+                await member.add_roles(role, reason = "Rôle automatique")
+
+
     
 def setup(bot):
     bot.add_cog(on_member_join(bot))

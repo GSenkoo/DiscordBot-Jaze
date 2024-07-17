@@ -61,6 +61,8 @@ class on_interaction_giveaway(commands.Cog):
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction : discord.Interaction):
+        if interaction.type != discord.InteractionType.component:
+            return
         if interaction.custom_id != "giveaway":
             return
         

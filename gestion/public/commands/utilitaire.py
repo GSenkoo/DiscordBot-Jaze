@@ -1073,6 +1073,7 @@ class Utilitaire(commands.Cog):
 
         await ctx.send(embed = embed, view = EmbedCreator())
 
+
     @commands.command(description = "Obtenir des/un utilisateur(s) choisi au hasard")
     @commands.guild_only()
     async def randommember(self, ctx, count : int = None):
@@ -1098,7 +1099,69 @@ class Utilitaire(commands.Cog):
             members.remove(choice)
 
         await ctx.send(f"> Voici une liste de {count} utilisateurs choisi au hasard :\n\n{', '.join(choosed_members)}", allowed_mentions = AM.none())
+    
 
+    @commands.command(description = "Faire une suggestion au serveur")
+    @commands.cooldown(rate = 5, per = 60)
+    @commands.guild_only()
+    async def suggest(self, ctx, *, suggestion : str):
+        if len(suggestion) > 2000:
+            await ctx.send("> Votre suggestion ne peut pas dépasser 2000 caractères.")
+            return
+        
+        suggestion_enabled = await self.bot.db.get_data("suggestions", "enabled", guild_id = ctx.guild.id)
+        if not suggestion_enabled:
+            await ctx.send(f"> Les suggestions ne sont pas activés sur ce serveur (utilisez `{await self.bot.get_prefix(ctx.message)}suggestions` pour les configurer).")
+            return
+        
+        suggestion_channel = await self.bot.db.get_data("suggestions", "channel", guild_id = ctx.guild.id)
+        suggestion_channel = ctx.guild.get_channel(suggestion_channel)
+
+        if not suggestion_channel:
+            await ctx.send("> Le salon de suggestion configuré n'est plus d'actualité.")
+            return
+        
+        confirmation_channel = await self.bot.db.get_data("suggestions", "confirm_channel", guild_id = ctx.guild.id)
+        confirmation_channel = ctx.guild.get_channel(confirmation_channel)
+
+        if confirmation_channel:
+            confirm_view = discord.ui.View(timeout = None)
+            confirm_view.add_item(discord.ui.Button(label = "Confirmer", style = discord.ButtonStyle.success, custom_id = f"suggestion_confirm_{ctx.author.id}"))
+            confirm_view.add_item(discord.ui.Button(label = "Rejeter", style = discord.ButtonStyle.danger, custom_id = f"suggestion_denied_{ctx.author.id}"))
+            confirm_view.add_item(discord.ui.Button(emoji = "🗑", custom_id = f"suggestion_delete_{ctx.author.id}"))
+
+            await confirmation_channel.send(
+                embed = discord.Embed(
+                    author = discord.EmbedAuthor(name = ctx.author.display_name, icon_url = ctx.author.avatar.url if ctx.author.avatar else None),
+                    title = "Suggestion en attente",
+                    description = suggestion,
+                    color = await self.bot.get_theme(ctx.guild.id)
+                ),
+                view = confirm_view
+            )
+        else:
+            for_emoji = await self.bot.db.get_data("suggestions", "for_emoji", guild_id = ctx.guild.id)
+            against_emoji = await self.bot.db.get_data("suggestions", "against_emoji", guild_id = ctx.guild.id)
+
+            message = await suggestion_channel.send(
+                embed = discord.Embed(
+                    author = discord.EmbedAuthor(name = ctx.author.display_name, icon_url = ctx.author.avatar.url if ctx.author.avatar else None),
+                    description = suggestion,
+                    color = await self.bot.get_theme(ctx.guild.id)
+                )
+            )
+
+            async def add_reaction(message, reaction, if_connot_reaction):
+                try: await message.add_reaction(reaction)
+                except:
+                    try: await message.add_reaction(if_connot_reaction)
+                    except: pass
+
+            await add_reaction(message, for_emoji, "✅")
+            await add_reaction(message, against_emoji, "❌")
+
+        await ctx.send(f"> Votre suggestion a été bien été envoyé.")
+    
 
 def setup(bot):
     bot.add_cog(Utilitaire(bot))

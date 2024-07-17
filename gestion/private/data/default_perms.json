@@ -26,7 +26,8 @@
         "help",
         "joke",
         "pfc",
-        "bingo"
+        "bingo",
+        "suggest"
     ],
     "1": [
         "warn",
@@ -64,7 +65,8 @@
         "joins",
         "leaves",
         "ghostping",
-        "joinrole"
+        "joinrole",
+        "suggestions"
     ],
     "10": [
         "owners",

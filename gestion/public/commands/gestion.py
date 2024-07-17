@@ -256,9 +256,7 @@ class Gestion(commands.Cog):
                     
                     query = query[2].replace(">", "")
                     try: query = bot.get_emoji(int(query))
-                    except Exception as e:
-                        print(e)
-                        return None
+                    except: return None
                     return query
 
                 async def get_option_name(option_id):
@@ -464,6 +462,7 @@ class Gestion(commands.Cog):
                         value = value.strftime("%Y-%m-%d %H:%M:%S")
                     await bot.db.set_data("giveaway", data, value, guild_id = ctx.guild.id, channel_id = channel.id, message_id = message.id)
                 await bot.db.set_data("giveaway", "participations", json.dumps([]), guild_id = ctx.guild.id, channel_id = channel.id, message_id = message.id)
+                await interaction.message.edit(view = None) 
                 await interaction.response.send_message(f"> Votre giveaway **{self.giveaway_data['reward']}** a bien été envoyé dans le salon <#{self.giveaway_data['channel_id']}>.", ephemeral = True)
         
         await ctx.send(view = ManageGiveaway(giveaway_data), embed = await get_giveaway_embed(giveaway_data))
