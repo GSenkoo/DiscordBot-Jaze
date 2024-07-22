@@ -11,7 +11,7 @@ class Developer(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(description = "Mettre à jour les commandes, évènements et tâches en arrière plan du bot", aliases = ["up"])
+    @commands.command(description = "Mettre à jour les commandes, évènements et tâches en arrière plan du bot", aliases = ["up", "uc"])
     @commands.guild_only()
     async def update(self, ctx):
         with open("config.json", encoding = "utf-8") as file:

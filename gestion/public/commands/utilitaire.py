@@ -1160,7 +1160,7 @@ class Utilitaire(commands.Cog):
             await add_reaction(message, for_emoji, "✅")
             await add_reaction(message, against_emoji, "❌")
 
-        await ctx.send(f"> Votre suggestion a été bien été envoyé.")
+        await ctx.send(f"> Votre suggestion a été bien été envoyé" + (", il doit désormais être confirmé." if confirmation_channel else "."))
     
 
 def setup(bot):

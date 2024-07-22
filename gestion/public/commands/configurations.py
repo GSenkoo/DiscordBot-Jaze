@@ -1,6 +1,7 @@
 import discord
 import json
 import asyncio
+from discord.ui.item import Item
 import emoji
 from discord.ext import commands
 from discord import AllowedMentions as AM
@@ -9,8 +10,8 @@ from utils.Searcher import Searcher
 
 
 class MyViewClass(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout = 180)
+    def __init__(self, timeout : int = 180):
+        super().__init__(timeout = timeout)
     
     async def on_timeout(self) -> None:
         try: message = await self.message.channel.fetch_message(self.message.id)
@@ -279,7 +280,7 @@ class Configurations(commands.Cog):
             suggesiton_columns = await self.bot.db.get_table_columns("suggestions")
             suggestion_current_data = dict(set(zip(suggesiton_columns, suggestions_found[0])))
             suggestion_data = {
-                "channel": ctx.channel.id, "confirm_channel": suggestion_current_data["confirm_channel"],
+                "channel": suggestion_current_data["channel"], "confirm_channel": suggestion_current_data["confirm_channel"],
                 "moderator_roles": json.loads(suggestion_current_data["moderator_roles"]),
                 "enabled": suggestion_current_data["enabled"], "for_emoji": suggestion_current_data["for_emoji"], "against_emoji": suggestion_current_data["against_emoji"]
             }
@@ -514,8 +515,208 @@ class Configurations(commands.Cog):
 
         await ctx.send(embed = await get_suggestion_settings_embed(suggestion_data), view = Suggestions(suggestion_data))
 
+    @commands.command(description = "Configurer l'ajout d'un rôle automatique selon le status")
+    @commands.guild_only()
+    async def soutien(self, ctx):
+        soutien_data = await self.bot.db.execute(f"SELECT * FROM soutien WHERE guild_id = {ctx.guild.id}", fetch = True)
+        if not soutien_data:
+            soutien_data = {"enabled": False, "status": [], "strict": False, "role": 0}
+        else:
+            soutien_columns = await self.bot.db.get_table_columns("soutien")
+            soutien_datas = dict(set(zip(soutien_columns, soutien_data[0])))
+            if not soutien_datas["status"]: soutien_datas["status"] = "[]"
+            soutien_data = {"enabled": soutien_datas["enabled"], "status": json.loads(soutien_datas["status"]), "strict": soutien_datas["strict"], "role": soutien_datas["role"]}
+
+        async def get_soutien_embed(data, guild):
+            embed = discord.Embed(
+                title = "Système de soutien",
+                color = await self.bot.get_theme(ctx.guild.id),
+                description = "*En cas d'erreur, si vous nous fournissez accidentellement un rôle soutien avec des permissions dangereuses, vous en assumerez la responsabilité.*"
+            )
+
+            role = guild.get_role(data["role"])
+
+            embed.add_field(name = "Système mis en place", value = "Oui" if data["enabled"] else "Non")
+            embed.add_field(name = "Rôle soutien", value = role.mention if role else "*Aucun rôle configuré*")
+            embed.add_field(name = "Stricte égalitée?", value = "Oui" if data["strict"] else "Non")
+            embed.add_field(name = "Statut autorisés", value = "\n".join(data["status"]) if data["status"] else "*Aucun status configuré*", inline = False)
+            
+            return embed
+        
+        async def delete_message(message):
+            async def task():
+                try: await message.delete()
+                except: pass
+            loop = asyncio.get_event_loop()
+            loop.create_task(task())
+
+        bot = self.bot
+        class ManageSoutien(MyViewClass):
+            def __init__(self, soutien_data):
+                super().__init__(timeout = 300)
+                self.soutien_data = soutien_data
+
+            @discord.ui.select(
+                placeholder = "Choisir une action",
+                options = [
+                    discord.SelectOption(label = "Système mis en place", value = "enabled", emoji = "❔"),
+                    discord.SelectOption(label = "Rôle soutien", emoji = "📌", value = "role"),
+                    discord.SelectOption(label = "Strict égalitée", emoji = "💢", value = "strict"),
+                    discord.SelectOption(label = "Ajouter un statut autorisé", emoji = "➕", value = "add_status"),
+                    discord.SelectOption(label = "Retirer un statut autorisé", emoji = "➖", value = "remove_status"),
+
+                ]
+            )
+            async def choose_action_select_callback(self, select, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                if select.values[0] in ["enabled", "strict"]:
+                    self.soutien_data[select.values[0]] = not self.soutien_data[select.values[0]]
+                    await interaction.message.edit(embed = await get_soutien_embed(self.soutien_data, interaction.guild))
+                    await interaction.response.defer()
+
+                if select.values[0] == "role":
+                    previous_view = self
+                    class ChooseRole(MyViewClass):
+                        @discord.ui.select(
+                            select_type = discord.ComponentType.role_select,
+                            placeholder = "Choisir un rôle"
+                        )
+                        async def choose_role_select_callback(self, select, interaction):
+                            if interaction.user != ctx.author:
+                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                return
+                            
+                            role = interaction.guild.get_role(select.values[0].id)
+                            
+                            if not role:
+                                await interaction.response.send_message(f"> Je n'ai pas accès au rôle {role.mention}.", ephemeral = True)
+                                return
+                            if role.position >= interaction.guild.me.top_role.position:
+                                await interaction.response.send_message(f"> Je ne peux pas ajotuer le rôle {role.mention} car il est suppérieur ou égal à mon rôle le plus élevé.", ephemeral = True)
+                                return
+                            
+                            await interaction.message.edit(embed = await get_soutien_embed(previous_view.soutien_data, interaction.guild), view = previous_view)
+                            await interaction.response.defer()
+                            
+                        @discord.ui.button(label = "Choisissez un rôle", style = discord.ButtonStyle.primary, disabled = True)
+                        async def button_indicator_callback(self, button, interaction):
+                            pass
+
+                        @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
+                        async def button_comback_callback(self, button, interaction):
+                            if interaction.user != ctx.author:
+                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                return
+                            
+                            await interaction.message.edit(view = previous_view)
+                            await interaction.response.defer()
+
+                    await interaction.message.edit(view = ChooseRole(timeout = 180))
+                    await interaction.response.defer()
+                
+                if select.values[0] == "add_status":
+                    if len(soutien_data["status"]) >= 25:
+                        await interaction.response.send_message("> Vous ne pouvez pas ajouter plus de 25 status autorisés.", ephemeral = True)
+                        return
+                    
+                    await interaction.response.defer()
+
+                    def check_validity(message):
+                        return (message.author == ctx.author) and (message.channel == ctx.channel) and (message.content)
+
+                    message = await ctx.send("Quel **statut** souhaitez-vous ajouter?")
+                    try: response_message = await bot.wait_for("message", check = check_validity, timeout = 60)
+                    except asyncio.TimeoutError:
+                        await ctx.send("> Action annulée, une minute s'est écoulée.", delete_after = 3)
+                        return
+                    finally: await delete_message(message)
+                    await delete_message(response_message)
+
+                    if len(response_message.content) > 50:
+                        await ctx.send("> Action annulée, le statut donné ne doit pas faire plus de 50 caracètres.", delete_after = 3)
+                        return
+                    if "\n" in response_message.content:
+                        await ctx.send("> Action annulée, le statut donné ne doit pas contenir de retour à la ligne.", delete_after = 3)
+                        return
+                    
+                    self.soutien_data["status"].append(response_message.content)
+                    await interaction.message.edit(embed = await get_soutien_embed(self.soutien_data, interaction.guild))
+
+                if select.values[0] == "remove_status":
+                    if len(soutien_data["status"]) == 0:
+                        await interaction.response.send_message("> Il n'y a pas de status à supprimer.", ephemeral = True)
+                        return
+                    
+                    previous_view = self
+                    class ChooseStatusToDelete(MyViewClass):
+                        @discord.ui.select(
+                            placeholder = "Choisir un status",
+                            options = [
+                                discord.SelectOption(label = status, value = status) for status in self.soutien_data["status"]
+                            ],
+                            max_values = len(self.soutien_data["status"])
+                        )
+                        async def choose_status_to_del_callback(self, select, interaction):
+                            if interaction.user != ctx.author:
+                                await ctx.send("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                return
+                            
+                            for value in select.values:
+                                if value not in previous_view.soutien_data["status"]:
+                                    continue
+                                previous_view.soutien_data["status"].remove(value)
+
+                            await interaction.message.edit(embed = await get_soutien_embed(previous_view.soutien_data, interaction.guild), view = previous_view)
+                            await interaction.response.defer()
+
+                        @discord.ui.button(label = "Choisissez un status", style = discord.ButtonStyle.primary, disabled = True)
+                        async def callback_indication_button(self, button, interaction):
+                            pass
 
 
+                        @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
+                        async def comeback_button_callback(self, button, interaction):
+                            if interaction.user != ctx.author:
+                                await ctx.send("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                return
+                            
+                            await interaction.message.edit(view = previous_view)
+                            await interaction.response.defer()
+
+                    await interaction.message.edit(view = ChooseStatusToDelete())
+                    await interaction.response.defer()
+
+            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.success)
+            async def save_callback(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                if self.soutien_data["enabled"]:
+                    if not self.soutien_data["status"]:
+                        await interaction.response.send_message("> Vous devez indiquer au moins un statut pour votre système de soutien afin de le sauvegarder.", ephemeral = True)
+                        return
+                    
+                    role = interaction.guild.get_role(self.soutien_data["role"])
+                    if not role:
+                        await interaction.response.send_message("> Vous devez indiquer un rôle de soutien valide pour sauvegarder.", ephemeral = True)
+                        return
+                
+                
+                for data, value in self.soutien_data.items():
+                    await bot.db.set_data("soutien", data, value if type(value) != list else json.dumps(value), guild_id = interaction.guild.id)
+                
+                message_embed = interaction.message.embeds[0]
+                message_embed.title = "Système de soutien sauvegardé"
+
+                await interaction.message.edit(embed = message_embed, view = None)
+                await interaction.response.defer()
+        
+
+        await ctx.send(embed = await get_soutien_embed(soutien_data, ctx.guild), view = ManageSoutien(soutien_data = soutien_data))
 
 def setup(bot):
     bot.add_cog(Configurations(bot))

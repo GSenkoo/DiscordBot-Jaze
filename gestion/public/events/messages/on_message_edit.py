@@ -9,6 +9,8 @@ class on_message_edit(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
+        if not after.guild:
+            return
         if (before.content == after.content) or (after.author == after.guild.me):
             return
 

@@ -66,7 +66,9 @@
         "leaves",
         "ghostping",
         "joinrole",
-        "suggestions"
+        "suggestions",
+        "variables",
+        "soutien"
     ],
     "10": [
         "owners",

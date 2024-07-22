@@ -94,6 +94,15 @@
                 "for_emoji": "VARCHAR(5) DEFAULT '✅'",
                 "against_emoji": "VARCHAR(5) DEFAULT '❌'"
             }
+        },
+        "soutien": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "enabled": "BOOLEAN DEFAULT false",
+                "status": "TEXT",
+                "strict": "BOOLEAN DEFAULT false",
+                "role": "BIGINT"
+            }
         }
     }
 }

@@ -137,13 +137,19 @@ class CustomHelp(commands.HelpCommand):
                 name = "Alias",
                 value = f"`{'`, `'.join(command.aliases)}`" if command.aliases else "*Aucun alias*"
             )
+        if command.cog_name:
+            embed.add_field(
+                name = "Catégorie",
+                value = f"`{command.cog_name}`"
+            )     
+
         if command.help:
             embed.add_field(
                 name = "Aide",
                 value = f"{command.help}"
             )
-            
 
+            
         channel = self.get_destination()
         await channel.send(embed = embed)
 

@@ -6,7 +6,9 @@ import psutil
 from datetime import datetime
 from typing import Union
 from discord.ext import commands
+from discord.ext.pages import PaginatorButton, Page
 from utils.Paginator import PaginatorCreator
+from utils.Paginator import CustomPaginator
 
 class Informations(commands.Cog):
     def __init__(self, bot):
@@ -480,6 +482,57 @@ class Informations(commands.Cog):
 
         await ctx.send(embed = embed, view = view)
 
+
+    @commands.command(description = "Voir la liste des variables pouvant être utilisé dans le bot.")
+    @commands.guild_only()
+    async def variables(self, ctx : commands.Context):
+        member_embed = discord.Embed(title = "Variables de Membre", color = await self.bot.get_theme(ctx.guild.id))
+        member_embed.add_field(name = "`{MemberName}`", value = f"*Exemple :* {ctx.author.name}")
+        member_embed.add_field(name = "`{MemberDisplayName}`", value = f"*Exemple :* {ctx.author.display_name}")
+        member_embed.add_field(name = "`{MemberMention}`", value = f"*Exemple :* {ctx.author.mention}")
+        member_embed.add_field(name = "`{MemberId}`", value = f"*Exemple :* {ctx.author.id}")
+        member_embed.add_field(name = "`{MemberCreatedAt}`", value = f"*Exemple :* {ctx.author.created_at.strftime('%d/%m/%Y %H:%M')}")
+        member_embed.add_field(name = "`{MemberCreatedAtf}`", value = f"*Exemple :* <t:{round(ctx.author.created_at.timestamp())}>")
+        member_embed.add_field(name = "`{MemberCreatedAtR}`", value = f"*Exemple :* <t:{round(ctx.author.created_at.timestamp())}:R>")
+        member_embed.add_field(name = "`{MemberRolesCount}`", value = f"*Exemple :* {len(ctx.author.roles)}")
+        member_embed.add_field(name = "`{MemberStatus}`", value = f"*Exemple :* {str(ctx.author.status).replace('dnd', 'ne pas déranger').replace('offline', 'hors ligne').replace('online', 'en ligne').replace('idle', 'inactif')}")
+        member_embed.add_field(name = "`{MemberActivity}`", value = f"*Exemple :* {ctx.author.activity.name if ctx.author.activity else 'Aucune activitée'}")
+
+        guild_embed = discord.Embed(title = "Variables de Serveur", color = await self.bot.get_theme(ctx.guild.id))
+        guild_embed.add_field(name = "`{ServerName}`", value = f"*Exemple :* {ctx.guild.name}")
+        guild_embed.add_field(name = "`{ServerId}`", value = f"*Exemple :* {ctx.guild.id}")
+        guild_embed.add_field(name = "`{ServerCreatedAt}`", value = f"*Exemple :* {ctx.guild.created_at.strftime('%d/%m/%Y %H:%M')}")
+        guild_embed.add_field(name = "`{ServerCreatedAtf}`", value = f"*Exemple :* <t:{round(ctx.guild.created_at.timestamp())}>")
+        guild_embed.add_field(name = "`{ServerCreatedAtR}`", value = f"*Exemple :* <t:{round(ctx.guild.created_at.timestamp())}:R>")
+        guild_embed.add_field(name = "`{MemberCount}`", value = f"*Exemple :* {len(ctx.guild.members)}")
+        guild_embed.add_field(name = "`{ConnectedCount}`", value = f"Le nombre d'utilisateur non hors ligne.\n*Exemple :* {len([member for member in ctx.guild.members if member.status != discord.Status.offline])}")
+        guild_embed.add_field(name = "`{OnlineCount}`", value = f"\"en ligne\".\n*Exemple :* {len([member for member in ctx.guild.members if member.status == discord.Status.online])}")
+        guild_embed.add_field(name = "`{OfflineCount}`", value = f"\"hors ligne\".\n*Exemple :* {len([member for member in ctx.guild.members if member.status == discord.Status.offline])}")
+        guild_embed.add_field(name = "`{DndCount}`", value = f"\"ne pas déranger\".\n*Exemple :* {len([member for member in ctx.guild.members if member.status == discord.Status.dnd])}")
+        guild_embed.add_field(name = "`{IdleCount}`", value = f"\"inactif\".\n*Exemple :* {len([member for member in ctx.guild.members if member.status == discord.Status.idle])}")
+        guild_embed.add_field(name = "`{AdminCount}`", value = f"*Exemple :* {len([member for member in ctx.guild.members if member.guild_permissions.administrator])}")
+        guild_embed.add_field(name = "`{BotCount}`", value = f"*Exemple :* {len([member for member in ctx.guild.members if member.bot])}")
+        guild_embed.add_field(name = "`{BoostCount}`", value = f"*Exemple :* {ctx.guild.premium_subscription_count}")
+        guild_embed.add_field(name = "`{ChannelCount}`", value = f"*Exemple :* {len(ctx.guild.channels)}")
+        guild_embed.add_field(name = "`{InVoiceCount}`", value = f"Utilisateurs en vocal.\n*Exemple :* {len([member for member in ctx.guild.members if member.voice])}")
+        
+        pages = [
+            Page(embeds = [member_embed]),
+            Page(embeds = [guild_embed]),
+        ]
+
+        paginator = CustomPaginator(
+            custom_buttons = [
+                PaginatorButton("prev", label = "◀", style = discord.ButtonStyle.primary, row = 4),
+                PaginatorButton("next", label = "▶", style = discord.ButtonStyle.primary, row = 4),
+            ],
+            show_indicator = False,
+            loop_pages = True,
+            pages = pages,
+            use_default_buttons = False
+        )
+
+        await paginator.send(ctx)
 
 def setup(bot):
     bot.add_cog(Informations(bot))
