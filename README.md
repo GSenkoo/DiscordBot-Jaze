@@ -70,7 +70,7 @@ Pour utiliser ce bot, vous aurez biensûr besoin de [Python 3.11](https://www.py
 ```
 pip install -r requirements.txt
 ```
-Ou alors, regardez les requirements ci-dessous et installez les manuellements.
+Ou alors, regardez les requirements ci-dessous et installez les un par un.
 
 # Requirements (avec Python et Mysql)
  - py-cord (version suppérieur ou égal à `2.5.0`)
