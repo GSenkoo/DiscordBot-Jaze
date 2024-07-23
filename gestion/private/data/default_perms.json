@@ -58,12 +58,11 @@
         "prefix",
         "clearlimit",
         "bringall",
+        "cleanup",
         "giveaway",
         "giveaways",
         "reroll",
         "randommember",
-        "joins",
-        "leaves",
         "ghostping",
         "joinrole",
         "suggestions",
@@ -82,7 +81,8 @@
         "customhelp",
         "guideperms",
         "blrank",
-        "blvoc"
+        "blvoc",
+        "massiverole"
     ],
     "11": [
         "owner",

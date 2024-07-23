@@ -209,8 +209,8 @@ class Utilitaire(commands.Cog):
                     )
 
                 buttons = [
-                    PaginatorButton("prev", label="◀", style=discord.ButtonStyle.primary),
-                    PaginatorButton("next", label="▶", style=discord.ButtonStyle.primary),
+                    PaginatorButton("prev", label="◀", style=discord.ButtonStyle.secondary),
+                    PaginatorButton("next", label="▶", style=discord.ButtonStyle.secondary),
                 ]
                 paginator = CustomPaginator(
                     pages = pages,
@@ -479,7 +479,8 @@ class Utilitaire(commands.Cog):
                     discord.SelectOption(label = "Thumbnail", emoji = "🎴", value = "thumbnail"),
                     discord.SelectOption(label = "Auteur", emoji = "👤", value = "author"),
                     discord.SelectOption(label = "Ajouter un champ", emoji = "➕", value = "field_add"),
-                    discord.SelectOption(label = "Retirer un champ", emoji = "➖", value = "field_remove")
+                    discord.SelectOption(label = "Retirer un champ", emoji = "➖", value = "field_remove"),
+                    discord.SelectOption(label = "Copier un embed", emoji = "⤵", value = "copy_embed")
                 ]
             )
             async def select_callback(self, select, interaction):
@@ -497,7 +498,7 @@ class Utilitaire(commands.Cog):
                     return (message.author == ctx.author) and (message.channel == ctx.channel)
                 
                 message = None
-                if select.values[0] not in ["footer", "author", "field_add", "field_remove", "timestamp"]:
+                if select.values[0] not in ["footer", "author", "field_add", "field_remove", "timestamp", "copy_embed"]:
                     message = await ctx.send(f"Quel sera la nouvelle valeur de votre **{select.values[0]}** ? Envoyez `cancel` pour annuler")
 
                     # Attendre la réponse de l'utilisateur, après 60 secondes d'attente, l'action est annulée
@@ -791,7 +792,53 @@ class Utilitaire(commands.Cog):
                             await ctx.send("> Action annulée, nom de field invalide.", delete_after = 3)
                             return
                         self.embed["fields"] = [field_data for field_data in self.embed["fields"] if field_data["name"].lower() != response.content.lower()]
+                
+                
+                # -------------- COPY EMBED
+                if select.values[0] == "copy_embed":
+                    message = await ctx.send("Quel est le **lien du message** contenant l'embed?")
+                    try: response = await bot.wait_for("message", timeout = 60, check = response_check)
+                    except asyncio.TimeoutError:
+                        await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 3)
+                        return
+                    finally: await delete_message(message)
+                    await delete_message(response)
 
+
+                    response_content = response.content.removeprefix(f"https://discord.com/channels/{interaction.guild.id}/")
+                    response_content = response_content.split("/")
+
+                    if not ((len(response_content) == 2) or (all(element.isdigit() for element in response_content))):
+                        await ctx.send("> Action annulée, Le lien donné n'est pas valide.", delete_after = 3)
+                        return
+                    channel = interaction.guild.get_channel(int(response_content[0]))
+                    if not channel:
+                        await ctx.send("> Action annulée, le salon du lien est invalide ou inaccessible.", delete_after = 3)
+                        return
+                    try:
+                        message : discord.Message = await channel.fetch_message(int(response_content[1]))
+                    except:
+                        await ctx.send("> Action annulée, Le message du lien donné est invalide ou inaccessible.", delete_after = 3)
+                        return
+                    
+                    if not message.embeds:
+                        await ctx.send("> Action annulée, le message donné ne contient pas d'embed.", delete_after = 3)
+                        return
+                    
+
+                    embed_to_copy = message.embeds[0].to_dict()
+                    self.embed["title"] = embed_to_copy.get("title", None)
+                    self.embed["description"] = embed_to_copy.get("description", None)
+                    self.embed["color"] = embed_to_copy.get("color", None)
+                    self.embed["footer"]["text"] = embed_to_copy.get("footer", {}).get("text", None)
+                    self.embed["footer"]["icon_url"] = embed_to_copy.get("footer", {}).get("icon_url", None)
+                    self.embed["timestamp"] = embed_to_copy.get("timestamp", None)
+                    self.embed["thumbnail"] = embed_to_copy.get("thumbnail", None)
+                    self.embed["image"] = embed_to_copy.get("image", None)
+                    self.embed["author"]["name"] = embed_to_copy.get("author", {}).get("name", None)
+                    self.embed["author"]["url"] = embed_to_copy.get("author", {}).get("url", None)
+                    self.embed["author"]["icon_url"] = embed_to_copy.get("author", {}).get("icon_url", None)
+                    self.embed["fields"] = embed_to_copy.get("fields", None)
 
                 await ctx.send(f"Votre **embed** a été mis à jours.", delete_after = 3)
 

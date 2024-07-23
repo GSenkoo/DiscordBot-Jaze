@@ -21,10 +21,6 @@ class on_member_role_update(commands.Cog):
             role_to_remove = [role for role in after.roles if (role.is_assignable()) and (role.id not in noderank_roles) and (role.position < after.guild.me.top_role.position)]
             if role_to_remove:
                 await after.remove_roles(*role_to_remove, reason = f"Membre blrank. Pour retirer le blrank utilisez <prefix>blrank del @{after.display_name}")
-        
 
-
-
-    
 def setup(bot):
     bot.add_cog(on_member_role_update(bot))

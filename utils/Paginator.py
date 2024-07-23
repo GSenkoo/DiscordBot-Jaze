@@ -131,8 +131,8 @@ class PaginatorCreator:
             )
 
         buttons = [
-            PaginatorButton("prev", label = "◀", style = discord.ButtonStyle.primary, row = 4),
-            PaginatorButton("next", label = "▶", style = discord.ButtonStyle.primary, row = 4),
+            PaginatorButton("prev", label = "◀", style = discord.ButtonStyle.secondary, row = 4),
+            PaginatorButton("next", label = "▶", style = discord.ButtonStyle.secondary, row = 4),
         ]
 
         paginator = CustomPaginator(

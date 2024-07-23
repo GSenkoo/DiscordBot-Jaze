@@ -10,10 +10,42 @@ from discord.ext import commands
 from utils.Tools import Tools
 from utils.Searcher import Searcher
 from utils.Paginator import PaginatorCreator
+from utils.MyViewClass import MyViewClass
 
 class Gestion(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.massiverole_loading = {}
+
+    async def cog_unload(self):
+        for key in self.massiverole_loading.keys():
+            self.massiverole_loading[key] = False
+
+
+    @commands.Cog.listener()
+    async def on_interaction(self, interaction : discord.Interaction):
+        if interaction.type != discord.InteractionType.component:
+            return
+        if not interaction.custom_id.startswith("massiverole_stop"):
+            return
+        
+        if not self.massiverole_loading.get(interaction.guild.id, False):
+            await interaction.response.send_message("> Il n'y a aucun massiverole en cours sur ce serveur.", ephemeral = True)
+            return
+        
+        if (interaction.user != interaction.guild.owner) and (str(interaction.user.id) not in interaction.custom_id):
+            await interaction.response.send_message("> Seul l'auteur de l'action ou le propriétaire peut arrêter ce massiverole.")
+            return
+        
+        del self.massiverole_loading[interaction.guild.id]
+
+        class StopedMassiveRole(MyViewClass):
+            @discord.ui.button(label = "Arrêter", style = discord.ButtonStyle.danger, disabled = True)
+            async def stop_massiverole_callback(self, button, interaction):
+                pass
+        
+        await interaction.channel.send(f"<@{interaction.custom_id.removeprefix('massiverole_stop_')}>", embed = discord.Embed(title = f"Massiverole annulé par {interaction.user.display_name}", color = await self.bot.get_theme(interaction.guild.id)))
+        await interaction.response.defer()
 
 
     @commands.command(description = "Modifier la visiblitée/la permission d'envoi pour un salon", usage = "<lock/unlock/hide/unhide> [channel]")
@@ -547,6 +579,301 @@ class Gestion(commands.Cog):
         if type(paginator) == list: await ctx.send(embed = paginator[0])
         else: await paginator.send(ctx)
 
+
+    @commands.command(description = "Ajouter/Retirer un ou plusieurs rôle à tous les membres")
+    @commands.guild_only()
+    async def massiverole(self, ctx):
+        class_self = self
+
+        async def get_massiverole_embed(data):
+            embed = discord.Embed(
+                title = "Paramètre du massiverole",
+                description = "*Si vous nous fournissez accidentellement un rôle soutien avec des permissions dangereuses, vous en assumerez la responsabilité.*",
+                color = await self.bot.get_theme(ctx.guild.id)
+            )
+
+            # Calcul des estimations
+            users = 0
+            for member in ctx.guild.members:
+                if not data["roles"]:
+                    continue
+                if ((member.bot) and ("bot" not in data["target"])) or ((not member.bot) and ("human" not in data["target"])):
+                    continue
+
+                member_roles_ids = [role.id for role in member.roles]
+                
+                if not all([ignored_role_id not in member_roles_ids for ignored_role_id in data["ignored_roles"]]): continue
+                if not all([required_role_id in member_roles_ids for required_role_id in data["required_roles"]]): continue
+
+                if data["action"] == "add":
+                    if all([role_id in member_roles_ids for role_id in data["roles"]]): continue
+                else:
+                    if all([role_id not in member_roles_ids for role_id in data["roles"]]): continue
+                users += 1
+
+            hours, remainder = divmod(users, 3600)
+            minutes, remainder = divmod(remainder, 60)
+            seconds = remainder
+
+            text = ""
+            if hours and minutes: text = f"{hours} heures, {minutes} minutes"
+            elif hours: text = f"{hours} heures"
+            elif minutes: text = f"{minutes} minutes"
+            if text: text += f" et {seconds} secondes"
+            else: text += f"{seconds} secondes"
+
+            embed.add_field(name = "Action", value = "Ajouter" if data["action"] == "add" else "Retirer")
+            embed.add_field(name = "Cible", value = data["target"].replace("human", "Humains").replace("bot", "Bots").replace("_", " & "))
+            embed.add_field(name = "Durée estimée", value = text)
+            embed.add_field(name = "Rôles à ajouter/retirer", value = "<@&" + f">\n<@&".join([str(role_id) for role_id in data["roles"]]) + ">" if data["roles"] else "*Aucun rôles*")
+            embed.add_field(name = "Rôles requis", value = "<@&" + f">\n<@&".join([str(role_id) for role_id in data["required_roles"]]) + ">" if data["required_roles"] else "*Aucun rôles*")
+            embed.add_field(name = "Rôles ignorés", value = "<@&" + f">\n<@&".join([str(role_id) for role_id in data["ignored_roles"]]) + ">" if data["ignored_roles"] else "*Aucun rôles*")
+
+            return embed
+
+        massiverole_data = {
+            "action": "add", # add/remove
+            "roles": [],
+            "target": "human_bot", # human/bot/human_bot
+            "required_roles": [],
+            "ignored_roles": [],
+        }
+
+        bot = self.bot
+        class MangageMassiveRole(MyViewClass):
+            def __init__(self, massiverole_data):
+                super().__init__(timeout = 200)
+                self.massiverole_data = massiverole_data
+
+            @discord.ui.select(
+                placeholder = "Choisir un paramètre",
+                options = [
+                    discord.SelectOption(label = "Action", emoji = "⚡", value = "action"),
+                    discord.SelectOption(label = "Cible", emoji = "🎯", value = "target"),
+                    discord.SelectOption(label = "Rôles à ajouter/retirer", emoji = "➕", value = "roles"),
+                    discord.SelectOption(label = "Rôles requis", emoji = "📌", value = "required_roles"),
+                    discord.SelectOption(label = "Rôles ignorés", emoji = "🚫", value = "ignored_roles")
+                ]
+            )
+            async def select_manage_massiverole_callback(self, select, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                
+                if select.values[0] == "action":
+                    if self.massiverole_data["action"] == "add": self.massiverole_data["action"] = "remove"
+                    else: self.massiverole_data["action"] = "add"
+
+                    await interaction.message.edit(embed = await get_massiverole_embed(self.massiverole_data))
+                    await interaction.response.defer()
+                
+                if select.values[0] == "target":
+                    previous_view = self
+                    class ChooseTarget(MyViewClass):
+                        def __init__(self):
+                            super().__init__(timeout = 180)
+
+                        @discord.ui.select(
+                            placeholder = "Choisir des cibles",
+                            options = [
+                                discord.SelectOption(label = "Humains", value = "human", emoji = "👤"),
+                                discord.SelectOption(label = "Bots", value = "bot", emoji = "🤖")
+                            ],
+                            max_values = 2
+                        )
+                        async def choose_target_callback(self, select, interaction):
+                            if interaction.user != ctx.author:
+                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                return
+                            
+                            previous_view.massiverole_data["target"] = "_".join(select.values)
+                            await interaction.message.edit(view = previous_view, embed = await get_massiverole_embed(previous_view.massiverole_data))
+                            await interaction.response.defer()
+                            
+                        @discord.ui.button(label = "Choisissez des cibles", style = discord.ButtonStyle.primary, disabled = True)
+                        async def button_indicator_callback(self, button, interaction):
+                            pass
+
+                        @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
+                        async def comeback_button_callback(self, button, interaction):
+                            if interaction.user != ctx.author:
+                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                return
+                            
+                            await interaction.message.edit(view = previous_view)
+                            await interaction.response.defer()
+                        
+                    await interaction.message.edit(view = ChooseTarget())
+                    await interaction.response.defer()
+
+                if select.values[0] in ["roles", "ignored_roles", "required_roles"]:
+                    def get_option_name(option_id):
+                        return [option.label for option in select.options if option.value ==option_id][0]
+                    
+                    option_id = select.values[0]
+                    option_name = get_option_name(option_id)
+
+                    if len(self.massiverole_data[option_id]) >= 10:
+                        await interaction.response.send_message(f"> Vous ne pouvez pas ajouter plus de 10 rôles à vos {option_name}.", ephemeral = True)
+                        return
+
+                    previous_view = self
+                    class ChooseRole(MyViewClass):
+                        def __init__(self):
+                            super().__init__(timeout = 180)
+
+                        @discord.ui.select(
+                            placeholder = "Choisir des rôles",
+                            select_type = discord.ComponentType.role_select,
+                            max_values = 10
+                        )
+                        async def choose_role_callback(self, select, interaction):
+                            if interaction.user != ctx.author:
+                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                return
+                            
+                            
+                            if option_id == "roles":
+                                not_assignable = []
+                                
+                                for role in select.values:
+                                    role_instance = interaction.guild.get_role(role.id)
+                                    if not role_instance.is_assignable():
+                                        not_assignable.append(role_instance.mention)
+
+                                if not_assignable:
+                                    await interaction.response.send_message("> Vos modifications n'ont pas étés prises en comptes, " + ("les rôles suivants ne sont pas assignables" if len(not_assignable) > 1 else "le rôle suivant n'est pas assignable") + " : \n" + ", ".join(not_assignable) + ".", ephemeral = True)
+                                    return
+                            
+                            opposed_options = ["roles", "ignored_roles", "required_roles"]
+                            opposed_options.remove(option_id)
+                            opposed_roles = previous_view.massiverole_data[opposed_options[0]] + previous_view.massiverole_data[opposed_options[1]]
+
+                            previous_view.massiverole_data[option_id] = [role.id for role in select.values if role.id not in opposed_roles]
+                            not_added_roles_count = sum([1 for role in select.values if role.id in opposed_roles])
+
+                            await interaction.message.edit(view = previous_view, embed = await get_massiverole_embed(previous_view.massiverole_data))
+                            
+                            if not not_added_roles_count:
+                                await interaction.response.defer()
+                            else:
+                                await interaction.response.send_message(f"> Vos modifications ont bien étés prises en compte, mais un total de {not_added_roles_count} rôle(s) n'a pas été ajouté car les {option_name.lower()} ne peuvent pas être dans les {get_option_name(opposed_options[0]).lower()} ou dans les rôles {get_option_name(opposed_options[1]).lower()}.", ephemeral = True)
+
+                            
+                        @discord.ui.button(label = f"Choisissez des {option_name.lower()}", style = discord.ButtonStyle.primary, disabled = True)
+                        async def button_indicator_callback(self, button, interaction):
+                            pass
+
+                        @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
+                        async def comeback_button_callback(self, button, interaction):
+                            if interaction.user != ctx.author:
+                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                return
+                            
+                            await interaction.message.edit(view = previous_view)
+                            await interaction.response.defer()
+                        
+                    await interaction.message.edit(view = ChooseRole())
+                    await interaction.response.defer()
+
+            @discord.ui.button(label = "Lancer", emoji = "👥")
+            async def launch_button_callback(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                if not self.massiverole_data["roles"]:
+                    await interaction.response.send_message("> Vous n'avez pas fournis de rôle à ajouter.", ephemeral = True)
+                    return
+                
+                roles_to_edit = []
+                for role_id in self.massiverole_data["roles"]:
+                    role = interaction.guild.get_role(role_id)
+                    if not role:
+                        await interaction.response.send_message(f"> L'id de rôle `{role_id}` n'éxiste plus ou alors je n'y ai plus accès.", ephemeral = True)
+                        return
+                    roles_to_edit.append(role)
+
+                if class_self.massiverole_loading.get(interaction.guild.id, False):
+                    await interaction.response.send_message("> Un massiverole est déjà en cours sur ce serveur, merci de patienter que celui-ci se termine.", ephemeral = True)
+                    return
+
+                
+
+                class StopMassiveRole(MyViewClass):
+                    @discord.ui.button(label = "Arrêter", style = discord.ButtonStyle.danger, custom_id = f"massiverole_stop_{interaction.user.id}")
+                    async def stop_massiverole_callback(self, button, interaction):
+                        pass
+
+                async def get_massiverole_loading_embed(added_count : int):
+                    embed = discord.Embed(
+                        title = "Massiverole en cours...",
+                        color = await bot.get_theme(interaction.guild.id),
+                    )
+
+                    embed.add_field(name = "Membres affectés", value = str(added_count))
+                    return embed
+
+                class_self.massiverole_loading[interaction.guild.id] = True
+                await interaction.message.edit(embed = await get_massiverole_loading_embed(0), view = StopMassiveRole(timeout = None))
+                await interaction.response.defer()
+
+                added_count = 0
+                for member in interaction.guild.members:
+                    if not class_self.massiverole_loading.get(interaction.guild.id, False):
+                        break
+                    if ((member.bot) and ("bot" not in self.massiverole_data["target"]) or ((not member.bot) and ("human" not in self.massiverole_data["target"]))):
+                        continue
+                        
+                    member_roles_ids = [role.id for role in member.roles]
+                    if self.massiverole_data["required_roles"]:
+                        if not all([role_id in member_roles_ids for role_id in self.massiverole_data["required_roles"]]):
+                            continue
+                    if self.massiverole_data["ignored_roles"]:
+                        if not all([role_id not in member_roles_ids for role_id in self.massiverole_data["ignored_roles"]]):
+                            continue
+                    if self.massiverole_data["action"] == "add":
+                        if all([role_id in member_roles_ids for role_id in self.massiverole_data["roles"]]):
+                            continue
+                    else:
+                        if all([role_id not in member_roles_ids for role_id in self.massiverole_data["roles"]]):
+                            continue
+
+                    try:
+                        if self.massiverole_data["action"] == "add":
+                            await member.add_roles(*roles_to_edit, reason = f"[{interaction.user.display_name} - {interaction.user.id}] Massiverole")
+                        else:
+                            await member.remove_roles(*roles_to_edit, reason = f"[{interaction.user.display_name} - {interaction.user.id}] Massiverole")
+                        added_count += 1
+
+                        if (added_count) and (added_count % 5 == 0):
+                            try: await interaction.message.edit(embed = await get_massiverole_loading_embed(added_count))
+                            except: pass
+
+                        await asyncio.sleep(1)
+                    except: pass
+
+                massiverole_loading_embed = await get_massiverole_loading_embed(added_count)
+                massiverole_loading_embed.title = "Massiverole terminé" if class_self.massiverole_loading.get(interaction.guild.id, None) else "Massiverole annulé"
+                
+                try: await interaction.message.edit(embed = massiverole_loading_embed, view = None)
+                except: pass
+                if class_self.massiverole_loading.get(interaction.guild.id, False):
+                    await interaction.channel.send(interaction.user.mention, embed = discord.Embed(title = f"Massiverole terminé", color = await bot.get_theme(interaction.guild.id)))
+                if interaction.guild.id in class_self.massiverole_loading.keys():
+                    del class_self.massiverole_loading[interaction.guild.id]                
+
+            @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
+            async def delete_button_callback(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                await interaction.message.edit(embed = discord.Embed(title = "Configuration du massiverole annulée.", color = await bot.get_theme(interaction.guild.id)), view = None)
+                await interaction.response.defer()
+
+        await ctx.send(embed = await get_massiverole_embed(massiverole_data), view = MangageMassiveRole(massiverole_data))
 
 
 def setup(bot):

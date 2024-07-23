@@ -11,7 +11,7 @@ class on_message_delete(commands.Cog):
     async def on_message_delete(self, message : discord.Message):
         if message.author == message.guild.me:
             return
-        
+
         await self.bot.db.set_data("snipe", "author_id", message.author.id, guild_id = message.guild.id, channel_id = message.channel.id)
         await self.bot.db.set_data("snipe", "author_name", message.author.display_name, guild_id = message.guild.id, channel_id = message.channel.id)
         await self.bot.db.set_data("snipe", "author_avatar", message.author.display_avatar, guild_id = message.guild.id, channel_id = message.channel.id)

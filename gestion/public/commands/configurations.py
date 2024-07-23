@@ -7,32 +7,7 @@ from discord.ext import commands
 from discord import AllowedMentions as AM
 from utils.Paginator import PaginatorCreator
 from utils.Searcher import Searcher
-
-
-class MyViewClass(discord.ui.View):
-    def __init__(self, timeout : int = 180):
-        super().__init__(timeout = timeout)
-    
-    async def on_timeout(self) -> None:
-        try: message = await self.message.channel.fetch_message(self.message.id)
-        except: return
-
-        def check_is_equal(components1, components2):
-            if len(components1) != len(components2):
-                return False
-            for index in range(len(components1)):
-                if len(components1[index]["components"]) != len(components2[index]["components"]):
-                    return False
-                for index2 in range(len(components1[index]["components"])):
-                    if components1[index]["components"][index2]["custom_id"] != components2[index]["components"][index2]["custom_id"]:
-                        return False
-            return True
-        
-        message_components = [component.to_dict() for component in message.components]
-        
-        if check_is_equal(message_components, self.to_components()):
-            try: await message.edit(view = None)
-            except: pass
+from utils.MyViewClass import MyViewClass
 
 
 class Configurations(commands.Cog):
@@ -531,7 +506,7 @@ class Configurations(commands.Cog):
             embed = discord.Embed(
                 title = "Système de soutien",
                 color = await self.bot.get_theme(ctx.guild.id),
-                description = "*En cas d'erreur, si vous nous fournissez accidentellement un rôle soutien avec des permissions dangereuses, vous en assumerez la responsabilité.*"
+                description = "*Si vous nous fournissez accidentellement un rôle soutien avec des permissions dangereuses, vous en assumerez la responsabilité.*"
             )
 
             role = guild.get_role(data["role"])
@@ -557,11 +532,11 @@ class Configurations(commands.Cog):
                 self.soutien_data = soutien_data
 
             @discord.ui.select(
-                placeholder = "Choisir une action",
+                placeholder = "Choisir un paramètre",
                 options = [
                     discord.SelectOption(label = "Système mis en place", value = "enabled", emoji = "❔"),
                     discord.SelectOption(label = "Rôle soutien", emoji = "📌", value = "role"),
-                    discord.SelectOption(label = "Strict égalitée", emoji = "💢", value = "strict"),
+                    discord.SelectOption(label = "Stricte égalitée", emoji = "💢", value = "strict"),
                     discord.SelectOption(label = "Ajouter un statut autorisé", emoji = "➕", value = "add_status"),
                     discord.SelectOption(label = "Retirer un statut autorisé", emoji = "➖", value = "remove_status"),
 
@@ -594,10 +569,14 @@ class Configurations(commands.Cog):
                             if not role:
                                 await interaction.response.send_message(f"> Je n'ai pas accès au rôle {role.mention}.", ephemeral = True)
                                 return
+                            if not role.is_assignable():
+                                await interaction.response.send_message(f"> Le rôle {role.mention} n'est pas assignable.", ephemeral = True)
+                                return
                             if role.position >= interaction.guild.me.top_role.position:
                                 await interaction.response.send_message(f"> Je ne peux pas ajotuer le rôle {role.mention} car il est suppérieur ou égal à mon rôle le plus élevé.", ephemeral = True)
                                 return
                             
+                            previous_view.soutien_data["role"] = role.id
                             await interaction.message.edit(embed = await get_soutien_embed(previous_view.soutien_data, interaction.guild), view = previous_view)
                             await interaction.response.defer()
                             
@@ -714,9 +693,9 @@ class Configurations(commands.Cog):
 
                 await interaction.message.edit(embed = message_embed, view = None)
                 await interaction.response.defer()
-        
 
         await ctx.send(embed = await get_soutien_embed(soutien_data, ctx.guild), view = ManageSoutien(soutien_data = soutien_data))
+
 
 def setup(bot):
     bot.add_cog(Configurations(bot))

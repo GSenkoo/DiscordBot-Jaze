@@ -412,6 +412,16 @@ class Moderation(commands.Cog):
         await member.move_to(None, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de deco")
         await ctx.send("> " + (f"Le membre {member.mention} a" if member != ctx.author else "Vous avez") + " été déconnecté.", allowed_mentions = AM.none())
 
+    @commands.command(description = "Déconnecter tous les membres actuellement dans un salon vocal.")
+    @commands.bot_has_guild_permissions(move_members = True)
+    async def cleanup(self, ctx, channel : discord.VoiceChannel):
+        if not channel.members:
+            await ctx.send(f"> Il n'y a personne dans le salon {channel.mention}.")
+            return
+
+        for member in channel.members:
+            await member.move_to(None, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de cleanup")
+        await ctx.send(f"> Tous les membres du salon {channel.mention} ont étés déconnectés.", allowed_mentions = AM.none())
     
     @commands.command(description = "Déplacer un membre dans un salon vocal")
     @commands.bot_has_guild_permissions(move_members = True)
