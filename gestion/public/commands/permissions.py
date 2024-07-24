@@ -50,7 +50,7 @@ class Permissions(commands.Cog):
         self.bot = bot
 
 
-    @commands.command(description = "Lire le guide de configuration des permissions.", aliases = ["gp"])
+    @commands.command(description = "Lire le guide de configuration des permissions", aliases = ["gp"])
     @commands.guild_only()
     async def guideperms(self, ctx):
         bot = self.bot
@@ -64,11 +64,9 @@ class Permissions(commands.Cog):
                 placeholder = "Choisir un guide",
                 options = [
                     discord.SelectOption(label = "1. Permissions hiérarchiques et personnalisées [1]", value = "perms_hp"),
-                    discord.SelectOption(label = "1. Permissions hiérarchiques et personnalisées [2]", value = "perms_hp2"),
-                    discord.SelectOption(label = "2. Comprendre vos configurations", value = "understand_config"),
-                    discord.SelectOption(label = "3. Gérer les commandes de vos permissions", value = "config_commands"),
-                    discord.SelectOption(label = "4. Gérer les autorisations de vos permissions", value = "manage_perms_of_perms"),
-                    discord.SelectOption(label = "5. Les limites de configurations", value = "config_limit")
+                    discord.SelectOption(label = "2. Permissions hiérarchiques et personnalisées [2]", value = "perms_hp2"),
+                    discord.SelectOption(label = "3. Gérer et comprendre vos configurations", value = "understand_config"),
+
                 ],
                 custom_id = "select"
             )
@@ -80,24 +78,26 @@ class Permissions(commands.Cog):
                 for option in self.get_item("select").options:
                     option.default = (option.value == select.values[0])
 
+                bot_prefix = await bot.get_prefix(ctx.message)
+
                 if select.values[0] == "perms_hp":
                     await interaction.message.edit(
                         embed = discord.Embed(
                             color = await bot.get_theme(ctx.guild.id),
                             description = textwrap.dedent("""
                                 ## Différences théoriques
-                                La différence principale entre les permissions hiérarchiques et les permissions personnalisées est que les permissions hiérarchiques sont triées par hiérarchie (comme son nom l'indique). Cela signifie que chaque permission a accès à toutes les commandes des permissions inférieures (en plus des siennes).
+                                La différence principale entre les permissions hiérarchiques et les permissions personnalisées est que les permissions hiérarchiques sont triées par hiérarchie (comme son nom l'indique). Cela signifie que chaque permission a accès à toutes les commandes des permissions inférieures (en plus des siennes). Tandis que pour les permissions personnalisées, les permissions sont indépendantes, c'est à dire que les utilisateurs pouvant utiliser les commandes d'une certaine permission personnalisée n'auront accès qu'aux commandes de cette permission et aucune autre (sauf si vous leurs donner l'accès à d'autres permissions).
 
-                                En plus de cette différence, vous devrez également noter que les permissions hiérarchiques sont notées par des nombres de 1 à 9 représentant leur niveau dans la hiérarchie des permissions hiérarchiques.
+                                En plus de ces différences, vous devrez également noter que les permissions hiérarchiques sont notées par des nombres de 1 à 9 représentant leur niveau dans la hiérarchie des permissions hiérarchiques, plus le nombre est grand, plus il est haut hiérarchiquement.
 
                                 ## Différences pratiques
                                 La distinction entre ces deux types de permissions peut encore sembler assez floue. Voici donc un exemple concret :
 
-                                *"Thomas souhaite faire en sorte que les @modérateurs de son serveur aient accès à une certaine commande `+warn`. Il a déjà configuré ses paramètres de telle sorte que les modérateurs aient accès à la permission 2.*
-                                *Mais Thomas veut aussi que tous les rôles avec une permission hiérarchique supérieure aient accès à cette commande. Comment faire ?"*
+                                *"Thomas souhaite faire en sorte que les @modérateurs de son serveur aient accès aux commandes de modérations complète (par défaut en permission 2). Il a déjà configuré ses paramètres de telle sorte que les modérateurs aient accès à la permission 2.*
+                                *Mais Thomas veut aussi que tous les rôles avec une permission hiérarchique supérieure aient accès aux commandes de cette permission. Comment faire ?"*
 
-                                > Dans un premier temps, il serait stupide de créer des permissions personnalisées pour chaque rôle, cela prendrait un temps fou et la gestion serait plus difficile.
-                                > Pour résoudre ce problème, Thomas n'aura qu'à configurer ses permissions de telle sorte que les rôles supérieurs à @modérateurs aient accès à une permission supérieure à la permission 2, et c'est fini.
+                                > Dans un premier temps, il serait stupide de créer des permissions personnalisées pour chaque rôle, cela prendrait un temps fou, la gestion serait plus difficile et le nombre de commande par permission personnalisée est limité à maximum 25 commandes.
+                                > Pour résoudre ce problème, Thomas n'aura qu'à configurer ses permissions de telle sorte que les rôles supérieurs à @modérateurs aient accès à une permission hiérarchique supérieure à la permission 2, et c'est fini.
                             """)
                         ),
                         view = self
@@ -135,6 +135,41 @@ class Permissions(commands.Cog):
                         view = self
                     )
                     await interaction.response.defer()
+                
+                elif select.values[0] == "understand_config":
+                    await interaction.message.edit(
+                        embed = discord.Embed(
+                            color = await bot.get_theme(ctx.guild.id),
+                            description = textwrap.dedent(f"""
+                                ## Configurations des permissions hiérarchiques
+                                1. Pour voir et configurer les autorisations : `{bot_prefix}perms`
+                                2. Pour configurer les commandes par permissions : `{bot_prefix}switch`
+                                3. Pour voir vos commandes par permission : `{bot_prefix}helpall`
+
+                                - **Les permissions suivantes ont quelques particularitée et ne peuvent pas recevoir d'autorisation spécifique**
+                                 - Public (Tous le monde y a accès) 
+                                 - Owner (Réservé à ceux possédant la permission owner)
+                                 - Propriétaire (Réservé au propriétaire du serveur)
+
+                                - **Les permissions hiérarchiques possèdent chacune des limites de configurations des autorisations**
+                                 - 15 rôles maximum (rôles donnants la permission)
+                                 - 15 utilisateurs spécifiques maximum (utilisateurs ayant la permission)
+                                 - 15 permissions de serveur maximum (vous pouvez définir des permission de serveur, comme par exemple : administrateur)
+
+                                ## Configurations des permissions personnalisées
+                                1. Pour créer des permissions, ensuite voir et configurer l'ensemble des autorisations et des commandes : `{bot_prefix}customperms`
+                                2. Pour voir vos commandes par permission personnalisée : `{bot_prefix}customhelp`
+
+                                - **Les permissions personnalisées possèdent chacune des limites de configurations des autorisations**
+                                 - 25 commandes maximum
+                                 - 15 rôles maximum
+                                 - 15 utilisateurs spécifiques maximum
+                                 - 15 permissions de serveur maximum
+                            """)
+                        ),
+                        view = self
+                    )
+                    await interaction.response.defer()
 
                 else:
                     await interaction.response.send_message("> Cette partie n'a pas encore été rédigée.", ephemeral = True)
@@ -158,7 +193,7 @@ class Permissions(commands.Cog):
         )
 
     
-    @commands.command(description = "Voir et configurer les autorisations des permissions hiérarchiques")
+    @commands.command(description = "Voir et configurer les autorisations des permissions hiérarchiques", aliases = ["permissions"])
     @commands.guild_only()
     async def perms(self, ctx):
         bot = self.bot
@@ -548,7 +583,7 @@ class Permissions(commands.Cog):
         await ctx.send(embed = await get_main_embed(), view = ConfigPerms())
 
 
-    @commands.command(description = "Modifier les commandes par permission hiérarchique.")
+    @commands.command(description = "Modifier les commandes par permission hiérarchique", aliases = ["change"])
     @commands.guild_only()
     async def switch(self, ctx):
         bot = self.bot # Pour pouvoir accéder à l'instance du bot dans les callback des bouttons/select menus
@@ -1545,6 +1580,15 @@ class Permissions(commands.Cog):
 
         if type(paginator) == list: await ctx.send(embed = paginator[0])
         else: await paginator.send(ctx)
+
+    
+    @commands.command(description = "Rétablir les permissions par défauts")
+    @commands.guild_only()
+    async def resetperms(self, ctx):
+        permission_manager = PermissionsManager(self.bot)
+        await permission_manager.reset_guild_perms(ctx.guild.id)
+
+        await ctx.send("> Vos permissions ont bien étés réinitialisés.")
 
 
 def setup(bot):

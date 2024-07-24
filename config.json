@@ -18,7 +18,8 @@
                 "blvoc_users": "TEXT",
                 "help_type": "VARCHAR(1) DEFAULT 'b'",
                 "ghostping_channels": "VARCHAR(237)",
-                "join_roles": "VARCHAR(237)"
+                "join_roles": "VARCHAR(237)",
+                "autoreact": "TEXT"
             }
         },
         "member": {

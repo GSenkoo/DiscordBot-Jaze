@@ -2,12 +2,12 @@ import discord
 import json
 import asyncio
 from discord.ui.item import Item
-import emoji
 from discord.ext import commands
 from discord import AllowedMentions as AM
 from utils.Paginator import PaginatorCreator
 from utils.Searcher import Searcher
 from utils.MyViewClass import MyViewClass
+from utils.Tools import Tools
 
 
 class Configurations(commands.Cog):
@@ -15,20 +15,20 @@ class Configurations(commands.Cog):
         self.bot = bot
 
 
-    @commands.command(description = "Définir les rôles qui ne seront pas retirés lors des derank et blrank", usage = "<add/del/reset/view> [role]")
+    @commands.command(description = "Définir les rôles qui ne seront pas retirés lors des derank et blrank", usage = "<add/del/reset/list> [role]")
     @commands.guild_only()
     async def noderank(self, ctx, action : str, role : discord.Role = None):
-        if action.lower() not in ["add", "del", "view", "reset"]:
-            await ctx.send(f"> Action invalide, voici un rappel d'utilisation : `{await self.bot.get_prefix(ctx.message)}noderank <add/del/reset/view> [role]`.")
+        if action.lower() not in ["add", "del", "list", "reset"]:
+            await ctx.send(f"> Action invalide, voici un rappel d'utilisation : `{await self.bot.get_prefix(ctx.message)}noderank <add/del/reset/list> [role]`.")
             return
         
-        if (action.lower() not in ["view", "reset"]) and (not role):
-            await ctx.send("> Si votre action n'est pas \"view\" ou \"reset\", alors le paramètre `role` devient obligatoire.")
+        if (action.lower() not in ["list", "reset"]) and (not role):
+            await ctx.send("> Si votre action est \"add\" ou \"del\", alors le paramètre `role` devient obligatoire.")
             return
 
         noderank_roles = await self.bot.db.get_data("guild", "noderank_roles", True, guild_id = ctx.guild.id)
 
-        if action.lower() == "view":
+        if action.lower() == "list":
             paginator_creator = PaginatorCreator()
             paginator = await paginator_creator.create_paginator(
                 title = "Rôles noderank",
@@ -130,18 +130,18 @@ class Configurations(commands.Cog):
         await ctx.send(f"> Le type de help a bien été défini sur **{helptype}**.")
 
 
-    @commands.command(description = "Ajouter/Supprimer des salons où les membres seront mentionné à l'arrivée", usage = "<add/del/reset/view> [channel]")
+    @commands.command(description = "Ajouter/Supprimer des salons où les membres seront mentionné à l'arrivée", usage = "<add/del/reset/list> [channel]")
     @commands.guild_only()
     async def ghostping(self, ctx, action : str, channel : discord.TextChannel = None):
-        if action.lower() not in ["add", "del", "view", "reset"]:
-            await ctx.send(f"> Action invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}ghostping <add/del/reset/view> [channel]`")
+        if action.lower() not in ["add", "del", "list", "reset"]:
+            await ctx.send(f"> Action invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}ghostping <add/del/reset/list> [channel]`")
             return
         
         if not channel:
             channel = ctx.channel
         
         ghostping_channels = await self.bot.db.get_data("guild", "ghostping_channels", True, guild_id = ctx.guild.id)
-        if action.lower() == "view":
+        if action.lower() == "list":
             if not ghostping_channels:
                 await ctx.send(f"> Il n'y aucun salon ghostping.")
                 return
@@ -184,11 +184,11 @@ class Configurations(commands.Cog):
         await self.bot.db.set_data("guild", "ghostping_channels", json.dumps(ghostping_channels), guild_id = ctx.guild.id)
 
     
-    @commands.command(description = "Définir des rôles qui seront automatiquements ajoutés aux nouveaux membres", usage = "<add/del/reset/view> [role]")
+    @commands.command(description = "Définir des rôles qui seront automatiquements ajoutés aux nouveaux membres", usage = "<add/del/reset/list> [role]")
     @commands.guild_only()
     async def joinrole(self, ctx, action, role : discord.Role = None):
-        if action.lower() not in ["add", "del", "view", "reset"]:
-            await ctx.send(f"> Action invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}joinrole <add/del/reset/view> [role]`")
+        if action.lower() not in ["add", "del", "list", "reset"]:
+            await ctx.send(f"> Action invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}joinrole <add/del/reset/list> [role]`")
             return
 
         if (action.lower() in ["add", "del"]) and (not role):
@@ -196,7 +196,7 @@ class Configurations(commands.Cog):
             return
         
         join_roles = await self.bot.db.get_data("guild", "join_roles", True, guild_id = ctx.guild.id)
-        if action.lower() == "view":
+        if action.lower() == "list":
             if not join_roles:
                 await ctx.send(f"> Il n'y aucun rôle automatiquement ajouté aux nouveaux membres.")
                 return
@@ -238,12 +238,93 @@ class Configurations(commands.Cog):
 
         await self.bot.db.set_data("guild", "join_roles", json.dumps(join_roles), guild_id = ctx.guild.id)
 
+
+    @commands.command(description = "Configurer l'ajout automatique d'un emoji spécifique dans un salon", usage = "<add/del/reset/list> [emoji] [channel]")
+    @commands.guild_only()
+    async def autoreact(self, ctx, action : str, emoji : str = None, channel : discord.TextChannel = None):
+        tools = Tools(self.bot)
+        action = action.lower()
+
+        if action not in ["add", "del", "list", "reset"]:
+            await ctx.send(f"> Action invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}autoreact <add/del/reset/list> [emoji] [channel]`")
+            return
+        
+        if not channel: channel = ctx.channel
+        
+        if action in ["add", "del"]:
+            if not emoji:
+                await ctx.send("> Les paramètres `emoji` deviennent obligatoire si votre action est \"add\" ou \"del\".")
+                return
+          
+        autoreact_data = await self.bot.db.get_data("guild", "autoreact", False, True, guild_id = ctx.guild.id)
+        if action != "add":
+            if not autoreact_data:
+                await ctx.send("> Aucun ajout de réaction automatique a été configuré sur ce serveur.")
+                return 
+
+        if action == "list":
+            embed = discord.Embed(
+                title = f"Autoreact ({len(autoreact_data)}/5)",
+                description = "\n".join([f"<#{channel_id}> : {', '.join(reactions)}" for channel_id, reactions in autoreact_data.items()]),
+                color = await self.bot.get_theme(ctx.guild.id)
+            )
+            await ctx.send(embed = embed)
+            return
+
+
+        if action == "reset":
+            await ctx.send(f"> Un total de {len(autoreact_data)} salons n'aura désormais plus d'ajout automatique de réactions.")
+            autoreact_data = {}
+
+        if action == "del":
+            if str(channel.id) not in autoreact_data.keys():
+                await ctx.send(f"> Le salon {channel.mention} n'a aucune réaction automatique configuré.")
+                return
+            
+            found_emoji = await tools.get_emoji(emoji)
+            if not found_emoji:
+                await ctx.send(f"> L'emoji donné est invalide.")
+                return
+            
+            if str(found_emoji) not in autoreact_data[str(channel.id)]:
+                await ctx.send(f"> L'emoji donné n'est pas dans la liste des réactions automatiques du salon {channel.mention}.")
+                return
+            
+            autoreact_data[str(channel.id)].remove(str(found_emoji))
+            if not autoreact_data[str(channel.id)]:
+                del autoreact_data[str(channel.id)]
+            await ctx.send(f"> La réaction {found_emoji} ne sera désormais plus automatiquement ajouté dans le salon {channel.mention}.")
+
+        if action == "add":
+            found_emoji = await tools.get_emoji(emoji)
+            if not found_emoji:
+                await ctx.send(f"> L'emoji donné est invalide.")
+                return
+            
+            if found_emoji in autoreact_data.get(str(channel.id), []):
+                await ctx.send(f"> L'emoji donné est déjà dans la liste des réactions automatiques du salon {channel.mention}.")
+                return
+
+            if (str(channel.id) not in autoreact_data.keys()) and (len(autoreact_data) >= 5):
+                await ctx.send("> Vous ne pouvez pas ajouter plus de 5 salons disposant d'ajout de réaction automatique.")
+                return
+            
+            if len(autoreact_data.get(str(channel.id), [])) >= 3:
+                await ctx.send("> Vous ne pouvez pas ajouter plus de 3 réactions automatiques par salon.")
+                return
+            
+            autoreact_data[str(channel.id)] = autoreact_data.get(str(channel.id), []) + [str(found_emoji)]
+            await ctx.send(f"> La réaction {found_emoji} sera désormais automatiquement ajouté dans le salon {channel.mention}.")
+
+        await self.bot.db.set_data("guild", "autoreact", json.dumps(autoreact_data), guild_id = ctx.guild.id)
     
+
     @commands.command(description = "Configurer les paramètres de suggestion")
     @commands.guild_only()
     async def suggestions(self, ctx):
         suggestions_found = await self.bot.db.execute(f"SELECT * FROM suggestions WHERE guild_id = {ctx.guild.id}", fetch = True)
         searcher = Searcher(self.bot, ctx)
+        tools = Tools(self.bot)
 
         if not suggestions_found:
             suggestion_data = {
@@ -326,19 +407,6 @@ class Configurations(commands.Cog):
                 def check_validity(message):
                     return (message.author == ctx.author) and (message.content) and (message.channel == ctx.channel)
                 
-
-                def get_emoji(query):
-                    if emoji.is_emoji(query):
-                        return query
-                    
-                    query = query.split(":")
-                    if len(query) != 3:
-                        return None
-                    
-                    query = query[2].replace(">", "")
-                    try: query = bot.get_emoji(int(query))
-                    except: return None
-                    return query
                 
                 # ------------------------------ Pour les cas spéciaux
                 if select.values[0] == "add_moderator_roles":
@@ -457,7 +525,7 @@ class Configurations(commands.Cog):
                         self.suggestion_data[select.values[0]] = channel.id
 
                 if select.values[0] in ["for_emoji", "against_emoji"]:
-                    found_emoji = get_emoji(response.content)
+                    found_emoji = await tools.get_emoji(response.content)
                     if not found_emoji:
                         await ctx.send("> Action annulée, l'emoji donné est invalide.", delete_after = 3)
                         return
@@ -489,6 +557,7 @@ class Configurations(commands.Cog):
                 
 
         await ctx.send(embed = await get_suggestion_settings_embed(suggestion_data), view = Suggestions(suggestion_data))
+
 
     @commands.command(description = "Configurer l'ajout d'un rôle automatique selon le status")
     @commands.guild_only()
@@ -695,6 +764,7 @@ class Configurations(commands.Cog):
                 await interaction.response.defer()
 
         await ctx.send(embed = await get_soutien_embed(soutien_data, ctx.guild), view = ManageSoutien(soutien_data = soutien_data))
+    
 
 
 def setup(bot):

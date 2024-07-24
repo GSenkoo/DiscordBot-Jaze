@@ -278,19 +278,6 @@ class Gestion(commands.Cog):
                     try: await message.delete()
                     except: pass
 
-                async def get_emoji(query):
-                    if emoji.is_emoji(query):
-                        return query
-                    
-                    query = query.split(":")
-                    if len(query) != 3:
-                        return None
-                    
-                    query = query[2].replace(">", "")
-                    try: query = bot.get_emoji(int(query))
-                    except: return None
-                    return query
-
                 async def get_option_name(option_id):
                     for option in select.options:
                         if option.value == option_id:
@@ -358,7 +345,7 @@ class Gestion(commands.Cog):
                     self.giveaway_data["channel_id"] = channel.id
 
                 if select.values[0] == "emoji":
-                    found_emoji = await get_emoji(response_message.content)
+                    found_emoji = await tools.get_emoji(response_message.content)
 
                     if not found_emoji:
                         await ctx.send("> Emoji invalide, merci de donner un emoji valide.", delete_after = 2)

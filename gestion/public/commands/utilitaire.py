@@ -679,7 +679,7 @@ class Utilitaire(commands.Cog):
                     await delete_message(response)
 
                     if not response.content:
-                        await ctx.send("> Action annulée, vous n'avez pas donné de réponse.", delete_fater = 2)
+                        await ctx.send("> Action annulée, vous n'avez pas donné de réponse.", delete_after = 2)
                         return
                     if response.content.lower() == "delete":
                         temporary_data["author"]["icon_url"] = None

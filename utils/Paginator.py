@@ -98,7 +98,7 @@ class PaginatorCreator:
                         color = embed_color,
                         thumbnail = embed_thumbnail,
                         author = embed_author
-                    ).set_footer(text = f"Page {index + 1}/{len(data_list)}" if page_counter else "")
+                    ).set_footer(text = f"{index + 1}/{len(data_list)}" if page_counter else "")
                 ],
                 custom_view = custom_rows[index] if custom_rows else None
             ) for index, data in enumerate(data_list)
@@ -112,7 +112,7 @@ class PaginatorCreator:
                     color = embed_color,
                     thumbnail = embed_thumbnail,
                     author = embed_author
-                ).set_footer(text = f"Page 1/1" if page_counter else "")
+                ).set_footer(text = f"1/1" if page_counter else "")
             ]
         
         if len(pages) == 0:
@@ -125,7 +125,7 @@ class PaginatorCreator:
                             color = embed_color,
                             thumbnail = embed_thumbnail,
                             author = embed_author
-                        ).set_footer(text = f"Page 1/1" if page_counter else "")
+                        ).set_footer(text = f"1/1" if page_counter else "")
                     ]
                 )
             )

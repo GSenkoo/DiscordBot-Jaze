@@ -67,7 +67,8 @@
         "joinrole",
         "suggestions",
         "variables",
-        "soutien"
+        "soutien",
+        "autoreact"
     ],
     "10": [
         "owners",

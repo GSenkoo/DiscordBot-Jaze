@@ -1,5 +1,6 @@
 import json
 import discord
+import emoji
 from discord.ext import commands
 from typing import Union
 from datetime import timedelta, datetime
@@ -105,3 +106,16 @@ class Tools:
             return timedelta(seconds = int(duration_test))
         
         return None
+    
+    async def get_emoji(self, query):
+        if emoji.is_emoji(query):
+            return query
+        
+        query = query.split(":")
+        if len(query) != 3:
+            return None
+        
+        query = query[2].replace(">", "")
+        try: query = self.bot.get_emoji(int(query))
+        except: return None
+        return query
