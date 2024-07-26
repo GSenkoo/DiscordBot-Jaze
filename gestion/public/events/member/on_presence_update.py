@@ -10,6 +10,9 @@ class on_presence_update(commands.Cog):
 
     @commands.Cog.listener()
     async def on_presence_update(self, before : discord.Member, after : discord.Member):
+        if not self.bot.db:
+            return
+        
         soutien_datas = await self.bot.db.execute(f"SELECT * FROM soutien WHERE guild_id = {after.guild.id}", fetch = True)
         if not soutien_datas:
             return
