@@ -11,8 +11,10 @@ class on_guild_join(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild : discord.Guild):
-        permission_manager = PermissionsManager(self.bot)
-        await permission_manager.initialize_guild_perms(guild.id)
+        perms_enabled = await self.bot.db.get_data("guild", "perms_enabled", guild_id = guild.id) # si le bot a déjà été précédement ajouté au serveur et que le serveur avait activé le système de permission
+        if perms_enabled:
+            permission_manager = PermissionsManager(self.bot)
+            await permission_manager.initialize_guild_perms(guild.id)
 
         user = None
         async for bot_added_log in guild.audit_logs(action = discord.AuditLogAction.bot_add):

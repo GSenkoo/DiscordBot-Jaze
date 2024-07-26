@@ -22,8 +22,10 @@ class on_ready(commands.Cog):
         permission_manager = PermissionsManager(self.bot)
 
         for guild in self.bot.guilds:
-            await permission_manager.initialize_guild_perms(guild.id)
-            print(f"[PermissionManager] Le serveur {guild.name} a été intialisé avec succès.")
+            perms_enabled = await self.bot.db.get_data("guild", "perms_enabled", guild_id = guild.id)
+            if perms_enabled:
+                await permission_manager.initialize_guild_perms(guild.id)
+                print(f"[PermissionManager] Le serveur {guild.name} a été intialisé avec succès.")
         print("[PermissionManager] Initialisation des serveurs terminés.")
 
 
