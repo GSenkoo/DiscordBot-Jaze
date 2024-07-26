@@ -83,7 +83,8 @@
         "guideperms",
         "blrank",
         "blvoc",
-        "massiverole"
+        "massiverole",
+        "advancedperms"
     ],
     "11": [
         "owner",

@@ -149,6 +149,7 @@ class PermissionsManager:
         
         return commands
 
+# ------------------------------------------- CHECK -------------------------------------------
 
     async def can_use_cmd(self, ctx):
         owners = await self.bot.db.get_data("guild", "owners", True, guild_id = ctx.guild.id)
@@ -160,9 +161,28 @@ class PermissionsManager:
             config_data = json.load(file)
         if ctx.author.id in config_data["developers"]:
             return True
-        
         if ctx.command.name in [command.name for command in developer_cog.get_commands()]:
             return False
+
+        perms_enabled = await self.bot.db.get_data("guild", "perms_enabled", guild_id = ctx.guild.id)
+        if not perms_enabled:
+            with open("gestion/private/data/commands_guildpermissions.json") as file:
+                commands_guildpermissions = json.load(file)
+
+            command_required_permissions = commands_guildpermissions[ctx.command.name]
+
+            if (ctx.author == ctx.guild.owner):
+                return True
+            if (ctx.author.id in await self.bot.db.get_data("guild", "owners", True, guild_id = ctx.guild.id)) and ("buyer" not in command_permissions):
+                return True
+
+            for permission in command_required_permissions:
+                if permission in ["owner", "buyer"]:
+                    return False
+                if not getattr(ctx.author.guild_permissions, permission):
+                    return False
+            return True
+
 
         perms_hierarchic_data = await self.bot.db.get_data("guild", "perms_hierarchic", False, True, guild_id = ctx.guild.id)
         try:

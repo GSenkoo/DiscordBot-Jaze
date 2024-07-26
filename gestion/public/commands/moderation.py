@@ -460,7 +460,7 @@ class Moderation(commands.Cog):
         else: await ctx.send(f"> Un membre a été déplacé vers le salon {channel.mention}.")
 
 
-    @commands.command(description = "Empêcher un membre de recevoir des rôles qui ne sont pas noderank", usage = "<add/del/view> [member] [reason]")
+    @commands.command(description = "Empêcher un membre de recevoir des rôles qui ne sont pas noderank", usage = "<add/del/list> [member] [reason]")
     @commands.guild_only()
     @commands.bot_has_guild_permissions(manage_roles = True)
     async def blrank(self, ctx, action, member : discord.Member = None, *, reason : str = None):
@@ -468,17 +468,17 @@ class Moderation(commands.Cog):
         paginator_creator = PaginatorCreator()
         tools = Tools(self.bot)
 
-        if action not in ["add", "del", "view"]:
-            await ctx.send(f"> Action invalide, voici un rappel d'utilisation : `{await self.bot.get_prefix(ctx.message)}blrank <add/del/view> [member] [reason]`.")
+        if action not in ["add", "del", "list"]:
+            await ctx.send(f"> Action invalide, voici un rappel d'utilisation : `{await self.bot.get_prefix(ctx.message)}blrank <add/del/list> [member] [reason]`.")
             return
         
-        if (action != "view") and (not member):
-            await ctx.send("> Si votre action n'est pas \"view\", alors le paramètre `member` devient obligatoire.")
+        if (action != "list") and (not member):
+            await ctx.send("> Si votre action n'est pas \"list\", alors le paramètre `member` devient obligatoire.")
             return
 
         blrank_users = await self.bot.db.get_data("guild", "blrank_users", True, guild_id = ctx.guild.id)
 
-        if action == "view":
+        if action == "list":
             blrank_users = [f"<@{user}>" for user in blrank_users]
 
             paginator = await paginator_creator.create_paginator(
@@ -520,7 +520,7 @@ class Moderation(commands.Cog):
 
 
 
-    @commands.command(description = "Empêcher un membre de recevoir des rôles qui ne sont pas noderank", usage = "<add/del/view> [member] [reason]")
+    @commands.command(description = "Empêcher un membre de recevoir des rôles qui ne sont pas noderank", usage = "<add/del/list> [member] [reason]")
     @commands.guild_only()
     @commands.bot_has_guild_permissions(manage_roles = True)
     async def blvoc(self, ctx, action, member : discord.Member = None, *, reason : str = None):
@@ -528,17 +528,17 @@ class Moderation(commands.Cog):
         paginator_creator = PaginatorCreator()
         tools = Tools(self.bot)
 
-        if action not in ["add", "del", "view"]:
-            await ctx.send(f"> Action invalide, voici un rappel d'utilisation : `{await self.bot.get_prefix(ctx.message)}blvoc <add/del/view> [member] [reason]`.")
+        if action not in ["add", "del", "list"]:
+            await ctx.send(f"> Action invalide, voici un rappel d'utilisation : `{await self.bot.get_prefix(ctx.message)}blvoc <add/del/list> [member] [reason]`.")
             return
         
-        if (action != "view") and (not member):
-            await ctx.send("> Si votre action n'est pas \"view\", alors le paramètre `member` devient obligatoire.")
+        if (action != "list") and (not member):
+            await ctx.send("> Si votre action n'est pas \"list\", alors le paramètre `member` devient obligatoire.")
             return
 
         blvoc_users = await self.bot.db.get_data("guild", "blvoc_users", True, guild_id = ctx.guild.id)
 
-        if action == "view":
+        if action == "list":
             blvoc_users = [f"<@{user}>" for user in blvoc_users]
 
             paginator = await paginator_creator.create_paginator(

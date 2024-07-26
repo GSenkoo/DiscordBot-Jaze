@@ -209,8 +209,8 @@ class Utilitaire(commands.Cog):
                     )
 
                 buttons = [
-                    PaginatorButton("prev", label="◀", style=discord.ButtonStyle.secondary),
-                    PaginatorButton("next", label="▶", style=discord.ButtonStyle.secondary),
+                    PaginatorButton("prev", label = "◀", style=discord.ButtonStyle.primary),
+                    PaginatorButton("next", label = "▶", style=discord.ButtonStyle.primary),
                 ]
                 paginator = CustomPaginator(
                     pages = pages,
@@ -321,14 +321,18 @@ class Utilitaire(commands.Cog):
         translation = await self.bot.get_translation("snipe", ctx.guild.id)
 
         author_id = await self.bot.db.get_data("snipe", "author_id", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
+
+        if not author_id:
+            await ctx.send(f"> " + translation["Aucun récent message supprimé n'a été enregistré"] + ".")
+            return
+            
         author_name = await self.bot.db.get_data("snipe", "author_name", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
         author_avatar = await self.bot.db.get_data("snipe", "author_avatar", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
         message_content = await self.bot.db.get_data("snipe", "message_content", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
         message_datetime = await self.bot.db.get_data("snipe", "message_datetime", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
 
-        if not author_id:
-            await ctx.send(f"> " + translation["Aucun récent message supprimé n'a été enregistré"] + ".")
-            return
+        snipe_view = discord.ui.View(timeout = None)
+        snipe_view.add_item(discord.ui.Button(emoji = "🗑", custom_id = f"snipedelete_{ctx.author.id}_{author_id}"))
         
         embed = discord.Embed(
             author = discord.EmbedAuthor(name = author_name, icon_url = author_avatar, url = "https://discord.com/users/" + str(author_id)),
@@ -337,7 +341,7 @@ class Utilitaire(commands.Cog):
             timestamp = message_datetime
         )
 
-        await ctx.send(embed = embed)
+        await ctx.send(embed = embed, view = snipe_view)
 
     
     @commands.command(description = "Voir le dernier message modifié du salon")
@@ -346,16 +350,20 @@ class Utilitaire(commands.Cog):
         translation = await self.bot.get_translation("esnipe", ctx.guild.id)
 
         author_id = await self.bot.db.get_data("snipe_edit", "author_id", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
+        
+        if not author_id:
+            await ctx.send(f"> " + translation["Aucun récent message modifié n'a été enregistré"] + ".")
+            return
+
         author_name = await self.bot.db.get_data("snipe_edit", "author_name", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
         author_avatar = await self.bot.db.get_data("snipe_edit", "author_avatar", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
         message_content_before = await self.bot.db.get_data("snipe_edit", "message_content_before", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
         message_content_after = await self.bot.db.get_data("snipe_edit", "message_content_after", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
         message_datetime = await self.bot.db.get_data("snipe_edit", "message_datetime", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
-
-        if not author_id:
-            await ctx.send(f"> " + translation["Aucun récent message modifié n'a été enregistré"] + ".")
-            return
         
+        snipe_view = discord.ui.View(timeout = None)
+        snipe_view.add_item(discord.ui.Button(emoji = "🗑", custom_id = f"snipedelete_{ctx.author.id}_{author_id}"))
+
         embed = discord.Embed(
             author = discord.EmbedAuthor(name = author_name, icon_url = author_avatar, url = "https://discord.com/users/" + str(author_id)),
             color = await self.bot.get_theme(ctx.guild.id),
@@ -365,7 +373,7 @@ class Utilitaire(commands.Cog):
         embed.add_field(name = "Précédent contenu", value = message_content_before)
         embed.add_field(name = "Nouveau contenu", value = message_content_after, inline = False)
 
-        await ctx.send(embed = embed)
+        await ctx.send(embed = embed, view = snipe_view)
 
 
     @commands.command(description = "Afficher un menu intéractif pour créer et envoyer un embed")

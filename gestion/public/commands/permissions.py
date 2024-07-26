@@ -8,6 +8,7 @@ from datetime import datetime
 from discord.ext import commands
 from utils.PermissionsManager import PermissionsManager
 from utils.Paginator import PaginatorCreator
+from utils.MartialBot import MartialBot
 
 
 class MyViewClass(discord.ui.View):
@@ -45,12 +46,40 @@ async def delete_message(message):
     try: await message.delete()
     except: pass
 
+async def check_perms_enabled(ctx):
+    permissions_enabled = await ctx.bot.db.get_data("guild", "perms_enabled", guild_id = ctx.guild.id)
+    if not permissions_enabled:
+        await ctx.send(f"> Pour activer le système de permission avancé utilisez `{await ctx.bot.get_prefix(ctx.message)}advancedperms <on/off>`.")
+    return permissions_enabled
+
 class Permissions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    
+    @commands.command(description = "Activer/Désactiver le système de permission avancé, en étant désactivé le bot se basera sur les permissions discord", usage = "<on/off>", aliases = ["advancedperm"])
+    @commands.guild_only()
+    async def advancedperms(self, ctx, action):
+        action = action.lower()
+        if action not in ["on", "off"]:
+            await ctx.send(f"> Votre action est invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}advancedperms <on/off>`.")
+            return
+        
+        perms_enabled = await self.bot.db.get_data("guild", "perms_enabled", guild_id = ctx.guild.id)
+        if (perms_enabled and action == "on") or (not perms_enabled and action == "off"):
+            await ctx.send(f"> Le système de permission est déjà {'activé' if action == 'on' else 'désactivé'}.")
+            return
+        
+        perms_enabled = not perms_enabled
+        await self.bot.db.set_data("guild", "perms_enabled", perms_enabled, guild_id = ctx.guild.id)
+        await ctx.send(f"> Le système de permission avancé a bien été {'activé' if action == 'on' else 'désactivé'}." + (f"\n> Conseil : Pour en apprendre un peu plus sur ce système, utilisez `{await self.bot.get_prefix(ctx.message)}guideperms`." if action == "on" else ""))
 
-    @commands.command(description = "Lire le guide de configuration des permissions", aliases = ["gp"])
+        if perms_enabled:
+            permission_manager = PermissionsManager(self.bot)
+            await permission_manager.initialize_guild_perms(ctx.guild.id)
+
+
+    @commands.command(description = "Lire le guide de configuration des permissions", aliases = ["gp", "guideperm"])
     @commands.guild_only()
     async def guideperms(self, ctx):
         bot = self.bot
@@ -192,9 +221,10 @@ class Permissions(commands.Cog):
             view = PermGuideMenu()
         )
 
-    
-    @commands.command(description = "Voir et configurer les autorisations des permissions hiérarchiques", aliases = ["permissions"])
+
+    @commands.command(description = "Voir et configurer les autorisations des permissions hiérarchiques", aliases = ["permissions", "perm"])
     @commands.guild_only()
+    @commands.check(check_perms_enabled)
     async def perms(self, ctx):
         bot = self.bot
 
@@ -585,6 +615,7 @@ class Permissions(commands.Cog):
 
     @commands.command(description = "Modifier les commandes par permission hiérarchique", aliases = ["change"])
     @commands.guild_only()
+    @commands.check(check_perms_enabled)
     async def switch(self, ctx):
         bot = self.bot # Pour pouvoir accéder à l'instance du bot dans les callback des bouttons/select menus
         prefix = ctx.clean_prefix
@@ -851,6 +882,7 @@ class Permissions(commands.Cog):
 
     @commands.command(description = "Voir vos commandes par permissions hiérarchiques")
     @commands.guild_only()
+    @commands.check(check_perms_enabled)
     async def helpall(self, ctx):
         perms_manager = PermissionsManager(self.bot)
         paginator_creator = PaginatorCreator()
@@ -883,8 +915,9 @@ class Permissions(commands.Cog):
         await paginator.send(ctx)
         
 
-    @commands.command(description = "Voir et configurer vos permissions personnalisées")
+    @commands.command(description = "Voir et configurer vos permissions personnalisées", aliases = ["customperm"])
     @commands.guild_only()
+    @commands.check(check_perms_enabled)
     async def customperms(self, ctx):
         
         cogs_to_commands = {}
@@ -1546,6 +1579,7 @@ class Permissions(commands.Cog):
 
     @commands.command(description = "Voir vos commandes par permissions personnalisées")
     @commands.guild_only()
+    @commands.check(check_perms_enabled)
     async def customhelp(self, ctx):
         paginator_creator = PaginatorCreator()
         permission_manager = PermissionsManager(self.bot)
@@ -1582,7 +1616,8 @@ class Permissions(commands.Cog):
         else: await paginator.send(ctx)
 
     
-    @commands.command(description = "Rétablir les permissions par défauts")
+    @commands.command(description = "Rétablir les permissions par défauts et supprimer toutes les permissions (sauf owner)", aliases = ["resetperm"])
+    @commands.check(check_perms_enabled)
     @commands.guild_only()
     async def resetperms(self, ctx):
         permission_manager = PermissionsManager(self.bot)

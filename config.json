@@ -1,5 +1,6 @@
 {
     "developers": [1213951846234726441],
+    "support_invite_url": "https://discord.gg/EjXRPUsmTA",
 
     "tables": {
         "guild": {
@@ -10,6 +11,7 @@
                 "langage": "VARCHAR(2) DEFAULT 'fr'",
                 "owners": "TEXT",
                 "whitelist": "TEXT",
+                "perms_enabled": "BOOLEAN DEFAULT false",
                 "perms_hierarchic": "TEXT",
                 "perms_custom": "TEXT",
                 "noderank_roles": "TEXT",
@@ -19,7 +21,8 @@
                 "help_type": "VARCHAR(1) DEFAULT 'b'",
                 "ghostping_channels": "VARCHAR(237)",
                 "join_roles": "VARCHAR(237)",
-                "autoreact": "TEXT"
+                "autoreact": "TEXT",
+                "snipelimit": "INTEGER DEFAULT 1"
             }
         },
         "member": {
@@ -35,7 +38,7 @@
             }
         },
         "snipe": {
-            "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL UNIQUE"},
+            "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL", "snipe_id": "BIGINT"},
             "keys": {
                 "author_id": "BIGINT DEFAULT 0",
                 "author_name": "VARCHAR(50) DEFAULT 'No data'",
