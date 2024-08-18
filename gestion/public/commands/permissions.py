@@ -93,8 +93,9 @@ class Permissions(commands.Cog):
                 placeholder = "Choisir un guide",
                 options = [
                     discord.SelectOption(label = "1. Permissions hiérarchiques et personnalisées [1]", value = "perms_hp"),
-                    discord.SelectOption(label = "2. Permissions hiérarchiques et personnalisées [2]", value = "perms_hp2"),
-                    discord.SelectOption(label = "3. Gérer et comprendre vos configurations", value = "understand_config"),
+                    discord.SelectOption(label = "1. Permissions hiérarchiques et personnalisées [2]", value = "perms_hp2"),
+                    discord.SelectOption(label = "2. Configurations", value = "config"),
+                    discord.SelectOption(label = "3. Informations supplémentaires", value = "understand_config"),
 
                 ],
                 custom_id = "select"
@@ -114,33 +115,44 @@ class Permissions(commands.Cog):
                         embed = discord.Embed(
                             color = await bot.get_theme(ctx.guild.id),
                             description = textwrap.dedent("""
-                                ## Différences théoriques
+                                ## 1. Différences théoriques
                                 La différence principale entre les permissions hiérarchiques et les permissions personnalisées est que les permissions hiérarchiques sont triées par hiérarchie (comme son nom l'indique). Cela signifie que chaque permission a accès à toutes les commandes des permissions inférieures (en plus des siennes). Tandis que pour les permissions personnalisées, les permissions sont indépendantes, c'est à dire que les utilisateurs pouvant utiliser les commandes d'une certaine permission personnalisée n'auront accès qu'aux commandes de cette permission et aucune autre (sauf si vous leurs donner l'accès à d'autres permissions).
 
                                 En plus de ces différences, vous devrez également noter que les permissions hiérarchiques sont notées par des nombres de 1 à 9 représentant leur niveau dans la hiérarchie des permissions hiérarchiques, plus le nombre est grand, plus il est haut hiérarchiquement.
-
-                                ## Différences pratiques
-                                La distinction entre ces deux types de permissions peut encore sembler assez floue. Voici donc un exemple concret :
-
-                                *"Thomas souhaite faire en sorte que les @modérateurs de son serveur aient accès aux commandes de modérations complète (par défaut en permission 2). Il a déjà configuré ses paramètres de telle sorte que les modérateurs aient accès à la permission 2.*
-                                *Mais Thomas veut aussi que tous les rôles avec une permission hiérarchique supérieure aient accès aux commandes de cette permission. Comment faire ?"*
-
-                                > Dans un premier temps, il serait stupide de créer des permissions personnalisées pour chaque rôle, cela prendrait un temps fou, la gestion serait plus difficile et le nombre de commande par permission personnalisée est limité à maximum 25 commandes.
-                                > Pour résoudre ce problème, Thomas n'aura qu'à configurer ses permissions de telle sorte que les rôles supérieurs à @modérateurs aient accès à une permission hiérarchique supérieure à la permission 2, et c'est fini.
                             """)
                         ),
                         view = self
                     )
                     await interaction.response.defer()
 
+
                 elif select.values[0] == "perms_hp2":
                     await interaction.message.edit(
                         embed = discord.Embed(
                             color = await bot.get_theme(ctx.guild.id),
                             description = textwrap.dedent("""
-                                ## Explications plus détaillées
-                                La première partie, qui explique la différence entre les permissions hiérarchiques et les permissions personnalisées, est bien sûr très floue. Nous allons ici plonger un peu plus dans les détails.
+                                # 2. Différences pratiques
 
+                                Pour mieux comprendre les différences entre les permissions hiérarchiques et les permissions personnalisées, prenons un exemple concret :
+
+                                Imaginons que Thomas gère un serveur et souhaite que les @modérateurs aient accès aux commandes de modération complètes, qui sont par défaut associées à la permission hiérarchique de niveau 2. Thomas a déjà configuré les permissions pour que les modérateurs aient accès à cette permission.
+
+                                Cependant, il veut aussi que tous les autres rôles ayant une permission hiérarchique supérieure à celle des @modérateurs puissent également utiliser les commandes de modération. Comment peut-il s'y prendre ?
+
+                                Dans ce cas, utiliser des permissions personnalisées pour chaque rôle serait contre-productif. Cela prendrait non seulement beaucoup de temps à configurer, mais compliquerait aussi la gestion des permissions, surtout avec la limite de 25 commandes par permission personnalisée.
+
+                                La solution pour Thomas est simple : il lui suffit d'attribuer aux rôles supérieurs une permission hiérarchique avec un niveau plus élevé que celui des modérateurs. Par exemple, il peut assigner une permission de niveau 3 ou plus. Grâce à la hiérarchie, ces rôles auront automatiquement accès non seulement à leurs propres commandes, mais aussi à celles des modérateurs (niveau 2), ainsi qu'à toutes les commandes des niveaux inférieurs. Cette approche permet à Thomas de gérer les permissions de manière efficace sans avoir à créer manuellement des permissions pour chaque rôle.
+                            """)
+                        ),
+                        view = self
+                    )
+                    await interaction.response.defer()
+
+                elif select.values[0] == "config":
+                    await interaction.message.edit(
+                        embed = discord.Embed(
+                            color = await bot.get_theme(ctx.guild.id),
+                            description = textwrap.dedent("""
                                 ## Configurations par défauts
                                 Dans un premier temps, parlons des configurations par défaut.
 

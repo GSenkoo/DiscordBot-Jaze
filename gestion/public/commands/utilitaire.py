@@ -17,6 +17,7 @@ from datetime import datetime
 from discord.ext import commands
 from utils.Searcher import Searcher
 from utils.Paginator import CustomPaginator
+from utils.PermissionsManager import PermissionsManager
 
 sys.set_int_max_str_digits(999999999) # Pour la commande +calc
 dotenv.load_dotenv()
@@ -929,8 +930,7 @@ class Utilitaire(commands.Cog):
 
                     @discord.ui.button(
                         label = "Modifier un message du bot",
-                        emoji = "✏",
-                        row = 1
+                        emoji = "✏"
                     )
                     async def button_message_edit_callback(self, button, interaction):
                         if interaction.user != ctx.author:
@@ -993,7 +993,7 @@ class Utilitaire(commands.Cog):
                     @discord.ui.button(
                         label = "Envoyer à un utilisateur",
                         emoji = "📧",
-                        row  = 2
+                        row  = 1
                     )
                     async def button_user_callback(self, button, interaction):
                         if interaction.user != ctx.author:
@@ -1034,11 +1034,40 @@ class Utilitaire(commands.Cog):
 
 
                     @discord.ui.button(
+                        label = "Définir comme embed de bienvenue",
+                        emoji = "📝",
+                        row = 1
+                    )
+                    async def button_set_join_embed_callback(self, button, interaction):
+                        if interaction.user != ctx.author:
+                            await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                            return
+                        
+                        permission_manager = PermissionsManager(bot)
+                        configuration_cog = bot.get_cog("Configuration")
+                        joins_command = [command for command in configuration_cog.get_commands() if command.name == "joins"][0]
+                        bot_prefix = await bot.get_prefix(ctx.message)
+
+                        if not await permission_manager.can_use_cmd(ctx, joins_command):
+                            await interaction.response.send_message(f"> Pour définir un embed de bienvenue, vous devez avoir accès à la commande `{bot_prefix}joins`.")
+                            return
+
+                        await bot.db.set_data("joins", "embed", json.dumps(embed_menu.embed), guild_id = interaction.guild.id)
+                        await interaction.message.edit(
+                            embed = discord.Embed(
+                                title = f"L'embed de bienvenue a correctement été définis",
+                                color = await bot.get_theme(ctx.guild.id)
+                            ),
+                            view = None
+                        )
+
+
+                    @discord.ui.button(
                         label = "Revenir à la configuration",
                         emoji = "↩",
-                        row = 3
+                        row = 4
                     )
-                    async def button_here_callback(self, button, interaction):
+                    async def button_comback_callback(self, button, interaction):
                         if interaction.user != ctx.author:
                             await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                             return
@@ -1047,11 +1076,12 @@ class Utilitaire(commands.Cog):
                             embed = formate_embed(embed_menu.embed),
                             view = embed_menu
                         )
+                        await interaction.response.defer()
            
                 
                 await interaction.message.edit(
                     embed = discord.Embed(
-                        title = "> Où souhaitez-vous envoyer l'embed?",
+                        title = "> Que souhaitez-vous faire de cet embed?",
                         color = await bot.get_theme(ctx.guild.id)
                     ),
                     view = ChooseDestination()

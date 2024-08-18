@@ -1,6 +1,7 @@
 import discord
 import json
 import asyncio
+import textwrap
 from discord.ui.item import Item
 from discord.ext import commands
 from discord import AllowedMentions as AM
@@ -9,8 +10,14 @@ from utils.Searcher import Searcher
 from utils.MyViewClass import MyViewClass
 from utils.Tools import Tools
 
+def delete_message(message):
+    async def task():
+        try: await message.delete()
+        except: pass
+    loop = asyncio.get_event_loop()
+    loop.create_task(task())
 
-class Configurations(commands.Cog):
+class Configuration(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -357,14 +364,6 @@ class Configurations(commands.Cog):
             embed.add_field(name = "Rôles modérateurs", value = "<@&" + ">\n<@&".join([str(role_id) for role_id in data['moderator_roles']]) + ">" if data['moderator_roles'] else "*Aucun rôles modérateurs*")
 
             return embed
-        
-
-        async def delete_message(message):
-            async def task():
-                try: await message.delete()
-                except: pass
-            loop = asyncio.get_event_loop()
-            loop.create_task(task())
 
         bot = self.bot
         class Suggestions(discord.ui.View):
@@ -494,8 +493,8 @@ class Configurations(commands.Cog):
                     except:
                         await ctx.send("> Action annulée, une minute s'est écoulée.", delete_after = 3)
                         return
-                    finally: await delete_message(message)
-                    await delete_message(response)
+                    finally: delete_message(message)
+                    delete_message(response)
 
                     if response.content.lower() == "cancel":
                         await ctx.send("> Action annulée.", delete_after = 3)
@@ -554,7 +553,16 @@ class Configurations(commands.Cog):
 
                 await interaction.message.edit(embed = suggestion_embed, view = None)
                 await interaction.response.defer()
+            
+            
+            @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
+            async def delete_button_callback(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
                 
+                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de suggestion annulée", color = await bot.get_theme(ctx.guild.id)), view = None)
+                await interaction.response.defer()
 
         await ctx.send(embed = await get_suggestion_settings_embed(suggestion_data), view = Suggestions(suggestion_data))
 
@@ -680,8 +688,9 @@ class Configurations(commands.Cog):
                     except asyncio.TimeoutError:
                         await ctx.send("> Action annulée, une minute s'est écoulée.", delete_after = 3)
                         return
-                    finally: await delete_message(message)
-                    await delete_message(response_message)
+                    except: return
+                    finally: delete_message(message)
+                    delete_message(response_message)
 
                     if len(response_message.content) > 50:
                         await ctx.send("> Action annulée, le statut donné ne doit pas faire plus de 50 caracètres.", delete_after = 3)
@@ -763,9 +772,223 @@ class Configurations(commands.Cog):
                 await interaction.message.edit(embed = message_embed, view = None)
                 await interaction.response.defer()
 
-        await ctx.send(embed = await get_soutien_embed(soutien_data, ctx.guild), view = ManageSoutien(soutien_data = soutien_data))
-    
+            @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
+            async def delete_button_callback(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de soutien annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
+                await interaction.response.defer()
 
+
+        await ctx.send(embed = await get_soutien_embed(soutien_data, ctx.guild), view = ManageSoutien(soutien_data = soutien_data))
+
+
+    @commands.command(description = "Configurer une vérification des nouveaux membres")
+    @commands.guild_only()
+    async def captcha(self, ctx):
+        ...
+
+    @commands.command(description = "Configurer les messages automatiques de bienvenue")
+    @commands.guild_only()
+    async def joins(self, ctx):
+
+        async def get_join_data() -> dict:
+            results = await self.bot.db.execute(f"SELECT * FROM joins WHERE guild_id = {ctx.guild.id}")
+            if not results:
+                return {
+                    "enabled": False,
+                    "channel": 0,
+                    "message": "Bienvenue {MemberMention}",
+                    "message_dm_enabled": False,
+                    "message_dm": None,
+                    "embed": {},
+                    "send_after_captcha": False
+                }
+            
+            joins_columns = await self.bot.db.get_table_columns("joins")
+            return dict(set(zip(joins_columns, results)))
+        
+        """
+            "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "enabled": "BOOLEAN DEFAULT false",
+                "channel": "BIGINT DEFAULT 0",
+                "message": "VARCHAR(2000)",
+                "message_dm_enabled": "BOOLEAN DEFAULT false",
+                "message_dm": "VARCHAR(2000)",
+                "embed": "TEXT",
+                "send_after_captcha": "BOOLEAN DEFAULT false"
+            }
+        """
+        
+        async def get_join_embed(data : dict) -> discord.Embed:
+            bot_prefix = await self.bot.get_prefix(ctx.message)
+
+            embed = discord.Embed(
+                title = "Paramètres de bienvenue",
+                color = await self.bot.get_theme(ctx.guild.id),
+                description = 
+                "***Commandes qui ne pourraient que vous êtres utiles***\n"
+                + f"> `{bot_prefix}variables`\n"
+                + f"> `{bot_prefix}joinrole <add/del/reset/list> [role]`\n"
+                + f"> `{bot_prefix}ghostping <add/del/reset/list> [channel]`"
+            )
+
+            channel = ctx.guild.get_channel(data["channel"])
+            embed.add_field(name = "Statut", value = "Activé" if data["enabled"] else "Désactivé")
+            embed.add_field(name = "Salon", value = f"<#{channel.id}>" if data["channel"] else "*Aucun salon valide*")
+            embed.add_field(
+                name = "Message",
+                value = (
+                    data["message"]
+                    if (len(data["message"]) <= 500) 
+                    else (data["message"][:500] + f"... (et {len(data['message']) - 500} caractères)")
+                ) if data["message"] else "*Aucun message configuré*"
+            )
+            embed.add_field(name = "Envoi d'un MP", value = "Activé" if data["message_dm_enabled"] else "Désactivé")
+            embed.add_field(
+                name = "Message en MP", 
+                value = (
+                    data["message_dm"] if (len(data["message_dm"]) <= 500)
+                    else (data["message_dm"][:500] + f"... (et {len(data['message_dm']) - 500} caractères)")
+                ) if data["message_dm"] else "*Aucun message configuré*"
+            )
+            embed.add_field(name = "Embed", value = "Configuré" if await self.bot.db.get_data("joins", "embed", False, True, guild_id = ctx.guild.id) else "Non configuré")
+            embed.add_field(name = "Envoi après vérification", value = "Activé" if data["send_after_captcha"] else "Désactivé")
+
+            return embed
+        
+        
+        class JoinSettings(MyViewClass):
+            def __init__(self, data : dict, bot):
+                super().__init__()
+                self.data = data
+                self.bot = bot
+
+            @discord.ui.select(
+                placeholder = "Choisir une option",
+                options = [
+                    discord.SelectOption(label = "Statut", emoji = "⏳", value = "enabled"),
+                    discord.SelectOption(label = "Salon", emoji = "📌", value = "channel"),
+                    discord.SelectOption(label = "Message", emoji = "💬", value = "message"),
+                    discord.SelectOption(label = "Envoi d'un MP", emoji = "📩", value = "message_dm_enabled"),
+                    discord.SelectOption(label = "Message en MP", emoji = "💭", value = "message_dm"),
+                    discord.SelectOption(label = "Ajouter un embed", emoji = "📝", value = "embed"),
+                    discord.SelectOption(label = "Retirer l'embed", emoji = "❌", value = "del_embed"),
+                    discord.SelectOption(label = "Envoi après vérification", emoji = "🔒", value = "send_after_captcha")
+                ]
+            )
+            async def join_settings_select_callback(self, select : discord.SelectMenu, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                def response_check(message):
+                    return (message.author == interaction.user) and (message.channel == interaction.channel) and (message.content)
+          
+
+                if select.values[0] == "channel":
+                    await interaction.response.defer()
+
+                    message = await ctx.send("> Dans quel **salon** souhaitez-vous envoyer le message de bienvenue? Envoyez `cancel` pour annuler.")
+                    try: response = await self.bot.wait_for("message", check = response_check, timeout = 60)
+                    except asyncio.TimeoutError():
+                        await ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
+                        return
+                    except: return
+                    finally: delete_message(message)
+                    delete_message(response)
+
+                    if response.content.lower() == "cancel":
+                        await ctx.send("> Action annulée.", delete_after = 3)
+                        return
+                    
+                    searcher = Searcher(self.bot, ctx)
+                    channel = await searcher.search_channel(response.content, interaction.guild)
+
+                    if not channel:
+                        await ctx.send("> Action annulée, merci de fournir un salon valide.", delete_after = 3)
+                        return
+                    
+                    self.data["channel"] = channel.id
+                    await interaction.message.edit(embed = await get_join_embed(self.data))
+                    await ctx.send("> Le salon des **messages de bienvenues** a été modifié.", delete_after = 3)
+
+
+                if select.values[0] in ["message", "message_dm"]:
+                    await interaction.response.defer()
+
+                    option_name = [option for option in select.options if option.value == select.values[0]][0].label.lower()
+                    message = await ctx.send(f"> Quel sera le nouveau contenu de votre **{option_name}** ? Envoyez `cancel` pour annuler et `remove` pour retirer le contenu actuel.")
+
+                    try: response = await self.bot.wait_for("message", check = response_check, timeout = 60)
+                    except asyncio.TimeoutError():
+                        await ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
+                        return
+                    except: return
+                    finally: delete_message(message)
+                    delete_message(response)
+
+                    if response.content.lower() == "cancel":
+                        await ctx.send("> Action annulée.", delete_after = 3)
+                        return
+
+                    if response.content.lower() == "remove":
+                        self.data[select.values[0]] = None
+                        await ctx.send(f"> Le contenu de votre **{option_name}** a été retiré.", delete_after = 3)
+                    else:
+                        if len(response.content) > 2000:
+                            await ctx.send(f"> Votre **{option_name}** ne peut pas dépasser les 2000 caractères.", delete_after = 3)
+                            return
+                        
+                        self.data[select.values[0]] = response.content
+                        await ctx.send(f"> Le contenu de votre **{option_name}** a été mis à jour.", delete_after = 3)
+
+                    await interaction.message.edit(embed = await get_join_embed(self.data))
+
+                
+                if select.values[0] in ["enabled", "message_dm_enabled", "send_after_captcha"]:
+                    self.data[select.values[0]] = not self.data[select.values[0]]
+                    await interaction.message.edit(embed = await get_join_embed(self.data))
+                    await interaction.response.defer()
+
+                if select.values[0] == "embed":
+                    await interaction.response.send_message(textwrap.dedent("""
+                        **Configurer un embed de bienvenue est un jeu d'enfant. Suivez simplement ces étapes :**
+
+                        1. **Lancez la commande `+embed`.**
+                        2. **Personnalisez votre embed** grâce au menu interactif qui s'affiche.
+                        3. **Appuyez sur le bouton "Envoyer"** pour finaliser votre création.
+                        4. **Cliquez sur "Définir comme embed de bienvenue"** pour l'appliquer.
+                        5. **Et voilà, votre configuration est terminée.**
+                    """), ephemeral = True)
+
+                if select.values[0] == "del_embed":
+                    await self.bot.db.set_data("joins", "embed", None, guild_id = interaction.guild.id)
+                    await interaction.message.edit(embed = await get_join_embed(self.data))
+                    await interaction.response.defer()
+                
+
+            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.success)
+            async def save_callback(self, button, interaction):
+                pass
+
+            @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
+            async def delete_button_callback(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de bienvenue annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
+                await interaction.response.defer()
+
+        data = await get_join_data()
+        await ctx.send(embed = await get_join_embed(data), view = JoinSettings(data, self.bot))
+
+
+            
 
 def setup(bot):
-    bot.add_cog(Configurations(bot))
+    bot.add_cog(Configuration(bot))

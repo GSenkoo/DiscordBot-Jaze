@@ -37,7 +37,7 @@
             }
         },
         "snipe": {
-            "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL", "snipe_id": "BIGINT"},
+            "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL"},
             "keys": {
                 "author_id": "BIGINT DEFAULT 0",
                 "author_name": "VARCHAR(50) DEFAULT 'No data'",
@@ -75,14 +75,16 @@
                 "ended": "BOOLEAN DEFAULT 0"
             }
         },
-        "join_settings": {
+        "joins": {
             "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
             "keys": {
-                "channel": "BIGINT DEFAULT 0",
                 "enabled": "BOOLEAN DEFAULT false",
-                "message": "VARCHAR(2000) DEFAULT 'Bienvenue {MemberName} sur le serveur {ServerName}.'",
+                "channel": "BIGINT DEFAULT 0",
+                "message": "VARCHAR(2000)",
                 "message_dm_enabled": "BOOLEAN DEFAULT false",
-                "message_dm": "VARCHAR(2000) DEFAULT 'Bienvenue sur {ServerName}'",
+                "message_dm": "VARCHAR(2000)",
+                "embed_enabled": "BOOLEAN DEFAULT false",
+                "embed": "TEXT",
                 "send_after_captcha": "BOOLEAN DEFAULT false"
             }
         },

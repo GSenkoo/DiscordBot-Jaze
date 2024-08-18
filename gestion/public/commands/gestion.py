@@ -574,8 +574,8 @@ class Gestion(commands.Cog):
 
         async def get_massiverole_embed(data):
             embed = discord.Embed(
-                title = "Paramètre du massiverole",
-                description = "*Si vous nous fournissez accidentellement un rôle soutien avec des permissions dangereuses, vous en assumerez la responsabilité.*",
+                title = "Paramètres du massiverole",
+                description = "*Si vous nous fournissez accidentellement un rôle à ajouter avec des permissions dangereuses, vous en assumerez la responsabilité.*",
                 color = await self.bot.get_theme(ctx.guild.id)
             )
 
@@ -857,7 +857,7 @@ class Gestion(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                await interaction.message.edit(embed = discord.Embed(title = "Configuration du massiverole annulée.", color = await bot.get_theme(interaction.guild.id)), view = None)
+                await interaction.message.edit(embed = discord.Embed(title = "Configuration du massiverole annulée", color = await bot.get_theme(interaction.guild.id)), view = None)
                 await interaction.response.defer()
 
         await ctx.send(embed = await get_massiverole_embed(massiverole_data), view = MangageMassiveRole(massiverole_data))

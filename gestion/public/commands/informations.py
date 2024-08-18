@@ -326,7 +326,7 @@ class Informations(commands.Cog):
             thumbnail = self.bot.user.avatar.url
         )
 
-        with open("config.json") as file:
+        with open("config.json", encoding = "utf-8") as file:
             data = json.load(file)
             developers = data["developers"]
 

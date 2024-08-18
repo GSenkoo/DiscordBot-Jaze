@@ -159,7 +159,7 @@ class CustomHelp(commands.HelpCommand):
         cog_commands = await self.filter_commands(cog.get_commands())
 
         with open("config.json") as file:
-            data = json.load(file)
+            data = json.loads(file)
             developers = data["developers"]
 
         if (not cog_name) or (not cog_commands) or (cog_name == "Developer" and self.context.author.id not in developers):

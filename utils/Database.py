@@ -176,6 +176,10 @@ class Database:
             Le nom de votre table
         column `str` :
             Le colonne de la valeur que vous souhaitez obtenir dans la table
+        list_value `bool` :
+            Si vous souhaitez obtenir la valeur sous forme de liste
+        dict_vaue `bool` :
+            Si vous souhaitez obtenir la valeur sous forme de dictionnaire
         keys_indicator `key word arguments` :
             Les clées primaires
 

@@ -151,12 +151,14 @@ class PermissionsManager:
 
 # ------------------------------------------- CHECK -------------------------------------------
 
-    async def can_use_cmd(self, ctx):
+    async def can_use_cmd(self, ctx, specific_command = None):
+        if specific_command: ctx.command = specific_command
+        
         owners = await self.bot.db.get_data("guild", "owners", True, guild_id = ctx.guild.id)
 
         # Pour les commandes réservé aux développeurs
         developer_cog = self.bot.get_cog("Developer")
-
+        
         with open("config.json", encoding = "utf-8") as file:
             config_data = json.load(file)
         if ctx.author.id in config_data["developers"]:
@@ -173,7 +175,7 @@ class PermissionsManager:
 
             if (ctx.author == ctx.guild.owner):
                 return True
-            if (ctx.author.id in await self.bot.db.get_data("guild", "owners", True, guild_id = ctx.guild.id)) and ("buyer" not in command_permissions):
+            if (ctx.author.id in await self.bot.db.get_data("guild", "owners", True, guild_id = ctx.guild.id)) and ("buyer" not in command_required_permissions):
                 return True
 
             for permission in command_required_permissions:

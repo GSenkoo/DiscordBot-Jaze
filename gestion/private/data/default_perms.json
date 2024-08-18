@@ -68,7 +68,9 @@
         "suggestions",
         "variables",
         "soutien",
-        "autoreact"
+        "autoreact",
+        "joins",
+        "leaves"
     ],
     "10": [
         "owners",
