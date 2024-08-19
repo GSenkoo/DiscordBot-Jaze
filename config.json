@@ -88,6 +88,18 @@
                 "send_after_captcha": "BOOLEAN DEFAULT false"
             }
         },
+        "captcha": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "enabled": "BOOLEAN DEFAULT false",
+                "button_text": "VARCHAR(80) DEFAULT 'Vérification'",
+                "button_emoji": "VARCHAR(10)",
+                "button_color": "VARCHAR(10) DEFAULT 'blue'",
+                "channel": "BIGINT DEFAULT 0",
+                "non_verified_role": "BIGINT DEFAULT 0",
+                "verified_role": "BIGINT DEFAULT 0"
+            }
+        },
         "suggestions": {
             "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
             "keys": {

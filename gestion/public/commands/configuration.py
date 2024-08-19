@@ -788,7 +788,21 @@ class Configuration(commands.Cog):
     @commands.command(description = "Configurer une vérification des nouveaux membres")
     @commands.guild_only()
     async def captcha(self, ctx):
-        ...
+        # TODO: Faire un système qui s'affiche en fin de configuration : le bot propose de bien configurer le rôle des utilisateurs non vérifiés 
+        # SI SEULEMENT le rôle donné a accès à d'autres salon que celui de vérification
+
+        # TODO2: S'assurer qu'on ne puisse pas mélanger les rôles captcha et soutien/joinrole
+        # TODO3: Le système de vérification
+
+        async def get_captcha_embed(data) -> dict:
+            embed = discord.Embed(
+                title = "Système de vérification",
+                color = await self.bot.get_theme(ctx.guild.id),
+            )
+
+            embed.add_field(name = "Système mis en place", value = "Oui" if data["enabled"] else "Non")
+            
+
 
     @commands.command(description = "Configurer les messages automatiques de bienvenue")
     @commands.guild_only()
