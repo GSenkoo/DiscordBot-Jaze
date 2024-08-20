@@ -26,7 +26,7 @@ class CustomHelp(commands.HelpCommand):
             titles.append(getattr(cog, "qualified_name").replace("_", " "))
             descriptions.append(
                 f"*Utilisez des espaces pour séparer vos arguments, mettez les entre guillemets `\"\"` si vos arguments comportent des espaces. "
-                + "Les arguments sous forme `<...>` sont obligatoires, tandis que les arguments sous forme `[...]` sont facultatifs.*\n\n"
+                + f"Les arguments sous forme `<...>` sont obligatoires, tandis que les arguments sous forme `[...]` sont facultatifs. Utilisez `{self.context.clean_prefix}help [command/category]` pour vous aider.*\n\n"
                 + "\n\n".join(commands_signatures)
             )
 
@@ -102,6 +102,9 @@ class CustomHelp(commands.HelpCommand):
             return False
 
         for cog, commands in mapping.items():
+            if not commands:
+                continue
+            
             cog_name = getattr(cog, "qualified_name", None)
 
             if cog_name:
@@ -149,7 +152,34 @@ class CustomHelp(commands.HelpCommand):
                 value = f"{command.help}"
             )
 
+        advanced_perms_enabled = await self.context.bot.db.get_data("guild", "perms_enabled", guild_id = self.context.guild.id)
+        if not advanced_perms_enabled:
+            with open("gestion/private/data/permissions_translations.json", encoding = "utf-8") as file:
+                perms_translation = json.load(file)
+            with open("gestion/private/data/commands_guildpermissions.json", encoding = "utf-8") as file:
+                commands_guildpermissions = json.load(file)
             
+            command_allowed_perms = [perms_translation[perm] for perm in commands_guildpermissions[str(command)]]
+            embed.add_field(
+                name = "Permissions nécessaire",
+                value = "`" + f"`, `".join(command_allowed_perms) + "`" if command_allowed_perms else "*Aucune. Utilisable par tous.*"
+            )
+        else:
+            perms_hierarchic_data = await self.context.bot.db.get_data("guild", "perms_hierarchic", False, True, guild_id = self.context.guild.id)
+            perms_custom_data = await self.context.bot.db.get_data("guild", "perms_custom", False, True, guild_id = self.context.guild.id)
+            
+            embed.add_field(
+                name = "Permission hiérarchique",
+                value = "`Perm " +  str(perms_hierarchic_data["commands"][str(command)]).replace("0", "Public").replace("10", "Owner").replace("11", "Propriétaire") + "`"
+            )
+
+            command_custom_perms_allowed = perms_custom_data["commands"].get(str(command))
+            embed.add_field(
+                name = "Permissions personnalisées",
+                value = "`" + f"`, `".join(command_custom_perms_allowed) + "`" if command_custom_perms_allowed else "*Aucune*"
+            )
+
+
         channel = self.get_destination()
         await channel.send(embed = embed)
 
@@ -169,7 +199,7 @@ class CustomHelp(commands.HelpCommand):
         embed = discord.Embed(
             title = cog_name,
             description = f"*Utilisez des espaces pour séparer vos arguments, mettez les entre guillemets `\"\"` si vos arguments comportent des espaces. "
-                + "Les arguments sous forme `<...>` sont obligatoires, tandis que les arguments sous forme `[...]` sont facultatifs.*\n\n"
+                + f"Les arguments sous forme `<...>` sont obligatoires, tandis que les arguments sous forme `[...]` sont facultatifs. Utilisez `{self.context.clean_prefix}help [command/category]` pour vous aider.*\n\n"
                 + "\n\n".join(cog_commands_signatures),
             color = await self.context.bot.get_theme(self.context.guild.id)
         )

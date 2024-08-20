@@ -224,6 +224,11 @@ class Configuration(commands.Cog):
             if role.id in join_roles:
                 await ctx.send(f"> Le rôle {role.mention} est déjà dans la liste des rôles automatiquements ajoutés aux nouveaux membres.", allowed_mentions = AM.none())
                 return
+            captcha_role_id = await self.bot.db.get_data("captcha", "non_verified_role", guild_id = ctx.guild.id)
+            if role.id == captcha_role_id:
+                await ctx.send("> Le rôle des utilisateurs non vérifiés (dans le système de captcha) ne peut pas être dans la liste des rôles automatiquements ajoutés.")
+                return
+                            
 
             join_roles.append(role.id)
             await ctx.send(f"> Les nouveaux membres srecevront désormais automatiquement le rôle {role.mention}.", allowed_mentions = AM.none())
@@ -653,6 +658,11 @@ class Configuration(commands.Cog):
                                 await interaction.response.send_message(f"> Je ne peux pas ajotuer le rôle {role.mention} car il est suppérieur ou égal à mon rôle le plus élevé.", ephemeral = True)
                                 return
                             
+                            captcha_role_id = await bot.db.get_data("captcha", "non_verified_role", guild_id = interaction.guild.id)
+                            if role.id == captcha_role_id:
+                                await interaction.response.send_message("> Le rôle soutien ne peut pas être le même que celui des utilisateurs non vérifiés (dans le système de captcha).", ephemeral = True)
+                                return
+                            
                             previous_view.soutien_data["role"] = role.id
                             await interaction.message.edit(embed = await get_soutien_embed(previous_view.soutien_data, interaction.guild), view = previous_view)
                             await interaction.response.defer()
@@ -761,6 +771,11 @@ class Configuration(commands.Cog):
                     if not role:
                         await interaction.response.send_message("> Vous devez indiquer un rôle de soutien valide pour sauvegarder.", ephemeral = True)
                         return
+                    
+                    captcha_role_id = await bot.db.get_data("captcha", "non_verified_role", guild_id = interaction.guild.id)
+                    if role.id == captcha_role_id:
+                        await interaction.response.send_message("> Le rôle soutien ne peut pas être le même que celui des utilisateurs non vérifiés (dans le système de captcha).", ephemeral = True)
+                        return
                 
                 
                 for data, value in self.soutien_data.items():
@@ -785,7 +800,7 @@ class Configuration(commands.Cog):
         await ctx.send(embed = await get_soutien_embed(soutien_data, ctx.guild), view = ManageSoutien(soutien_data = soutien_data))
 
 
-    @commands.command(description = "Configurer une vérification des nouveaux membres")
+    @commands.command(description = "Configurer un système de vérification des nouveaux membres")
     @commands.guild_only()
     async def captcha(self, ctx):
         # TODO: Faire un système qui s'affiche en fin de configuration : le bot propose de bien configurer le rôle des utilisateurs non vérifiés 
@@ -793,16 +808,212 @@ class Configuration(commands.Cog):
 
         # TODO2: S'assurer qu'on ne puisse pas mélanger les rôles captcha et soutien/joinrole
         # TODO3: Le système de vérification
+        """
+                "captcha": {
+                    "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
+                    "keys": {
+                        "enabled": "BOOLEAN DEFAULT false",
+                        "button_text": "VARCHAR(80) DEFAULT 'Vérification'",
+                        "button_emoji": "VARCHAR(10)",
+                        "button_color": "VARCHAR(10) DEFAULT 'blue'",
+                        "channel": "BIGINT DEFAULT 0",
+                        "non_verified_role": "BIGINT DEFAULT 0",
+                        "verified_role": "BIGINT DEFAULT 0"
+                    }
+        """
 
         async def get_captcha_embed(data) -> dict:
             embed = discord.Embed(
                 title = "Système de vérification",
+                description = "*À l'aide de ce panneau de configuration, vous pourrez configurer un bouton (que vous ajouterez à un message du bot) qui permettera la vérification des nouveaux membres.*",
                 color = await self.bot.get_theme(ctx.guild.id),
             )
 
             embed.add_field(name = "Système mis en place", value = "Oui" if data["enabled"] else "Non")
-            
+            embed.add_field(name = "Texte du bouton", value = data["button_text"])
+            embed.add_field(name = "Emoji du bouton", value = data["button_emoji"] if data["button_emoji"] else "*Aucun emoji (facultatif)*")
+            embed.add_field(name = "Couleur du bouton", value = data["button_color"].capitalize())
+            embed.add_field(name = "Salon de vérification", value = f"<#{data['channel']}>" if data["channel"] else "*Aucun salon*")
+            embed.add_field(name = "Rôle des utilisateurs non vérifiés", value = f"<@&{data['non_verified_role']}>" if data["non_verified_role"] else "*Aucun rôle*")
+            embed.add_field(name = "Rôle des utilisateurs vérifiés", value = f"<@&{data['verified_role']}>" if data["verified_role"] else "*Aucun rôle (facultatif)*")
 
+            return embed
+        
+        guild_data = await self.bot.db.execute(f"SELECT * FROM captcha WHERE guild_id = {ctx.guild.id}", fetch = True)
+        if not guild_data:
+            data = {
+                "enabled": False,
+                "button_text": "Vérification",
+                "button_emoji": None,
+                "button_color": "blurple",
+                "channel": None,
+                "non_verified_role": None,
+                "verified_role": None
+            }
+        else:
+            captcha_table_columns = await self.bot.db.get_table_columns("captcha")
+            data = dict(set(zip(captcha_table_columns, guild_data[0])))
+
+    
+        class ManageCaptchaView(MyViewClass):
+            def __init__(self, ctx, data, bot):
+                super().__init__()
+                self.ctx = ctx
+                self.data = data
+                self.bot = bot
+
+            @discord.ui.select(
+                placeholder = "Choisir une option",
+                options = [
+                    discord.SelectOption(label = "Système mis en place", emoji = "❓", value = "enabled"),
+                    discord.SelectOption(label = "Texte du bouton", emoji = "📝", value = "button_text"),
+                    discord.SelectOption(label = "Emoji du bouton", emoji = "🎭", value = "button_emoji"),
+                    discord.SelectOption(label = "Couleur du bouton", emoji = "🎨", value = "button_color"),
+                    discord.SelectOption(label = "Salon de vérification", emoji = "🎯", value = "channel"),
+                    discord.SelectOption(label = "Rôle des utilisateurs non vérifié", emoji = "🚫", value = "non_verified_role"),
+                    discord.SelectOption(label = "Rôle des utilisateurs vérifiés", emoji = "✅", value = "verified_role")
+                ]
+            )
+            async def mange_captcha_select_callback(self, select, interaction):
+                if interaction.user != self.ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                if select.values[0] == "enabled":
+                    self.data["enabled"] = not self.data["enabled"]
+                    await interaction.message.edit(embed = await get_captcha_embed(self.data))
+                    await interaction.response.defer()
+
+                if select.values[0].startswith("button"):
+                    option_name = [option.label.lower().split(" ")[0] for option in select.options if option.value == select.values[0]][0]
+                    
+                    await interaction.response.defer()
+                    request_message = await self.ctx.send(
+                        f"> Quel {option_name} souhaitez-vous définir à votre bouton?"
+                        + (" Couleurs disponibles : `bleu`, `rouge`, `vert` et `gris`" if select.values[0] == "button_color" else "")
+                    )
+
+                    def response_check(message):
+                        return (message.author == interaction.user) and (message.channel == interaction.channel) and (message.content)
+                    
+                    try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
+                    except asyncio.TimeoutError():
+                        await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
+                    except: return
+                    finally: delete_message(request_message)
+                    delete_message(response_message)
+
+                    if select.values[0] == "button_text":
+                        if len(response_message.content) > 80:
+                            await self.ctx.send("> Action annulée, vous ne pouvez pas définir un texte qui dépasse 80 caractères.", delete_after = 3)
+                            return    
+                        self.data["button_text"] = response_message.content
+                    
+                    if select.values[0] == "button_emoji":
+                        tools = Tools(self.bot)
+                        emoji = await tools.get_emoji(response_message.content)
+                        if not emoji:
+                            await self.ctx.send("> Action annulée, emoji invalide.", delete_after = 3)
+                            return
+                        self.data["button_emoji"] = emoji
+                    
+                    if select.values[0] == "button_color":
+                        if response_message.content.lower() in ["bleu", "blue"]:
+                            self.data["button_color"] = "blurple"
+                        elif response_message.content.lower() in ["rouge", "red"]:
+                            self.data["button_color"] = "red"
+                        elif response_message.content.lower() in ["vert", "vert"]:
+                            self.data["button_color"] = "green"
+                        elif response_message.content.lower() in ["gris", "gris"]:
+                            self.data["button_color"] = "grey"
+                        else:
+                            await self.ctx.send("> Action annulée, couleur invalide.", delete_after = 3)
+                            return
+                        
+                    await interaction.message.edit(embed = await get_captcha_embed(self.data))
+
+                        
+                if "role" in select.values[0]:
+                    manage_captcha_view = self
+                    manage_captcha_select = select
+                    option_name = [option.label for option in select.options if option.value == select.values[0]][0]
+
+
+                    class ChooseRoleView(MyViewClass):
+                        @discord.ui.select(
+                            placeholder = "Choisissez un rôle",
+                            select_type = discord.ComponentType.role_select
+                        )    
+                        async def choose_role_select_callback(self, select, interaction):
+                            if interaction.user != manage_captcha_view.ctx.author:
+                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", delete_after = 3)
+                                return
+                            
+                            role_id = select.values[0].id
+
+                            join_roles = await manage_captcha_view.bot.db.get_data("guild", "join_roles", True, guild_id = interaction.guild.id)
+                            if role_id in join_roles:
+                                await interaction.response.send_message("> Vous ne pouvez pas choisir un rôle qui est parmis les rôles automatiquements ajoutés aux nouveaux membres.", ephemeral = True)
+                                return
+                            
+                            soutien_role = await manage_captcha_view.bot.db.get_data("soutien", "role", guild_id = interaction.guild.id)
+                            if role_id == soutien_role:
+                                await interaction.response.send_message("> Vous ne pouvez pas choisir un rôle ayant définis comme rôle soutien.", ephemeral = True)
+                                return
+                            
+                            manage_captcha_view.data[manage_captcha_select.values[0]] = role_id
+                            await interaction.message.edit(embed = await get_captcha_embed(manage_captcha_view.data), view = manage_captcha_view)
+                            await interaction.response.defer()
+                            
+                        
+                        @discord.ui.button(label = option_name, style = discord.ButtonStyle.primary, disabled = True)
+                        async def indication_button_callback(self, button, interaction):
+                            pass
+
+                        @discord.ui.button(label = "Retirer", emoji = "❌")
+                        async def remove_role_button_callback(self, button, interaction):
+                            if interaction.user != manage_captcha_view.ctx.author:
+                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", delete_after = 3)
+                                return
+                            
+                            if not manage_captcha_view.data[manage_captcha_select.values[0]]:
+                                await interaction.response.send_message(f"> Vous n'avez pas définis de **{option_name.lower()}**.", ephemeral = True)
+                                return
+
+                            manage_captcha_view.data[manage_captcha_select.values[0]] = None
+                            await interaction.message.edit(embed = await get_captcha_embed(manage_captcha_view.data), view = manage_captcha_view)
+                            await interaction.response.defer()
+
+                        @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
+                        async def comeback_button_callback(self, button, interaction):
+                            if interaction.user != manage_captcha_view.ctx.author:
+                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", delete_after = 3)
+                                return
+
+                            await interaction.message.edit(view = manage_captcha_view)
+                            await interaction.response.defer()  
+
+                    await interaction.message.edit(view = ChooseRoleView())
+                    await interaction.response.defer()
+
+
+            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.success)
+            async def save_button_callback(self, button, interaction):
+                if interaction.user != self.ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+
+            @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
+            async def delete_button_callback(self, button, interaction):
+                if interaction.user != self.ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de bienvenue annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
+                await interaction.response.defer()
+
+        
+        await ctx.send(embed = await get_captcha_embed(data), view = ManageCaptchaView(ctx, data, self.bot))
 
     @commands.command(description = "Configurer les messages automatiques de bienvenue")
     @commands.guild_only()

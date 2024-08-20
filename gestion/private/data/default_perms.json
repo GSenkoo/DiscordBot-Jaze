@@ -69,8 +69,10 @@
         "variables",
         "soutien",
         "autoreact",
+        "captcha",
         "joins",
-        "leaves"
+        "leaves",
+        "say"
     ],
     "10": [
         "owners",

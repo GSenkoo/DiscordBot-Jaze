@@ -37,9 +37,11 @@ class on_presence_update(commands.Cog):
         member_role_ids = [role.id for role in after.roles] if after.roles else []
 
         if (add_role) and (soutien_role.id not in member_role_ids):
-            await after.add_roles(soutien_role, reason = "Rôle soutien")
+            try: await after.add_roles(soutien_role, reason = "Rôle soutien")
+            except: pass
         if (not add_role) and (soutien_role.id in member_role_ids):
-            await after.remove_roles(soutien_role, reason = "Rôle soutien")
+            try: await after.remove_roles(soutien_role, reason = "Rôle soutien")
+            except: pass
     
 def setup(bot):
     bot.add_cog(on_presence_update(bot))

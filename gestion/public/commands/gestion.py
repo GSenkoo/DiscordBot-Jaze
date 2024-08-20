@@ -216,7 +216,7 @@ class Gestion(commands.Cog):
             embed.add_field(name = "Emoji", value = data["emoji"])
             embed.add_field(name = "Type d'intéraction", value = data["interaction_type"].capitalize())
             embed.add_field(name = "Couleur (Bouton)", value = data["button_color"].capitalize())
-            embed.add_field(name = "Texte (Button)", value = data["button_text"])
+            embed.add_field(name = "Texte (Bouton)", value = data["button_text"])
             embed.add_field(name = "Nombre de gagnants", value = str(data["winners_count"]))
             embed.add_field(name = "Gagnant imposé", value = f"<@{data['imposed_winner']}>" if data["imposed_winner"] else "*Aucun gagnant imposé*")
             embed.add_field(name = "Rôle requis", value = f"<@&{data['required_role']}>" if data["required_role"] else "*Aucun rôle*")

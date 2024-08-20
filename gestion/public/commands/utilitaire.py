@@ -1184,7 +1184,7 @@ class Utilitaire(commands.Cog):
             members.remove(choice)
 
         await ctx.send(f"> Voici une liste de {count} utilisateurs choisi au hasard :\n\n{', '.join(choosed_members)}", allowed_mentions = AM.none())
-    
+
 
     @commands.command(description = "Faire une suggestion au serveur")
     @commands.cooldown(rate = 5, per = 60)
@@ -1247,6 +1247,18 @@ class Utilitaire(commands.Cog):
 
         await ctx.send(f"> Votre suggestion a été bien été envoyé" + (", il doit désormais être confirmé." if confirmation_channel else "."))
     
+
+    @commands.command(description = "Faire envoyer un message avec un contenu donné")
+    @commands.cooldown(rate = 5, per = 60)
+    @commands.guild_only()
+    async def say(self, ctx : commands.Context, *, message : str):
+        if len(message) > 2000:
+            await ctx.send("> Je ne peux pas envoyer de message contentant plus de 2000 caractères.")
+            return
+        
+        allowed_mentions = AM.all() if ctx.author.guild_permissions.mention_everyone else AM.none()
+        await ctx.send(message, allowed_mentions = allowed_mentions)
+
 
 def setup(bot):
     bot.add_cog(Utilitaire(bot))
