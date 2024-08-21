@@ -72,7 +72,8 @@
         "captcha",
         "joins",
         "leaves",
-        "say"
+        "say",
+        "clearcomponents"
     ],
     "10": [
         "owners",

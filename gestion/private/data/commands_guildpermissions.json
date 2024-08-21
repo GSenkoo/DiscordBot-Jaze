@@ -72,6 +72,7 @@
     "leaves": ["manage_guild", "manage_channels"],
     "captcha": ["manage_guild", "moderate_members", "manage_channels"],
     "say": ["manage_guild"],
+    "clearcomponents": ["administrator"],
 
 
     "owners": ["owner"],

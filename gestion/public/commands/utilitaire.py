@@ -1260,5 +1260,24 @@ class Utilitaire(commands.Cog):
         await ctx.send(message, allowed_mentions = allowed_mentions)
 
 
+    @commands.command(description = "Retirer les boutons et sélecteurs d'un message du bot")
+    @commands.guild_only()
+    async def clearcomponents(self, ctx, message : discord.Message):
+        if message.author != ctx.guild.me:
+            await ctx.send(f"> Je ne suis pas l'ateur de ce [message](https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}).")
+            return
+        
+        if not message.components:
+            await ctx.send("> Le message donné ne contient pas de bouton.")
+            return
+        
+        try:
+            await message.edit(view = None)
+            await ctx.send(f"> Les boutons et sélecteurs du [message](https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}) donné ont tous étés retirés.")
+        except: 
+            await ctx.send(f"> Il me paraît pour le moment impossible de modifier le [message](https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}) donné.")
+
+
+
 def setup(bot):
     bot.add_cog(Utilitaire(bot))
