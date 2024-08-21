@@ -1260,7 +1260,7 @@ class Utilitaire(commands.Cog):
         await ctx.send(message, allowed_mentions = allowed_mentions)
 
 
-    @commands.command(description = "Retirer les boutons et sélecteurs d'un message du bot")
+    @commands.command(description = "Retirer les boutons et sélecteurs d'un message du bot", aliases = ["clearcomponent"])
     @commands.guild_only()
     async def clearcomponents(self, ctx, message : discord.Message):
         if message.author != ctx.guild.me:

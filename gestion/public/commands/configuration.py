@@ -698,7 +698,7 @@ class Configuration(commands.Cog):
                     except asyncio.TimeoutError:
                         await ctx.send("> Action annulée, une minute s'est écoulée.", delete_after = 3)
                         return
-                    except: return
+                    except Exception: return
                     finally: delete_message(message)
                     delete_message(response_message)
 
@@ -899,7 +899,7 @@ class Configuration(commands.Cog):
                     try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
                     except asyncio.TimeoutError():
                         await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
-                    except: return
+                    except Exception: return
                     finally: delete_message(request_message)
                     delete_message(response_message)
 
@@ -1005,6 +1005,19 @@ class Configuration(commands.Cog):
                                 await interaction.response.send_message("> Vous ne pouvez pas choisir un rôle ayant définis comme rôle soutien.", ephemeral = True)
                                 return
                             
+                            role = interaction.guild.get_role(role_id)
+                            if not role:
+                                await interaction.response.send_message(f"> Le rôle donné n'éxiste plus ou alors je n'y ai plus accès.", ephemeral = True)
+                                return
+                            
+                            if not role.is_assignable():
+                                await interaction.response.send_message(f"> Le rôle {role.mention} n'est pas assignable.", ephemeral = True)
+                                return
+                            
+                            if role.position >= interaction.guild.me.top_role.position:
+                                await interaction.response.send_message("> Je ne peux pas ajouter un rôle qui est suppérieur ou égal hiérarchiquement à mon rôle le plus élevé.", ephemeral = True)
+                                return
+                            
                             manage_captcha_view.data[manage_captcha_select.values[0]] = role_id
                             await interaction.message.edit(embed = await get_captcha_embed(manage_captcha_view.data), view = manage_captcha_view)
                             await interaction.response.defer()
@@ -1059,6 +1072,7 @@ class Configuration(commands.Cog):
                     await interaction.response.defer()
                     return
                 
+                # -------------------------- Vérification des valeurs obligatoires à vérifier ---------------------------------
                 gived_channel = interaction.guild.get_channel(self.data["channel"])
                 if not gived_channel:
                     await interaction.response.send_message("> Merci de fournir un salon de vérification valide.", ephemeral = True)
@@ -1069,6 +1083,7 @@ class Configuration(commands.Cog):
                     await interaction.response.send_message("> Merci de fournir un rôle valide pour les utilisateurs non vérifiés.", ephemeral = True)
                     return
                 
+                # -------------------------- Désactivation des bouttons et du sélecteur du ManageCaptchaView (afin d'empêcher le spam de confirmation)
                 for children in self.children:
                     children.disabled = True
                 async def restore():
@@ -1079,30 +1094,32 @@ class Configuration(commands.Cog):
                 await interaction.message.edit(view = self)
                 await interaction.response.defer()
 
+
+                # -------------------------- Demande à l'utilisateur le lien du message sur lequel il y'aura la bouton de vérfication
                 def response_check(message):
                     return (message.author == interaction.user) and (message.channel == interaction.channel) and (message.content)
-                i = 0
                 message = None
                 while not message:
-                    ask_message = await self.ctx.send("> Quel est le lien du message auquel vous souhaitez ajouter le bouton? Le message doit être un message du bot et ne doit pas contenir de bouton/sélecteur. Envoyez `cancel` pour annuler cette configuration." if i == 0 else f"> Lien invalide. Merci de donner un lien valide vers le message dans le salon <#{self.data['channel']}>.")
-                    try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 180)
+                    ask_message = await self.ctx.send(f"> Quel est le **lien ou l'identifiant du message** auquel vous souhaitez ajouter le bouton? Le message doit être un message du bot, ne doit pas contenir de bouton/sélecteur et doit être dans le salon <#{self.data['channel']}>. Envoyez `cancel` pour annuler cette action.")
+                    try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
                     except asyncio.TimeoutError():
-                        await self.ctx.send("> Configuration annulée, 3 minutes se sont écoulées.", delete_after = 3)
+                        await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                         await restore()
                         return
-                    except:
+                    except Exception:
                         await restore()
                         return
                     finally: delete_message(ask_message)
                     delete_message(response_message)
 
                     if response_message.content.lower() == "cancel":
-                        await self.ctx.send("> Configuration annulée.", delete_after = 3)
+                        await self.ctx.send("> Action annulée.", delete_after = 3)
                         await restore()
                         return
                     
                     content = response_message.content.removeprefix(f"https://discord.com/channels/{interaction.guild.id}/{self.data['channel']}/")
                     if not content.isdigit():
+                        await self.ctx.send("> Lien invalide.", delete_after = 3)
                         continue
 
                     content = int(content)
@@ -1113,7 +1130,9 @@ class Configuration(commands.Cog):
                         return
                     
                     try: message = await channel.fetch_message(content)
-                    except: continue
+                    except:
+                        await self.ctx.send("> Lien invalide.", delete_after = 3)
+                        continue
 
                     if message.author != interaction.guild.me:
                         await self.ctx.send("> Je ne suis pas l'auteur du message donné.", delete_after = 3)
@@ -1124,100 +1143,109 @@ class Configuration(commands.Cog):
                         await self.ctx.send("> Le message donné contient un/des sélécteur(s)/bouton(s).", delete_after = 3)
                         message = None
                         continue
+            
+                # -------------------------- Demander à l'utilisateur s'il souhaite une configuration automatique de son système de vérification
+                manage_captcha_view = self
+                previous_message = message
 
-                bot = self.bot
-                role_id = self.data["noderank_role"]
-                verification_channel_id = self.data["non_verified_role"]
+                async def get_data_validity():
+                    try: message = await previous_message.channel.fetch_message(previous_message.id)
+                    except:
+                        return "> Configuration annulée, le message précédement fourni n'est plus disponible.", None, None, False
+                    
+                    try: non_verified_role = interaction.guild.get_role(manage_captcha_view.data["non_verified_role"])
+                    except:
+                        return "> Configuration annulée, le rôle (pour les utilisateurs non vérifiés) précédement fourni n'est plus disponible.", None, None, False
+                    
+                    try: verification_channel = interaction.guild.get_channel(manage_captcha_view.data["channel"])
+                    except:
+                        return "> Configuration annulée, le salon de vérification n'est plus disponible.", None, None, False
+
+                    return message, non_verified_role, verification_channel, True
+
                 class AutoConfig(MyViewClass):
                     @discord.ui.button(emoji = "✅")
                     async def launch_autoconfig_callback(self, button, interaction):
-                        if interaction.user != self.ctx.author:
+                        if interaction.user != manage_captcha_view.ctx.author:
                             await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                             return
-                        
-                        try: message = message.channel.fetch_message(message.id)
-                        except: 
-                            await interaction.response.send_message("> Configuration annulée, le message précédement fourni n'est plus disponible.", ephemeral = True)
+                        # -------------------------- Vérification de la validité des valeurs
+                        message, non_verified_role, verification_channel, successfull = await get_data_validity()
+                        if not successfull:
+                            await interaction.response.send_message(message, ephemeral = True)
                             await interaction.message.edit(view = None)
-                            await interaction.response.defer()
                             return
                         
-                        try: non_verified_role = interaction.guild.get_role(role_id)
+
+                        captcha_view = discord.ui.View(timeout = None)
+                        captcha_view.add_item(discord.ui.Button(label = manage_captcha_view.data["button_text"], emoji = manage_captcha_view.data["button_emoji"], style = getattr(discord.ButtonStyle, manage_captcha_view.data["button_color"]), custom_id = "captcha_verify"))
+                        try: await message.edit(view = captcha_view)
                         except:
-                            await interaction.response.send_message("> Configuration annulée, le rôle (pour les utilisateurs non vérifiés) précédement fourni n'est plus disponible.", ephemeral = True)
-                            await interaction.message.edit(view = None)
+                            await interaction.message.edit(embed = discord.Embed(title = "Configuration annulée, Impossible d'ajouter le bouton de vérification au message précédement donné.", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)), view = None)
                             await interaction.response.defer()
                             return
                         
-                        try: verification_channel = interaction.guild.get_channel(verification_channel_id)
-                        except:
-                            await interaction.response.send_message("> Configuration annulée, le salon de vérification n'est plus disponible.", ephemeral = True)
-                            await interaction.message.edit(view = None)
-                            await interaction.response.defer()
-                            return
-                        
-
-                        canceled = False
-                        async def cancel_callback(self, button, interaction):
-                            if interaction.user != self.ctx.author:
-                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
-                                return
-                            
-                            global canceled
-                            canceled = True
-                            self.children[0].disabled = True
-
-                            await interaction.message.edit(embed = discord.Embed(title = "Configuration automatique annulée", color = await bot.get_theme(interaction.guild.id)), view = self)
-                            await interaction.response.defer()
-
-                        view = MyViewClass()
-                        button = discord.ui.Button(style = discord.ButtonStyle.danger, label = "Annuler")
-                        button.callback = cancel_callback
-                        view.add_item(button)
+                        for key, value in manage_captcha_view.data.items():
+                            if key == "guild_id": continue
+                            await manage_captcha_view.bot.db.set_data("captcha", key, value, guild_id = interaction.guild.id)
                         
                         await interaction.message.edit(
                             embed = discord.Embed(
                                 title = "Configuration automatique des permissions en cours...",
-                                color = await bot.get_theme(interaction.guild.id)
+                                color = await manage_captcha_view.bot.get_theme(interaction.guild.id)
                             ),
-                            view = view
+                            view = None
                         )
                         await interaction.response.defer()
 
-                        # TODO: Ajouter le bouton de vérification sur le message  concerné
-
-                        for channel in interaction.guild.channel:
+                        for channel in interaction.guild.channels:
                             if type(channel) == discord.CategoryChannel: continue
-                            if canceled: return
-                            if not channel.permissions_for(interaction.guild.default_role).view_channel: continue
+                            if (not channel.permissions_for(interaction.guild.default_role).view_channel) and (channel.id != verification_channel.id): continue
 
                             if channel.id == verification_channel.id:
-                                channel_overwrites = channel.overwrites_for(interaction.guild.default_role)
-                                channel_overwrites.view_channel = False
-                                await channel.set_permissions(interaction.guild.default_role, overwrites = channel_overwrites, reason = f"[{interaction.user.display_name} - {interaction.user.id}] Configuration automatique des permissions de captcha")
-                                await channel.set_permissions(non_verified_role, view_channel = True, reason = f"[{interaction.user.display_name} - {interaction.user.id}] Configuration automatique des permissions de captcha")
+                                if channel.permissions_for(interaction.guild.default_role).view_channel:
+                                    channel_overwrites = channel.overwrites_for(interaction.guild.default_role)
+                                    channel_overwrites.view_channel = False
+                                    await channel.set_permissions(interaction.guild.default_role, overwrite = channel_overwrites, reason = f"[{interaction.user.display_name} - {interaction.user.id}] Configuration automatique des permissions de captcha")
+                                
+                                if not channel.permissions_for(non_verified_role).view_channel:
+                                    await channel.set_permissions(non_verified_role, view_channel = True, reason = f"[{interaction.user.display_name} - {interaction.user.id}] Configuration automatique des permissions de captcha")
+                                
                                 continue
-
-                            try: await channel.set_permissions(non_verified_role, view_channel = False, reason = f"[{interaction.user.display_name} - {interaction.user.id}] Configuration automatique des permissions de captcha")
-                            except: pass
-
-                        await interaction.message.edit(embed = discord.Embed(title = "")) # TODO
-                        await self.ctx.send(interaction.user.mention, embed = discord.Embed(title = "Système de vérification des nouveaux membres est prêt.", color = await bot.get_theme(interaction.guild.id)))
+                            
+                            if channel.permissions_for(non_verified_role).view_channel:
+                                try: await channel.set_permissions(non_verified_role, view_channel = False, reason = f"[{interaction.user.display_name} - {interaction.user.id}] Configuration automatique des permissions de captcha")
+                                except: pass
+                        
+                        await interaction.message.edit(embed = discord.Embed(title = "Configuration automatique des permissions terminé", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)), view = None) 
+                        await manage_captcha_view.ctx.send(interaction.user.mention, embed = discord.Embed(title = "Votre système de vérification des nouveaux membres est prêt", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)))
                         
                         
                     @discord.ui.button(emoji = "❌")
                     async def no_autoconfig_callback(self, button, interaction):
-                        if interaction.user != self.ctx.author:
+                        if interaction.user != manage_captcha_view.ctx.author:
                             await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                             return 
+                        
+                        message, _, _, successfull = await get_data_validity()
+                        if not successfull:
+                            await interaction.response.send_message(message, ephemeral = True)
+                            await interaction.message.edit(view = None)
+                            return
+                        
+                        for key, value in manage_captcha_view.data.items():
+                            if key == "guild_id": continue
+                            await manage_captcha_view.bot.db.set_data("captcha", key, value, guild_id = interaction.guild.id)
+                        
+                        await interaction.message.edit(embed = discord.Embed(title = "Votre système de vérification des nouveaux membres est prêt", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)), view = None)
+                        await interaction.response.defer()
 
-                        # TODO
                         
                 await interaction.message.edit(
                     embed = discord.Embed(
                         title = "Configuration recommandée",
-                        description = f"***Souhaitez-vous configurer automatiquement les permissions du rôle <@&{self.data['non_verified_role']}> et des salons de ce serveur ?***\n\nLe processus consiste à masquer tous les salons pour les nouveaux membres non vérifiés, à l'exception du salon de vérification. Une fois la vérification terminée, les salons masqués deviennent accessibles aux utilisateurs vérifiés, tandis que le salon de vérification leur est ensuite rendu invisible.\n\n*Notez que les salons actuellement invisibles pour @everyone ne seront pas affectés par cette configuration.*",
-                        color = await self.bot.get_theme(interaction.guild.id)
+                        description = f"***Souhaitez-vous configurer automatiquement les permissions du rôle <@&{manage_captcha_view.data['non_verified_role']}> et des salons de ce serveur ?***\n\nLe processus consiste à masquer tous les salons pour les nouveaux membres non vérifiés, à l'exception du salon de vérification. Une fois la vérification terminée, les salons masqués deviennent accessibles aux utilisateurs vérifiés, tandis que le salon de vérification leur est ensuite rendu invisible.\n\n*Notez que les salons actuellement invisibles pour @everyone ne seront pas affectés par cette configuration.*",
+                        color = await manage_captcha_view.bot.get_theme(interaction.guild.id)
                     ),
                     view = AutoConfig()
                 )
@@ -1229,7 +1257,7 @@ class Configuration(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de bienvenue annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
+                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de vérification annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
                 await interaction.response.defer()
 
         
@@ -1372,7 +1400,7 @@ class Configuration(commands.Cog):
                     except asyncio.TimeoutError():
                         await ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                         return
-                    except: return
+                    except Exception: return
                     finally: delete_message(message)
                     delete_message(response)
 
