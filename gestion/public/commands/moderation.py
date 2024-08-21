@@ -140,7 +140,7 @@ class Moderation(commands.Cog):
 
 
     @commands.command(description = "Bannir un membre du serveur")
-    @commands.cooldown(rate = 5, per = 60)
+    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.guild)
     @commands.bot_has_permissions(ban_members = True)
     @commands.guild_only()
     async def ban(self, ctx, user : discord.User, *, reason = None):
@@ -179,7 +179,7 @@ class Moderation(commands.Cog):
     @commands.command(description = "Débannir un membre du serveur")
     @commands.guild_only()
     @commands.bot_has_permissions(ban_members = True)
-    @commands.cooldown(rate = 5, per = 60)
+    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.guild)
     async def unban(self, ctx, user : discord.User):
         banned_users = []
         async for banned in ctx.guild.bans():
@@ -197,8 +197,31 @@ class Moderation(commands.Cog):
         await ctx.send(f"> L'utilisateur **{user.display_name}** a été débanni du serveur.")
 
     
+    @commands.command(description = "Débannir tous les utilisateurs banni")
+    @commands.guild_only()
+    @commands.bot_has_permissions(ban_members = True)
+    async def unbanall(self, ctx):
+        unbanned = 0
+        total_banned = 0
+        banned_users = await ctx.guild.bans().flatten()
+        
+        if not banned_users:
+            await ctx.send("> Sur ce serveur, il n'y a pas d'utilisateur banni.")
+            return
+        
+        await ctx.send("> Débannissement des utilisateurs banni en cours...")
+
+        for ban_entry in banned_users:
+            total_banned += 1
+            try: await ctx.guild.unban(ban_entry.user, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de débanissement de tous les utilisateurs bannis")
+            except: continue
+            unbanned += 1
+
+        await ctx.send("> Tentative de débannissement effectué. " + (f"Je compte un total de {unbanned} utilisateur(s) débanni. " if unbanned else "") + (f"Je n'ai pas pu bannir {total_banned - unbanned} utilisateurs." if total_banned - unbanned else ""))
+
+    
     @commands.command(description = "Kick un membre du serveur")
-    @commands.cooldown(rate = 5, per = 60)
+    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.guild)
     @commands.bot_has_permissions(kick_members = True)
     @commands.guild_only()
     async def kick(self, ctx, member : discord.Member, *, reason = None):

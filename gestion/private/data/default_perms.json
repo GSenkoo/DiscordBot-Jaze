@@ -44,7 +44,8 @@
         "untempmute",
         "derank",
         "addrole",
-        "delrole"
+        "delrole",
+        "banlist"
     ],
     "3": [
         "ch",
@@ -73,7 +74,8 @@
         "joins",
         "leaves",
         "say",
-        "clearcomponents"
+        "clearcomponents",
+        "unbanall"
     ],
     "10": [
         "owners",

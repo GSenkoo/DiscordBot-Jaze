@@ -104,6 +104,27 @@ class Informations(commands.Cog):
             await paginator.send(ctx)
 
 
+    @commands.command(description = "Voir la liste des utilisateurs banni sur ce serveur")
+    @commands.guild_only()
+    @commands.bot_has_permissions(ban_members = True)
+    async def banlist(self, ctx):
+        banned_users = await ctx.guild.bans().flatten()
+        banned_users = [f"[{ban_entry.user.display_name}{f'#{ban_entry.user.discriminator}' if ban_entry.user.discriminator != '0' else ''}](discord:/users/{ban_entry.user.id}) `({ban_entry.user.id})`" for ban_entry in banned_users]
+
+        paginator_creator = PaginatorCreator()
+        paginator = await paginator_creator.create_paginator(
+            title = f"Bannissements",
+            embed_color = await self.bot.get_theme(ctx.guild.id),
+            data_list = banned_users,
+            data_per_page = 10,
+        )
+
+        if type(paginator) == list:
+            await ctx.send(embed = paginator[0])
+        else:
+            await paginator.send(ctx)
+
+
     @commands.command(description = "Voir les membres avec un certains rôle", aliases = ["rlmb", "rolemb"])
     @commands.guild_only()
     async def rolemembers(self, ctx, role: discord.Role):

@@ -38,12 +38,14 @@
     "sanctions": ["moderate_members"],
     "ban": ["ban_members"],
     "unban": ["ban_members"],
+    "banlist": ["ban_members"],
     "kick": ["kick_members"],
     "tempmute": ["mute_members"],
     "untempmute": ["mute_members"],
     "derank": ["manage_roles"],
     "addrole": ["manage_roles"],
     "delrole": ["manage_roles"],
+
 
 
     "ch": ["manage_channels"],
@@ -73,6 +75,7 @@
     "captcha": ["manage_guild", "moderate_members", "manage_channels"],
     "say": ["manage_guild"],
     "clearcomponents": ["administrator"],
+    "unbanall": ["administrator"],
 
 
     "owners": ["owner"],

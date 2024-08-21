@@ -224,7 +224,7 @@ class Utilitaire(commands.Cog):
 
     @commands.command(usage = "<text>", description = "Traduir un texte dans un langage que vous choisirez sur un menu", aliases = ["tsl"])
     @commands.guild_only()
-    @commands.cooldown(rate = 5, per = 60)
+    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.guild)
     async def translate(self, ctx, *, text):
         translation = await self.bot.get_translation("translate", ctx.guild.id)
 
@@ -1161,7 +1161,7 @@ class Utilitaire(commands.Cog):
 
     @commands.command(description = "Obtenir des/un utilisateur(s) choisi au hasard")
     @commands.guild_only()
-    async def randommember(self, ctx, count : int = None):
+    async def randommember(self, ctx, count : int = None, type = commands.BucketType.guild):
         if count is None: count = 1
 
         if not 1 <= count <= 50:
@@ -1187,7 +1187,7 @@ class Utilitaire(commands.Cog):
 
 
     @commands.command(description = "Faire une suggestion au serveur")
-    @commands.cooldown(rate = 5, per = 60)
+    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.guild)
     @commands.guild_only()
     async def suggest(self, ctx, *, suggestion : str):
         if len(suggestion) > 2000:
@@ -1249,7 +1249,7 @@ class Utilitaire(commands.Cog):
     
 
     @commands.command(description = "Faire envoyer un message avec un contenu donné")
-    @commands.cooldown(rate = 5, per = 60)
+    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.guild)
     @commands.guild_only()
     async def say(self, ctx : commands.Context, *, message : str):
         if len(message) > 2000:
