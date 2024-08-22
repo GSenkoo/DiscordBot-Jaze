@@ -169,11 +169,11 @@ class Moderation(commands.Cog):
 
         try: await ctx.guild.ban(user, reason = log_reason if len(log_reason) <= 50 else log_reason[:47] + "...")
         except:
-            await ctx.send(f"> Une erreur s'est produite lors de la tentative de bannissement de {member.mention}.", allowed_mentions = AM.none())
+            await ctx.send(f"> Une erreur s'est produite lors de la tentative de bannissement de {user.mention}.", allowed_mentions = AM.none())
             return
         
         await tools.add_sanction("ban", ctx, user, reason)
-        await ctx.send(f"> {member.mention} a été banni du serveur" + ("." if not reason else f" pour `" + (reason.replace("`", "'") if len(reason) <= 50 else reason.replace("`", "'")[:47] + "...") + "`."), allowed_mentions = AM.none()) 
+        await ctx.send(f"> L'utilisateur **{user}** a été banni du serveur" + ("." if not reason else f" pour `" + (reason.replace("`", "'") if len(reason) <= 50 else reason.replace("`", "'")[:47] + "...") + "`."), allowed_mentions = AM.none()) 
 
 
     @commands.command(description = "Débannir un membre du serveur")
@@ -194,7 +194,7 @@ class Moderation(commands.Cog):
             await ctx.send(f"> Une erreur s'est produite lors de la tentative de débannissement, merci de réessayer.")
             return
         
-        await ctx.send(f"> L'utilisateur **{user.display_name}** a été débanni du serveur.")
+        await ctx.send(f"> L'utilisateur **{user}** a été débanni du serveur.")
 
     
     @commands.command(description = "Débannir tous les utilisateurs banni")
@@ -209,7 +209,7 @@ class Moderation(commands.Cog):
             await ctx.send("> Sur ce serveur, il n'y a pas d'utilisateur banni.")
             return
         
-        await ctx.send("> Débannissement des utilisateurs banni en cours...")
+        message = await ctx.send("> Débannissement des utilisateurs banni en cours...")
 
         for ban_entry in banned_users:
             total_banned += 1
@@ -217,7 +217,10 @@ class Moderation(commands.Cog):
             except: continue
             unbanned += 1
 
-        await ctx.send("> Tentative de débannissement effectué. " + (f"Je compte un total de {unbanned} utilisateur(s) débanni. " if unbanned else "") + (f"Je n'ai pas pu bannir {total_banned - unbanned} utilisateurs." if total_banned - unbanned else ""))
+        try: await message.delete()
+        except: pass
+
+        await ctx.send("> Tentative de débannissement de tous les utilisateurs banni effectué." + (f"\n> Je compte un total de {unbanned} utilisateur(s) débanni. " if unbanned else "") + (f"\n> Je n'ai pas pu bannir {total_banned - unbanned} utilisateurs." if total_banned - unbanned else ""))
 
     
     @commands.command(description = "Kick un membre du serveur")

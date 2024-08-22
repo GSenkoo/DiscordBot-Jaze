@@ -698,7 +698,6 @@ class Configuration(commands.Cog):
                     except asyncio.TimeoutError:
                         await ctx.send("> Action annulée, une minute s'est écoulée.", delete_after = 3)
                         return
-                    except Exception: return
                     finally: delete_message(message)
                     delete_message(response_message)
 
@@ -891,6 +890,7 @@ class Configuration(commands.Cog):
                     request_message = await self.ctx.send(
                         f"> Quel {option_name} souhaitez-vous définir à votre bouton? Envoyez `cancel` pour annuler."
                         + (" Couleurs disponibles : `bleu`, `rouge`, `vert` et `gris`" if select.values[0] == "button_color" else "")
+                        + (" Envoyez `remove` pour retirer l'emoji." if select.values[0] == "button_emoji" else "")
                     )
 
                     def response_check(message):
@@ -899,7 +899,6 @@ class Configuration(commands.Cog):
                     try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
                     except asyncio.TimeoutError():
                         await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
-                    except Exception: return
                     finally: delete_message(request_message)
                     delete_message(response_message)
 
@@ -914,12 +913,16 @@ class Configuration(commands.Cog):
                         self.data["button_text"] = response_message.content
                     
                     if select.values[0] == "button_emoji":
-                        tools = Tools(self.bot)
-                        emoji = await tools.get_emoji(response_message.content)
-                        if not emoji:
-                            await self.ctx.send("> Action annulée, emoji invalide.", delete_after = 3)
-                            return
-                        self.data["button_emoji"] = emoji
+                        if response_message.content.lower() == "remove":
+                            self.data["button_emoji"] = None
+                        else:
+                            tools = Tools(self.bot)
+                            emoji = await tools.get_emoji(response_message.content)
+                            if not emoji:
+                                await self.ctx.send("> Action annulée, emoji invalide.", delete_after = 3)
+                                return
+                            
+                            self.data["button_emoji"] = emoji
                     
                     if select.values[0] == "button_color":
                         if response_message.content.lower() in ["bleu", "blue"]:
@@ -933,6 +936,8 @@ class Configuration(commands.Cog):
                         else:
                             await self.ctx.send("> Action annulée, couleur invalide.", delete_after = 3)
                             return
+                    
+                    await interaction.message.edit(embed = await get_captcha_embed(self.data))
                         
                 if select.values[0] == "channel":
                     manage_captcha_view = self
@@ -1100,15 +1105,13 @@ class Configuration(commands.Cog):
                     return (message.author == interaction.user) and (message.channel == interaction.channel) and (message.content)
                 message = None
                 while not message:
-                    ask_message = await self.ctx.send(f"> Quel est le **lien ou l'identifiant du message** auquel vous souhaitez ajouter le bouton? Le message doit être un message du bot, ne doit pas contenir de bouton/sélecteur et doit être dans le salon <#{self.data['channel']}>. Envoyez `cancel` pour annuler cette action.")
+                    ask_message = await self.ctx.send(f"> Quel est le **lien ou l'identifiant du message** auquel vous souhaitez ajouter le bouton? Le message doit être un message du bot, ne doit pas contenir de bouton/sélecteur (vous pouvez utiliser `{ctx.clean_prefix}clearcomponents <message>` pour retirer les boutons/sélécteurs d'un message) et doit être dans le salon <#{self.data['channel']}>. Envoyez `cancel` pour annuler cette action.")
                     try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
                     except asyncio.TimeoutError():
                         await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                         await restore()
                         return
-                    except Exception:
-                        await restore()
-                        return
+                
                     finally: delete_message(ask_message)
                     delete_message(response_message)
 
@@ -1400,7 +1403,6 @@ class Configuration(commands.Cog):
                     except asyncio.TimeoutError():
                         await ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                         return
-                    except Exception: return
                     finally: delete_message(message)
                     delete_message(response)
 

@@ -1,4 +1,5 @@
 import discord
+import json
 from discord.ext import commands
 
 class error_handler(commands.Cog):
@@ -13,7 +14,10 @@ class error_handler(commands.Cog):
         if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).send_messages:
             try: await ctx.author.send(f"> Je n'ai pas les permissions nécessaires pour envoyer des messages dans le salon <#{ctx.channel.id}>.")
             except: pass
-        
+
+        with open("gestion/private/data/permissions_translations.json") as file:
+            permissions_translations = json.load(file)
+  
         match type(error):
             case commands.CommandNotFound:
                 pass
@@ -60,9 +64,9 @@ class error_handler(commands.Cog):
             case commands.BadBoolArgument:
                 await ctx.send(f"> L'argument booléen (oui/non, vrai/faux, on/off) donné ({display(error.argument)}) est invalide.", allowed_mentions = None)
             case commands.MissingPermissions:
-                await ctx.send(f"> Vous n'avez pas les permissions nécessaires (`{'`, `'.join(error.missing_permissions)}`) pour faire ceci.")
+                await ctx.send(f"> Vous n'avez pas les permissions nécessaires (`{'`, `'.join([permissions_translations[perm] for perm in error.missing_permissions])}`) pour faire ceci.")
             case commands.BotMissingPermissions:
-                await ctx.send(f"> Je n'ai pas les permissions nécessaires (`{'`, `'.join(error.missing_permissions)}`) pour faire ceci.")
+                await ctx.send(f"> Je n'ai pas les permissions nécessaires (`{'`, `'.join([permissions_translations[perm] for perm in error.missing_permissions])}`) pour faire ceci.")
             case commands.MissingRole:
                 await ctx.send(f"> Vous n'avez pas les rôles nécessaires (<@&{'>, <@&'.join(str(role_id) for role_id in error.missing_role)}>) pour faire ceci.", allowed_mentions = None)
             case commands.BotMissingRole:

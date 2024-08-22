@@ -10,3 +10,4 @@ wikipedia>=1.4.0
 deepl>=1.18.0
 blagues-api>=1.0.3
 emoji>=2.12.1
+pillow>=10.4.0

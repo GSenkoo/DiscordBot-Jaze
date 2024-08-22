@@ -119,3 +119,38 @@ class Tools:
         try: query = self.bot.get_emoji(int(query))
         except: return None
         return query
+    
+    async def replace_vars(self, text, member = None, guild = None):
+        if member:
+            text \
+                .replace("{MemberName}", member.name) \
+                .replace("{MemberDisplayName}", member.display_name) \
+                .replace("{MemberMention}", member.mention) \
+                .replace("{MemberId}", member.id) \
+                .replace("{MemberCreatedAt}", member.created_at.strftime('%d/%m/%Y %H:%M')) \
+                .replace("{MemberCreatedAtf}", f"<t:{round(member.created_at.timestamp())}>") \
+                .replace("{MemberCreatedAtR}", f"<t:{round(member.created_at.timestamp())}:R>") \
+                .replace("{MemberRolesCount}", str(len(member.roles))) \
+                .replace("{MemberStatus}", str(member.status).replace('dnd', 'ne pas déranger').replace('offline', 'hors ligne').replace('online', 'en ligne').replace('idle', 'inactif')) \
+                .replace("{MemberActivity}", member.activity.name if member.activity else 'Aucune activitée')
+
+        if guild:
+            text \
+                .replace("{ServerName}", guild.name) \
+                .replace("{ServerId}", str(guild.id)) \
+                .replace("{ServerCreatedAt}", guild.created_at.strftime('%d/%m/%Y %H:%M')) \
+                .replace("{ServerCreatedAtf}", f"<t:{round(guild.created_at.timestamp())}>") \
+                .replace("{ServerCreatedAtR}", f"<t:{round(guild.created_at.timestamp())}:R>") \
+                .replace("{MemberCount}", str(len(guild.members))) \
+                .replace("{ConnectedCount}", str(len([member for member in guild.members if member.status != discord.Status.offline]))) \
+                .replace("{OnlineCount}", str(len([member for member in guild.members if member.status == discord.Status.online]))) \
+                .replace("{OfflineCount}", str(len([member for member in guild.members if member.status == discord.Status.offline]))) \
+                .replace("{DndCount}", str(len([member for member in guild.members if member.status == discord.Status.dnd]))) \
+                .replace("{IdleCount}", str(len([member for member in guild.members if member.status == discord.Status.idle]))) \
+                .replace("{AdminCount}", str(len([member for member in guild.members if member.guild_permissions.administrator]))) \
+                .replace("{BotCount}", str(len([member for member in guild.members if member.bot]))) \
+                .replace("{BoostCount}", str(guild.premium_subscription_count)) \
+                .replace("{ChannelCount}", str(len(guild.channels))) \
+                .replace("{InVoiceCount}", str(len([member for member in guild.members if member.voice])))
+
+        return text

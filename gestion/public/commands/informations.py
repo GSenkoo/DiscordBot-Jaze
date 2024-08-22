@@ -342,7 +342,7 @@ class Informations(commands.Cog):
 
         embed = discord.Embed(
             title = self.bot.user.display_name,
-            description = translation["Bot discord avancé, optimisé et complet."],
+            description = translation["Bot discord avancé, fiable et complet."],
             color = await self.bot.get_theme(ctx.guild.id),
             thumbnail = self.bot.user.avatar.url
         )
@@ -376,6 +376,10 @@ class Informations(commands.Cog):
         translation = await self.bot.get_translation("user", ctx.guild.id)
         if not user:
             user = ctx.author
+        try: user_instance = await self.bot.fetch_user(user.id)
+        except: 
+            await ctx.send("> Utilisateur introuvable.")
+            return
 
         embed = discord.Embed(
             description = f"### {user.mention} (`{user.id}`)",
@@ -405,7 +409,7 @@ class Informations(commands.Cog):
             if member.premium_since:
                 embed.add_field(name = translation["Booster depuis"], value = f"<t:{round(member.premium_since.timestamp())}:R>")
             embed.add_field(name = translation["Rôle le plus haut"], value = f"{member.top_role.mention}")
-        if user.banner: embed.set_image(url = user.banner.url)
+        if user_instance.banner: embed.set_image(url = user_instance.banner.url)
         await ctx.send(embed = embed)
 
 
@@ -448,6 +452,11 @@ class Informations(commands.Cog):
 
         if not user:
             user = ctx.author
+        try: user = await self.bot.fetch_user(user.id) # Fix
+        except: 
+            await ctx.send("> Utilisateur introuvable.")
+            return
+        
         if not user.banner:
             await ctx.send(f"> " + (translation["[data_user] n'a pas de bannière"].replace("[data_user]", user.mention) if user != ctx.author else translation["Vous n'avez pas de bannière"]) + ".", allowed_mentions = None)
             return
@@ -467,7 +476,7 @@ class Informations(commands.Cog):
     @commands.guild_only()
     async def serverpic(self, ctx, server : discord.Guild = None):
         translation = await self.bot.get_translation("serverpic", ctx.guild.id)
-
+        
         if not server:
             server = ctx.guild
         if not ctx.guild.icon:
@@ -536,7 +545,7 @@ class Informations(commands.Cog):
         guild_embed.add_field(name = "`{BoostCount}`", value = f"*Exemple :* {ctx.guild.premium_subscription_count}")
         guild_embed.add_field(name = "`{ChannelCount}`", value = f"*Exemple :* {len(ctx.guild.channels)}")
         guild_embed.add_field(name = "`{InVoiceCount}`", value = f"Utilisateurs en vocal.\n*Exemple :* {len([member for member in ctx.guild.members if member.voice])}")
-        
+
         pages = [
             Page(embeds = [member_embed]),
             Page(embeds = [guild_embed]),
