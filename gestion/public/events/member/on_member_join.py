@@ -1,5 +1,6 @@
 import discord
 import asyncio
+from utils.Tools import Tools
 from datetime import datetime
 from discord.ext import commands
 
@@ -41,7 +42,23 @@ class on_member_join(commands.Cog):
                 if non_verified_role:
                     await member.add_roles(non_verified_role, reason = "Rôle des utilisateurs non vérifiés")
 
-        tasks = [send_ghost_ping(), add_join_roles(), add_captcha_role()]
+        # ----------------------------------- JOIN MESSAGE
+        async def send_join_message():
+            tools = Tools(self.bot)
+            
+            joins_message_enabled = await self.bot.db.get_data("joins", "enabled", guild_id = member.guild.id)
+            if not joins_message_enabled:
+                return
+            
+            captcha_enabled = await self.bot.db.get_data("captcha", "enabled", guild_id = member.guild.id)
+            if captcha_enabled:
+                send_after_captcha = await self.bot.db.get_data("joins", "send_after_captcha", guild_id = member.guild.id)
+                if send_after_captcha:
+                    return
+            
+            await tools.send_join_message(member.guild, member)
+
+        tasks = [send_ghost_ping(), add_join_roles(), add_captcha_role(), send_join_message()]
         await asyncio.gather(*tasks)
 
     

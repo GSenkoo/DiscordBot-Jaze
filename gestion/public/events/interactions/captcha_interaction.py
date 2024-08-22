@@ -1,5 +1,6 @@
 import discord
 import secrets
+from utils.Tools import Tools
 from datetime import datetime
 from discord.ext import commands
 from utils.MyViewClass import MyViewClass
@@ -124,12 +125,24 @@ class CaptchaInteraction(commands.Cog):
                     await interaction.edit(
                         embed = discord.Embed(
                             title = "Vérification passée avec succès",
-                            description = f"Vous avez réussi à entrer le code **{self.code}**. Vous avez accès à l'entièretée du serveur, vous pouvez donc désormais quitter ce salon.",
+                            description = f"Vous avez réussi à entrer le code **{self.code}**. Vous avez accès à l'entièretée du serveur, vous pouvez désormais quitter ce salon.",
                             color = await captcha_interaction.bot.get_theme(interaction.guild.id),
                             thumbnail = interaction.guild.icon.url if interaction.guild.icon else None
                         ),
                         view = None
                     )
+
+                    # ----------------- JOIN MESSAGE
+                    join_message_enabled = await captcha_interaction.bot.db.get_data("captcha", "enabled", guild_id = interaction.guild.id)
+                    if not join_message_enabled:
+                        return
+                    
+                    send_after_captcha = await captcha_interaction.bot.db.get_data("joins", "send_after_captcha", guild_id = interaction.guild.id)
+                    if not send_after_captcha:
+                        return
+                    
+                    tools = Tools(captcha_interaction.bot)
+                    await tools.send_join_message(interaction.guild, interaction.user)
 
             @discord.ui.button(emoji = "⏪", row = 4)
             async def del_callback(self, button, interaction: discord.Interaction):

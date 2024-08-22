@@ -83,7 +83,6 @@
                 "message": "VARCHAR(2000)",
                 "message_dm_enabled": "BOOLEAN DEFAULT false",
                 "message_dm": "VARCHAR(2000)",
-                "embed_enabled": "BOOLEAN DEFAULT false",
                 "embed": "TEXT",
                 "send_after_captcha": "BOOLEAN DEFAULT false"
             }

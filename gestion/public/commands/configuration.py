@@ -802,25 +802,6 @@ class Configuration(commands.Cog):
     @commands.command(description = "Configurer un système de vérification des nouveaux membres")
     @commands.guild_only()
     async def captcha(self, ctx):
-        # TODO: Faire un système qui s'affiche en fin de configuration : le bot propose de bien configurer le rôle des utilisateurs non vérifiés 
-        # SI SEULEMENT le rôle donné a accès à d'autres salon que celui de vérification
-
-        # TODO2: S'assurer qu'on ne puisse pas mélanger les rôles captcha et soutien/joinrole
-        # TODO3: Le système de vérification
-        """
-                "captcha": {
-                    "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
-                    "keys": {
-                        "enabled": "BOOLEAN DEFAULT false",
-                        "button_text": "VARCHAR(80) DEFAULT 'Vérification'",
-                        "button_emoji": "VARCHAR(10)",
-                        "button_color": "VARCHAR(10) DEFAULT 'blue'",
-                        "channel": "BIGINT DEFAULT 0",
-                        "non_verified_role": "BIGINT DEFAULT 0",
-                        "verified_role": "BIGINT DEFAULT 0"
-                    }
-        """
-
         async def get_captcha_embed(data) -> dict:
             embed = discord.Embed(
                 title = "Système de vérification",
@@ -1262,16 +1243,16 @@ class Configuration(commands.Cog):
                 
                 await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de vérification annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
                 await interaction.response.defer()
-
         
         await ctx.send(embed = await get_captcha_embed(data), view = ManageCaptchaView(ctx, data, self.bot))
+
 
     @commands.command(description = "Configurer les messages automatiques de bienvenue")
     @commands.guild_only()
     async def joins(self, ctx):
 
         async def get_join_data() -> dict:
-            results = await self.bot.db.execute(f"SELECT * FROM joins WHERE guild_id = {ctx.guild.id}")
+            results = await self.bot.db.execute(f"SELECT * FROM joins WHERE guild_id = {ctx.guild.id}", fetch = True)
             if not results:
                 return {
                     "enabled": False,
@@ -1284,20 +1265,7 @@ class Configuration(commands.Cog):
                 }
             
             joins_columns = await self.bot.db.get_table_columns("joins")
-            return dict(set(zip(joins_columns, results)))
-        
-        """
-            "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
-            "keys": {
-                "enabled": "BOOLEAN DEFAULT false",
-                "channel": "BIGINT DEFAULT 0",
-                "message": "VARCHAR(2000)",
-                "message_dm_enabled": "BOOLEAN DEFAULT false",
-                "message_dm": "VARCHAR(2000)",
-                "embed": "TEXT",
-                "send_after_captcha": "BOOLEAN DEFAULT false"
-            }
-        """
+            return dict(set(zip(joins_columns, results[0])))
         
         async def get_join_embed(data : dict) -> discord.Embed:
             bot_prefix = await self.bot.get_prefix(ctx.message)
@@ -1313,7 +1281,7 @@ class Configuration(commands.Cog):
             )
 
             channel = ctx.guild.get_channel(data["channel"])
-            embed.add_field(name = "Statut", value = "Activé" if data["enabled"] else "Désactivé")
+            embed.add_field(name = "Système mis en place", value = "Oui" if data["enabled"] else "Non")
             embed.add_field(name = "Salon", value = f"<#{channel.id}>" if data["channel"] else "*Aucun salon valide*")
             embed.add_field(
                 name = "Message",
@@ -1331,7 +1299,7 @@ class Configuration(commands.Cog):
                     else (data["message_dm"][:500] + f"... (et {len(data['message_dm']) - 500} caractères)")
                 ) if data["message_dm"] else "*Aucun message configuré*"
             )
-            embed.add_field(name = "Embed", value = "Configuré" if await self.bot.db.get_data("joins", "embed", False, True, guild_id = ctx.guild.id) else "Non configuré")
+            embed.add_field(name = "Embed", value = "Configuré" if len(await self.bot.db.get_data("joins", "embed", False, True, guild_id = ctx.guild.id)) else "Non configuré")
             embed.add_field(name = "Envoi après vérification", value = "Activé" if data["send_after_captcha"] else "Désactivé")
 
             return embed
@@ -1346,7 +1314,7 @@ class Configuration(commands.Cog):
             @discord.ui.select(
                 placeholder = "Choisir une option",
                 options = [
-                    discord.SelectOption(label = "Statut", emoji = "⏳", value = "enabled"),
+                    discord.SelectOption(label = "Système mis en place", emoji = "⏳", value = "enabled"),
                     discord.SelectOption(label = "Salon", emoji = "📌", value = "channel"),
                     discord.SelectOption(label = "Message", emoji = "💬", value = "message"),
                     discord.SelectOption(label = "Envoi d'un MP", emoji = "📩", value = "message_dm_enabled"),
@@ -1448,7 +1416,35 @@ class Configuration(commands.Cog):
 
             @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.success)
             async def save_callback(self, button, interaction):
-                pass
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                if self.data["enabled"]:
+                    if (not self.data["channel"]) and (not interaction.guild.get_channel(self.data["channel"])):
+                        await interaction.response.send_message("> Merci de donner un salon de bienvenue valide.", ephemeral = True)
+                        return
+                    if not interaction.guild.get_channel(self.data["channel"]).permissions_for(interaction.guild.me).send_messages:
+                        await interaction.response.send_message(f"> Je n'ai pas les permissions nécessaires pour envoyer des messages dans le salon <#{self.data['channel']}>", ephemeral = True)
+                        return
+                    
+                    if self.data["message_dm_enabled"]:
+                        if not self.data["message_dm"]:
+                            await interaction.response.send_message("> Vous avez activé l'envoi de message privé, donc vous devez fournir un message à envoyer.", ephemeral = True)
+                            return
+
+                for key, value in self.data.items():
+                    if key == "guild_id": continue
+                    await self.bot.db.set_data("joins", key, value if type(value) != dict else json.dumps(value), guild_id = interaction.guild.id)
+                
+                embed = await get_join_embed(self.data)
+                embed.title = "Paramètres de bienvenue sauvegardés"
+                await interaction.message.edit(
+                    embed = embed,
+                    view = None
+                )
+                await interaction.response.defer()
+
 
             @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
             async def delete_button_callback(self, button, interaction):
@@ -1462,8 +1458,6 @@ class Configuration(commands.Cog):
         data = await get_join_data()
         await ctx.send(embed = await get_join_embed(data), view = JoinSettings(data, self.bot))
 
-
-            
 
 def setup(bot):
     bot.add_cog(Configuration(bot))
