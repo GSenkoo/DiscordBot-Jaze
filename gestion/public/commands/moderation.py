@@ -20,23 +20,11 @@ class Moderation(commands.Cog):
         if not user: user = ctx.author
 
         paginator_creator = PaginatorCreator()
-
         sanctions = await self.bot.db.get_data("member", "sanctions", guild_id = ctx.guild.id, user_id = user.id)
 
         if not sanctions or not json.loads(sanctions):
             await ctx.send(f"> Le membre {user.mention} n'a pas de sanction.", allowed_mentions = AM.none())
             return
-        
-        """
-        Sanctions format : 
-        
-        {
-            "type": "sanction_type",
-            "moderator": moderator_id,
-            "timestamp": sanction_timestamp_id,
-            "reason": "sanction_reason"
-        }
-        """
 
         type_converter = {
             "warn": "Avertissement",
@@ -102,8 +90,7 @@ class Moderation(commands.Cog):
                             description = f"*Sanction n°{int(select.values[0]) + 1} supprimée.*"    
                         ),
                         view = None
-                    )
-                    
+                    ) 
 
                 @discord.ui.button(label = "Tout supprimer", style = discord.ButtonStyle.danger, row = 4)
                 async def delete_all_button_callback(self, button, interaction):
@@ -230,7 +217,6 @@ class Moderation(commands.Cog):
     async def kick(self, ctx, member : discord.Member, *, reason = None):
         checker = GPChecker(ctx, self.bot)
         tools = Tools(self.bot)
-
         check = await checker.we_can_kick(member)
         if check != True:
             await ctx.send(check, allowed_mentions = AM.none())
@@ -335,7 +321,6 @@ class Moderation(commands.Cog):
             noderank_roles = "[]"
         noderank_roles = json.loads(noderank_roles)
 
-
         member_roles = [role for role in member.roles if (role.is_assignable()) and (role.id not in noderank_roles)]
 
         try: await member.remove_roles(*member_roles, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de derank")
@@ -418,7 +403,8 @@ class Moderation(commands.Cog):
         
         await ctx.message.delete()
         def message_check(message):
-            if user: return message.author == user
+            if user:
+                return message.author == user
             return True
         
         await ctx.channel.purge(
@@ -438,6 +424,7 @@ class Moderation(commands.Cog):
         await member.move_to(None, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de deco")
         await ctx.send("> " + (f"Le membre {member.mention} a" if member != ctx.author else "Vous avez") + " été déconnecté.", allowed_mentions = AM.none())
 
+
     @commands.command(description = "Déconnecter tous les membres actuellement dans un salon vocal.")
     @commands.bot_has_guild_permissions(move_members = True)
     async def cleanup(self, ctx, channel : discord.VoiceChannel):
@@ -449,6 +436,7 @@ class Moderation(commands.Cog):
             await member.move_to(None, reason = f"[{ctx.author.display_name} - {ctx.author.id}] Demande de cleanup")
         await ctx.send(f"> Tous les membres du salon {channel.mention} ont étés déconnectés.", allowed_mentions = AM.none())
     
+
     @commands.command(description = "Déplacer un membre dans un salon vocal")
     @commands.bot_has_guild_permissions(move_members = True)
     async def bring(self, ctx, member : discord.Member, channel : discord.VoiceChannel):
@@ -543,7 +531,6 @@ class Moderation(commands.Cog):
 
         # ------------------ Add sanctions
         await tools.add_sanction("blrank", ctx, member, reason)
-
 
 
     @commands.command(description = "Empêcher un membre de recevoir des rôles qui ne sont pas noderank", usage = "<add/del/list> [member] [reason]")

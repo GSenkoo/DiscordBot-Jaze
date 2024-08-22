@@ -227,8 +227,7 @@ class Configuration(commands.Cog):
             captcha_role_id = await self.bot.db.get_data("captcha", "non_verified_role", guild_id = ctx.guild.id)
             if role.id == captcha_role_id:
                 await ctx.send("> Le rôle des utilisateurs non vérifiés (dans le système de captcha) ne peut pas être dans la liste des rôles automatiquements ajoutés.")
-                return
-                            
+                return              
 
             join_roles.append(role.id)
             await ctx.send(f"> Les nouveaux membres srecevront désormais automatiquement le rôle {role.mention}.", allowed_mentions = AM.none())
@@ -282,7 +281,6 @@ class Configuration(commands.Cog):
             )
             await ctx.send(embed = embed)
             return
-
 
         if action == "reset":
             await ctx.send(f"> Un total de {len(autoreact_data)} salons n'aura désormais plus d'ajout automatique de réactions.")
@@ -407,10 +405,8 @@ class Configuration(commands.Cog):
                             return option.label
                     return None
                 
-
                 def check_validity(message):
                     return (message.author == ctx.author) and (message.content) and (message.channel == ctx.channel)
-                
                 
                 # ------------------------------ Pour les cas spéciaux
                 if select.values[0] == "add_moderator_roles":
@@ -437,7 +433,6 @@ class Configuration(commands.Cog):
 
                             await interaction.message.edit(view = previous_view, embed = await get_suggestion_settings_embed(previous_view.suggestion_data))
                             await interaction.response.defer()
-
 
                         @discord.ui.button(label = "Choisissez un rôle", style = discord.ButtonStyle.primary, disabled = True)
                         async def button_callback(self, button, interaction):
@@ -536,9 +531,7 @@ class Configuration(commands.Cog):
                     
                     self.suggestion_data[select.values[0]] = found_emoji
 
-
                 await interaction.message.edit(embed = await get_suggestion_settings_embed(self.suggestion_data))
-
             
             @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.success)
             async def button_save_callback(self, button, interaction):
@@ -558,7 +551,6 @@ class Configuration(commands.Cog):
 
                 await interaction.message.edit(embed = suggestion_embed, view = None)
                 await interaction.response.defer()
-            
             
             @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
             async def delete_button_callback(self, button, interaction):
@@ -742,7 +734,6 @@ class Configuration(commands.Cog):
                         async def callback_indication_button(self, button, interaction):
                             pass
 
-
                         @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
                         async def comeback_button_callback(self, button, interaction):
                             if interaction.user != ctx.author:
@@ -776,7 +767,6 @@ class Configuration(commands.Cog):
                         await interaction.response.send_message("> Le rôle soutien ne peut pas être le même que celui des utilisateurs non vérifiés (dans le système de captcha).", ephemeral = True)
                         return
                 
-                
                 for data, value in self.soutien_data.items():
                     await bot.db.set_data("soutien", data, value if type(value) != list else json.dumps(value), guild_id = interaction.guild.id)
                 
@@ -794,7 +784,6 @@ class Configuration(commands.Cog):
                 
                 await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de soutien annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
                 await interaction.response.defer()
-
 
         await ctx.send(embed = await get_soutien_embed(soutien_data, ctx.guild), view = ManageSoutien(soutien_data = soutien_data))
 
@@ -833,7 +822,6 @@ class Configuration(commands.Cog):
         else:
             captcha_table_columns = await self.bot.db.get_table_columns("captcha")
             data = dict(set(zip(captcha_table_columns, guild_data[0])))
-
     
         class ManageCaptchaView(MyViewClass):
             def __init__(self, ctx, data, bot):
@@ -961,13 +949,11 @@ class Configuration(commands.Cog):
                         
                     await interaction.message.edit(view = ChooseChannelView())
                     await interaction.response.defer()
-
                         
                 if "role" in select.values[0]:
                     manage_captcha_view = self
                     manage_captcha_select = select
                     option_name = [option.label for option in select.options if option.value == select.values[0]][0]
-
 
                     class ChooseRoleView(MyViewClass):
                         @discord.ui.select(
@@ -1008,7 +994,6 @@ class Configuration(commands.Cog):
                             await interaction.message.edit(embed = await get_captcha_embed(manage_captcha_view.data), view = manage_captcha_view)
                             await interaction.response.defer()
                             
-                        
                         @discord.ui.button(label = option_name, style = discord.ButtonStyle.primary, disabled = True)
                         async def indication_button_callback(self, button, interaction):
                             pass
@@ -1039,13 +1024,11 @@ class Configuration(commands.Cog):
                     await interaction.message.edit(view = ChooseRoleView())
                     await interaction.response.defer()
 
-
             @discord.ui.button(label = "Confirmer", emoji = "✅")
             async def save_button_callback(self, button, interaction):
                 if interaction.user != self.ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
-
                 
                 if not self.data["enabled"]:
                     for key, value in self.data.items():
@@ -1079,7 +1062,6 @@ class Configuration(commands.Cog):
 
                 await interaction.message.edit(view = self)
                 await interaction.response.defer()
-
 
                 # -------------------------- Demande à l'utilisateur le lien du message sur lequel il y'aura la bouton de vérfication
                 def response_check(message):
@@ -1159,7 +1141,6 @@ class Configuration(commands.Cog):
                             await interaction.response.send_message(message, ephemeral = True)
                             await interaction.message.edit(view = None)
                             return
-                        
 
                         captcha_view = discord.ui.View(timeout = None)
                         captcha_view.add_item(discord.ui.Button(label = manage_captcha_view.data["button_text"], emoji = manage_captcha_view.data["button_emoji"], style = getattr(discord.ButtonStyle, manage_captcha_view.data["button_color"]), custom_id = "captcha_verify"))
@@ -1194,7 +1175,7 @@ class Configuration(commands.Cog):
                                 
                                 if not channel.permissions_for(non_verified_role).view_channel:
                                     await channel.set_permissions(non_verified_role, view_channel = True, reason = f"[{interaction.user.display_name} - {interaction.user.id}] Configuration automatique des permissions de captcha")
-                                
+
                                 continue
                             
                             if channel.permissions_for(non_verified_role).view_channel:
@@ -1203,7 +1184,6 @@ class Configuration(commands.Cog):
                         
                         await interaction.message.edit(embed = discord.Embed(title = "Configuration automatique des permissions terminé", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)), view = None) 
                         await manage_captcha_view.ctx.send(interaction.user.mention, embed = discord.Embed(title = "Votre système de vérification des nouveaux membres est prêt", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)))
-                        
                         
                     @discord.ui.button(emoji = "❌")
                     async def no_autoconfig_callback(self, button, interaction):
@@ -1223,7 +1203,6 @@ class Configuration(commands.Cog):
                         
                         await interaction.message.edit(embed = discord.Embed(title = "Votre système de vérification des nouveaux membres est prêt", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)), view = None)
                         await interaction.response.defer()
-
                         
                 await interaction.message.edit(
                     embed = discord.Embed(
@@ -1234,7 +1213,6 @@ class Configuration(commands.Cog):
                     view = AutoConfig()
                 )
                 
-
             @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
             async def delete_button_callback(self, button, interaction):
                 if interaction.user != self.ctx.author:
@@ -1304,7 +1282,6 @@ class Configuration(commands.Cog):
 
             return embed
         
-        
         class JoinSettings(MyViewClass):
             def __init__(self, data : dict, bot):
                 super().__init__()
@@ -1332,7 +1309,6 @@ class Configuration(commands.Cog):
                 def response_check(message):
                     return (message.author == interaction.user) and (message.channel == interaction.channel) and (message.content)
           
-
                 if select.values[0] == "channel":
                     await interaction.response.defer()
 
@@ -1359,7 +1335,6 @@ class Configuration(commands.Cog):
                     self.data["channel"] = channel.id
                     await interaction.message.edit(embed = await get_join_embed(self.data))
                     await ctx.send("> Le salon des **messages de bienvenues** a été modifié.", delete_after = 3)
-
 
                 if select.values[0] in ["message", "message_dm"]:
                     await interaction.response.defer()
@@ -1390,7 +1365,6 @@ class Configuration(commands.Cog):
                         await ctx.send(f"> Le contenu de votre **{option_name}** a été mis à jour.", delete_after = 3)
 
                     await interaction.message.edit(embed = await get_join_embed(self.data))
-
                 
                 if select.values[0] in ["enabled", "message_dm_enabled", "send_after_captcha"]:
                     self.data[select.values[0]] = not self.data[select.values[0]]
@@ -1412,7 +1386,6 @@ class Configuration(commands.Cog):
                     await self.bot.db.set_data("joins", "embed", None, guild_id = interaction.guild.id)
                     await interaction.message.edit(embed = await get_join_embed(self.data))
                     await interaction.response.defer()
-                
 
             @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.success)
             async def save_callback(self, button, interaction):
@@ -1444,7 +1417,6 @@ class Configuration(commands.Cog):
                     view = None
                 )
                 await interaction.response.defer()
-
 
             @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
             async def delete_button_callback(self, button, interaction):

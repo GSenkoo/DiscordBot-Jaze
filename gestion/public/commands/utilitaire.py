@@ -114,7 +114,6 @@ class Utilitaire(commands.Cog):
         )
 
 
-
     @commands.command(usage = "<search>", description = "Faire une recherche wikipedia", aliases = ["wikipedia", "wkp"])
     @commands.guild_only()
     async def wiki(self, ctx, *, search):
@@ -170,7 +169,6 @@ class Utilitaire(commands.Cog):
             return
         
         message = await ctx.send("> Recherche de l'image en cours...")
-        
         params = {
             "q": query,
             "key": google_api_key,
@@ -178,6 +176,7 @@ class Utilitaire(commands.Cog):
             "searchType": "image",
             "imgSize": "huge"
         }
+
         async with aiohttp.ClientSession() as session:
             async with session.get("https://customsearch.googleapis.com/customsearch/v1", params = params) as response:
                 await message.edit("> Recherche terminée.", delete_after = 3)
@@ -248,9 +247,7 @@ class Utilitaire(commands.Cog):
         def get_translation(text, target):
             result = translator.translate_text(text = text, target_lang = target)
             assert result
-
             return result
-        
 
         async def get_translation_async(text, target):
             loop = asyncio.get_event_loop()
@@ -320,9 +317,7 @@ class Utilitaire(commands.Cog):
     @commands.guild_only()
     async def snipe(self, ctx):
         translation = await self.bot.get_translation("snipe", ctx.guild.id)
-
         author_id = await self.bot.db.get_data("snipe", "author_id", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
-
         if not author_id:
             await ctx.send(f"> " + translation["Aucun récent message supprimé n'a été enregistré"] + ".")
             return
@@ -349,9 +344,7 @@ class Utilitaire(commands.Cog):
     @commands.guild_only()
     async def esnipe(self, ctx):
         translation = await self.bot.get_translation("esnipe", ctx.guild.id)
-
         author_id = await self.bot.db.get_data("snipe_edit", "author_id", guild_id = ctx.guild.id, channel_id = ctx.channel.id)
-        
         if not author_id:
             await ctx.send(f"> " + translation["Aucun récent message modifié n'a été enregistré"] + ".")
             return
@@ -523,7 +516,6 @@ class Utilitaire(commands.Cog):
                     if response.content.lower() == "cancel":
                         await ctx.send("> Action annulée.", delete_after = 3)
                         return
-                
 
                 # ---------------------------- TITRE & DESCRIPTION ----------------------------
                 if select.values[0] in ["title", "description"]:
@@ -543,7 +535,6 @@ class Utilitaire(commands.Cog):
                     temporary_data[select.values[0]] = response.content
                     self.embed = temporary_data.copy()
 
-
                 # ---------------------------- IMAGE & THUMBNAIL ----------------------------
                 if select.values[0] in ["image", "thumbnail"]:
                     if not response.content.startswith(("https://", "http://")) or " " in response.content:
@@ -561,7 +552,6 @@ class Utilitaire(commands.Cog):
                         return
 
                     self.embed = temporary_data.copy()
-
 
                 # ---------------------------- FOOTER ----------------------------
                 if select.values[0] == "footer":
@@ -623,7 +613,6 @@ class Utilitaire(commands.Cog):
                         temporary_data["footer"]["icon_url"] = response.content
                     self.embed = temporary_data.copy()
 
-
                 # ---------------------------- TIMESTAMP ----------------------------
                 if select.values[0] == "timestamp":
                     message1 = await ctx.send(
@@ -649,7 +638,6 @@ class Utilitaire(commands.Cog):
                     temporary_data["timestamp"] = date
                     self.embed = temporary_data.copy()
 
-                
                 # ---------------------------- AUTHOR ----------------------------
                 if select.values[0] == "author":
 
@@ -722,7 +710,6 @@ class Utilitaire(commands.Cog):
                     
                     self.embed = temporary_data.copy()
 
-
                 # ---------------------------- ADD FIELD ----------------------------
                 if select.values[0] == "field_add":
                     # J'ajoute cette ligne pour que tous les dictionnaires dans self.embed_backups n'est pas en valeur "fields" un même OBJET, sinon, quand on modifie une valeur ici, alors on modifie PARTOUT.
@@ -772,7 +759,6 @@ class Utilitaire(commands.Cog):
 
                     self.embed = temporary_data.copy()
 
-                
                 # ---------------------------- REMOVE FIELD ----------------------------
                 if select.values[0] == "field_remove":
                     if not len(self.embed["fields"]):
@@ -802,7 +788,6 @@ class Utilitaire(commands.Cog):
                             return
                         self.embed["fields"] = [field_data for field_data in self.embed["fields"] if field_data["name"].lower() != response.content.lower()]
                 
-                
                 # -------------- COPY EMBED
                 if select.values[0] == "copy_embed":
                     message = await ctx.send("Quel est le **lien du message** contenant l'embed?")
@@ -812,7 +797,6 @@ class Utilitaire(commands.Cog):
                         return
                     finally: await delete_message(message)
                     await delete_message(response)
-
 
                     response_content = response.content.removeprefix(f"https://discord.com/channels/{interaction.guild.id}/")
                     response_content = response_content.split("/")
@@ -833,7 +817,6 @@ class Utilitaire(commands.Cog):
                     if not message.embeds:
                         await ctx.send("> Action annulée, le message donné ne contient pas d'embed.", delete_after = 3)
                         return
-                    
 
                     embed_to_copy = message.embeds[0].to_dict()
                     self.embed["title"] = embed_to_copy.get("title", None)
@@ -927,7 +910,6 @@ class Utilitaire(commands.Cog):
                             view = None
                         )
 
-
                     @discord.ui.button(
                         label = "Modifier un message du bot",
                         emoji = "✏"
@@ -989,7 +971,6 @@ class Utilitaire(commands.Cog):
                             view = None
                         )   
 
-
                     @discord.ui.button(
                         label = "Envoyer à un utilisateur",
                         emoji = "📧",
@@ -1032,7 +1013,6 @@ class Utilitaire(commands.Cog):
                             view = None
                         )
 
-
                     @discord.ui.button(
                         label = "Définir comme embed de bienvenue",
                         emoji = "📝",
@@ -1061,7 +1041,6 @@ class Utilitaire(commands.Cog):
                             view = None
                         )
 
-
                     @discord.ui.button(
                         label = "Revenir à la configuration",
                         emoji = "↩",
@@ -1078,7 +1057,6 @@ class Utilitaire(commands.Cog):
                         )
                         await interaction.response.defer()
            
-                
                 await interaction.message.edit(
                     embed = discord.Embed(
                         title = "> Que souhaitez-vous faire de cet embed?",
@@ -1088,13 +1066,11 @@ class Utilitaire(commands.Cog):
                 )
                 await interaction.response.defer()
 
-
             @discord.ui.button(label = "Annuler", emoji = "❌", style = discord.ButtonStyle.secondary)
             async def cancel(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
-
 
                 self.embeds_backup.append(self.embed.copy())
                 self.embeds_backup_of_backup = []

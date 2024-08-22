@@ -52,6 +52,7 @@ async def check_perms_enabled(ctx):
         await ctx.send(f"> Pour activer le système de permission avancé utilisez `{await ctx.bot.get_prefix(ctx.message)}advancedperms <on/off>`.")
     return permissions_enabled
 
+
 class Permissions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -124,7 +125,6 @@ class Permissions(commands.Cog):
                         view = self
                     )
                     await interaction.response.defer()
-
 
                 elif select.values[0] == "perms_hp2":
                     await interaction.message.edit(
@@ -278,7 +278,6 @@ class Permissions(commands.Cog):
                 async def get_permission_embed():
                     permissions_data = await bot.db.get_data("guild", "perms_hierarchic", False, True, guild_id = ctx.guild.id)
 
-
                     guildpermissions_translations = await bot.get_translation("permissions", interaction.guild.id)
                     perm_authorzation_data = permissions_data["authorizations"][select.values[0]]
                     perm_commands = [command for command, permission in permissions_data["commands"].items() if permission == select.values[0]]
@@ -335,7 +334,6 @@ class Permissions(commands.Cog):
                                 await interaction.response.send_message("> Vous ne pouvez pas ajouter plus de 15 rôles autorisés.", ephemeral = True)
                                 return
 
-                            
                             class AddRole(MyViewClass):
                                 @discord.ui.select(
                                     placeholder = "Choisir des rôles",
@@ -347,7 +345,6 @@ class Permissions(commands.Cog):
                                         await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                                         return
                                     
-
                                     permissions_data = await bot.db.get_data("guild", "perms_hierarchic", False, True, guild_id = interaction.guild.id)
                                     permission_data = permissions_data["authorizations"][original_permission]
 
@@ -363,7 +360,6 @@ class Permissions(commands.Cog):
                                     await bot.db.set_data("guild", "perms_hierarchic", json.dumps(permissions_data), guild_id = interaction.guild.id)
                                     await interaction.message.edit(embed = await get_permission_embed(), view = previous_view)
                                     await interaction.response.defer()
-
 
                                 @discord.ui.button(label = "Choisissez des rôles", style = discord.ButtonStyle.primary, disabled = True)
                                 async def callback(self, button, interaction):
@@ -396,7 +392,6 @@ class Permissions(commands.Cog):
                                     continue
                                 roles_data[str(role_id)] = "@" + guild_roles[guild_roles_ids.index(role_id)].name
 
-                            
                             class RemoveRole(MyViewClass):
                                 @discord.ui.select(
                                     placeholder = "Choisir des rôles",
@@ -473,7 +468,6 @@ class Permissions(commands.Cog):
                                     await interaction.message.edit(embed = await get_permission_embed(), view = previous_view)
                                     await interaction.response.defer()
 
-
                                 @discord.ui.button(label = "Choisissez des utilisateurs", disabled = True, style = discord.ButtonStyle.primary)
                                 async def callback(self, button, interaction):
                                     pass
@@ -502,7 +496,6 @@ class Permissions(commands.Cog):
                                 except:
                                     usr[str(user_id)] = "UtilisateurIntrouvable"
 
-                            
                             class RemoveUsers(MyViewClass):
                                 @discord.ui.select(
                                     max_values = len(usr),
@@ -528,7 +521,6 @@ class Permissions(commands.Cog):
                                     await bot.db.set_data("guild", "perms_hierarchic", json.dumps(permissions_data), guild_id = interaction.guild.id)
                                     await interaction.message.edit(embed = await get_permission_embed(), view = previous_view)
                                     await interaction.response.defer()
-
 
                                 @discord.ui.button(label = "Choisissez des utilisateurs", disabled = True, style = discord.ButtonStyle.primary)
                                 async def callback(self, button, interaction):
@@ -576,7 +568,6 @@ class Permissions(commands.Cog):
                                     await interaction.message.edit(embed = await get_permission_embed(), view = previous_view)
                                     await interaction.response.defer()
 
-
                                 @discord.ui.button(label = "Choisssez des permissions", style = discord.ButtonStyle.primary, disabled = True)
                                 async def callback(self, button, interaction):
                                     pass
@@ -605,7 +596,6 @@ class Permissions(commands.Cog):
                             await interaction.message.edit(embed = await get_permission_embed())
                             await interaction.response.defer()
 
-
                     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
                     async def comeback_button_callback(self, button, interaction):
                         if interaction.user != ctx.author:
@@ -620,7 +610,6 @@ class Permissions(commands.Cog):
 
                 await interaction.message.edit(embed = await get_permission_embed(), view = EditPerm())
                 await interaction.response.defer()
-
 
         await ctx.send(embed = await get_main_embed(), view = ConfigPerms())
 
@@ -645,7 +634,6 @@ class Permissions(commands.Cog):
             data = json.load(file)
             buyer_commands = data["11"]
 
-        
         # ------------------ Obtenir l'embed qui est affiché au début de la configuration
         async def get_switch_main_embed():
             permissions_data = await self.bot.db.get_data("guild", "perms_hierarchic", False, True, guild_id = ctx.guild.id)
@@ -669,7 +657,6 @@ class Permissions(commands.Cog):
             )
 
             return embed
-
 
         # ------------------ Obtenir l'embed de permission pour une certaine permission
         async def get_permission_embed(perm : int):
@@ -696,7 +683,6 @@ class Permissions(commands.Cog):
             )
 
             return embed
-
         
         # ------------------ Classe discord.ui.View composé d'un select menu permettant de choisir une permission à modifier
         class ChoosePermission(MyViewClass):
@@ -876,7 +862,6 @@ class Permissions(commands.Cog):
                             await interaction.response.defer()
                             await interaction.message.edit(view = ChoosePermission())
 
-
                     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
                     async def comback_switch_main_button(self, button, interaction):
                         if interaction.user != ctx.author:
@@ -931,7 +916,6 @@ class Permissions(commands.Cog):
     @commands.guild_only()
     @commands.check(check_perms_enabled)
     async def customperms(self, ctx):
-        
         cogs_to_commands = {}
         for cog in self.bot.cogs:
             cog_instance = self.bot.get_cog(cog)
@@ -939,7 +923,6 @@ class Permissions(commands.Cog):
                 continue
             cogs_to_commands[getattr(cog_instance, "qualified_name")] = [command.name for command in cog_instance.get_commands()]
     
-
         async def get_main_embed_customperms():
             perms_custom = await self.bot.db.get_data("guild", "perms_custom", False, True, guild_id = ctx.guild.id)
             perms_custom_name = list(perms_custom["authorizations"].keys())
@@ -955,7 +938,6 @@ class Permissions(commands.Cog):
 
             return embed
 
-
         async def get_main_select_options_customperms():
             perms_custom = await self.bot.db.get_data("guild", "perms_custom", False, True, guild_id = ctx.guild.id)
             perms_custom_name = list(perms_custom["authorizations"].keys())
@@ -969,7 +951,6 @@ class Permissions(commands.Cog):
 
             return options
         
-
         async def get_custom_permission_embed(permission_name : str):
             permission_manager = PermissionsManager(bot)
             perms_custom = await self.bot.db.get_data("guild", "perms_custom", False, True, guild_id = ctx.guild.id)
@@ -1007,7 +988,6 @@ class Permissions(commands.Cog):
         
             return embed
 
-        
         options = await get_main_select_options_customperms()
         bot = self.bot # Sauvegarder l'instance du bot pour l'utiliser dans la classe (pour l'accès à la db)
         class ManageCustomPerms(MyViewClass):
@@ -1078,7 +1058,6 @@ class Permissions(commands.Cog):
                                         await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                                         return
                                     
-
                                     permissions_data = await bot.db.get_data("guild", "perms_custom", False, True, guild_id = interaction.guild.id)
                                     permission_data = permissions_data["authorizations"][original_permission]
 
@@ -1126,7 +1105,6 @@ class Permissions(commands.Cog):
                                     continue
                                 roles_data[str(role_id)] = "@" + guild_roles[guild_roles_ids.index(role_id)].name
 
-                            
                             class RemoveRole(MyViewClass):
                                 @discord.ui.select(
                                     placeholder = "Choisir des rôles",
@@ -1173,7 +1151,6 @@ class Permissions(commands.Cog):
                             if len(permission_data["users"]) >= 15:
                                 await interaction.response.send_message("> Vous ne pouvez pas ajouter plus de 15 utilisateurs.", ephemeral = True)
                                 return
-                            
                             
                             class AddUsers(MyViewClass):
                                 @discord.ui.select(
@@ -1229,7 +1206,6 @@ class Permissions(commands.Cog):
                                 except:
                                     usr[str(user_id)] = "UtilisateurIntrouvable"
 
-                            
                             class RemoveUsers(MyViewClass):
                                 @discord.ui.select(
                                     max_values = len(usr),
@@ -1256,7 +1232,6 @@ class Permissions(commands.Cog):
                                     
                                     await interaction.message.edit(embed = await get_custom_permission_embed(original_permission), view = previous_view)
                                     await interaction.response.defer()
-
 
                                 @discord.ui.button(label = "Choisissez des utilisateurs", disabled = True, style = discord.ButtonStyle.primary)
                                 async def callback(self, button, interaction):
@@ -1297,7 +1272,6 @@ class Permissions(commands.Cog):
 
                                     await interaction.message.edit(embed = await get_custom_permission_embed(original_permission), view = previous_view)
                                     await interaction.response.defer()
-
 
                                 @discord.ui.button(label = "Choisssez des permissions", style = discord.ButtonStyle.primary, disabled = True)
                                 async def callback(self, button, interaction):
@@ -1370,7 +1344,6 @@ class Permissions(commands.Cog):
                                         @discord.ui.button(label = "Choisissez une commande", style = discord.ButtonStyle.primary, disabled = True)
                                         async def indication_callback(self, button, interaction):
                                             pass
-
 
                                         @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
                                         async def comback_command_button_callback(self, button, interaction):
@@ -1446,7 +1419,6 @@ class Permissions(commands.Cog):
                             await interaction.message.edit(view = ChooseCommand())
                             await interaction.response.defer()
 
-
                     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
                     async def comeback_button_callback(self, button, interaction):
                         if interaction.user != ctx.author:
@@ -1458,7 +1430,6 @@ class Permissions(commands.Cog):
 
                 await interaction.message.edit(embed = await get_custom_permission_embed(original_permission), view = EditCustomPerm())
                 await interaction.response.defer()
-                
                 
             @discord.ui.button(label = "Ajouter", emoji = "➕")
             async def add_custom_perm_button_callback(self, button, interaction):
@@ -1517,7 +1488,6 @@ class Permissions(commands.Cog):
 
                 await interaction.message.edit(embed = await get_main_embed_customperms(), view = self)
                 
-
             @discord.ui.button(label = "Retirer", emoji = "➖")
             async def remove_custom_perm_button_callback(self, button, interaction):
                 if interaction.user != ctx.author:
@@ -1558,7 +1528,6 @@ class Permissions(commands.Cog):
                         await interaction.message.edit(embed = await get_main_embed_customperms(), view = previous_view)
                         await interaction.response.defer()
 
-
                     @discord.ui.button(label = "Choisissez une permission", style = discord.ButtonStyle.primary, disabled = True)
                     async def choose_perm_to_del(self, select, interaction):
                         pass
@@ -1585,7 +1554,6 @@ class Permissions(commands.Cog):
                 await interaction.message.edit(view = ChoosePermToDel(), embed = embed)
                 await interaction.response.defer()
 
-        
         await ctx.send(embed = await get_main_embed_customperms(), view = ManageCustomPerms(timeout = 600))
 
 

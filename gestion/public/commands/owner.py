@@ -68,7 +68,6 @@ class Owner(commands.Cog):
         else:
             await paginator.send(ctx)
         
-
         
 def setup(bot):
     bot.add_cog(Owner(bot))

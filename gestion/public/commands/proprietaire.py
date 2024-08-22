@@ -24,7 +24,6 @@ class Proprietaire(commands.Cog):
         current_owners.append(user.id)
         await self.bot.db.set_data("guild", "owners",  json.dumps(current_owners), True, guild_id = ctx.guild.id)
 
-
         await ctx.send(f"> **{user.display_name}** a désormais la permission owner.")
     
 
@@ -75,9 +74,6 @@ class Proprietaire(commands.Cog):
         else:
             await paginator.send(ctx)
         
-
-        
-
 
 def setup(bot):
     bot.add_cog(Proprietaire(bot))

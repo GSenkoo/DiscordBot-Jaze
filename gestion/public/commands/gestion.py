@@ -225,7 +225,6 @@ class Gestion(commands.Cog):
 
             return embed
 
-
         giveaway_data = {
             "reward": "Exemple de récompense",
             "end_at": "2h",
@@ -314,43 +313,35 @@ class Gestion(commands.Cog):
                     await ctx.send("> Action annulée.", delete_after = 2)
                     return
 
-
                 # ----------------------------- S'occuper de la valeur
                 if select.values[0] == "reward":
                     if len(response_message.content) > 100:
                         await ctx.send("> Action annulée, votre nom de récompense est trop long (plus de 100 caractères).", delete_after = 2)
                         return
-                    
                     self.giveaway_data["reward"] = response_message.content
 
                 if select.values[0] == "end_at":
                     time = await tools.find_duration(response_message.content)
-
                     if not time:
                         await ctx.send("> Action annulée, durée invalide.", delete_after = 2)
                         return
                     if time > timedelta(days = 30):
                         await ctx.send("> Action annulée, durée trop longue. Vous ne pouvez pas définir une durée suppérieure à 30 jours.", delete_after = 2)
                         return
-                    
                     self.giveaway_data["end_at"] = response_message.content
 
                 if select.values[0] == "channel":
                     channel = await searcher.search_channel(response_message.content)
-
                     if not channel:
                         await ctx.send("> Action annulée, salon invalide.", delete_after = 2)
                         return
-                    
                     self.giveaway_data["channel_id"] = channel.id
 
                 if select.values[0] == "emoji":
                     found_emoji = await tools.get_emoji(response_message.content)
-
                     if not found_emoji:
                         await ctx.send("> Emoji invalide, merci de donner un emoji valide.", delete_after = 2)
                         return
-                    
                     self.giveaway_data["emoji"] = found_emoji
 
                 if select.values[0] == "interaction_type":
@@ -438,10 +429,8 @@ class Gestion(commands.Cog):
                         await ctx.send("> Action annulée, réponse invalide.", delete_after = 2)
                         return
 
-
                 # ----------------------------- Mettre à jours le message de giveaway
                 await interaction.message.edit(embed = await get_giveaway_embed(self.giveaway_data))
-
             
             @discord.ui.button(label = "Envoyer", emoji = "✅")
             async def send_giveaway_button_callback(self, button, interaction):
@@ -531,7 +520,6 @@ class Gestion(commands.Cog):
                     winner = random.choice(participants)
                     winners.append(f"<@{winner}>")
                     participants.remove(winner)
-            
 
             await message.reply(f"> Giveaway reroll, les gagnants du giveaway **{giveaway['reward']}** sont : " + ", ".join(winners[:-1]) + " et " + winners[-1])
         if message.channel != ctx.channel:
@@ -647,7 +635,6 @@ class Gestion(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                
                 if select.values[0] == "action":
                     if self.massiverole_data["action"] == "add": self.massiverole_data["action"] = "remove"
                     else: self.massiverole_data["action"] = "add"
@@ -720,7 +707,6 @@ class Gestion(commands.Cog):
                                 await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                                 return
                             
-                            
                             if option_id == "roles":
                                 not_assignable = []
                                 
@@ -746,8 +732,7 @@ class Gestion(commands.Cog):
                                 await interaction.response.defer()
                             else:
                                 await interaction.response.send_message(f"> Vos modifications ont bien étés prises en compte, mais un total de {not_added_roles_count} rôle(s) n'a pas été ajouté car les {option_name.lower()} ne peuvent pas être dans les {get_option_name(opposed_options[0]).lower()} ou dans les rôles {get_option_name(opposed_options[1]).lower()}.", ephemeral = True)
-
-                            
+   
                         @discord.ui.button(label = f"Choisissez des {option_name.lower()}", style = discord.ButtonStyle.primary, disabled = True)
                         async def button_indicator_callback(self, button, interaction):
                             pass
@@ -785,8 +770,6 @@ class Gestion(commands.Cog):
                 if class_self.massiverole_loading.get(interaction.guild.id, False):
                     await interaction.response.send_message("> Un massiverole est déjà en cours sur ce serveur, merci de patienter que celui-ci se termine.", ephemeral = True)
                     return
-
-                
 
                 class StopMassiveRole(MyViewClass):
                     @discord.ui.button(label = "Arrêter", style = discord.ButtonStyle.danger, custom_id = f"massiverole_stop_{interaction.user.id}")

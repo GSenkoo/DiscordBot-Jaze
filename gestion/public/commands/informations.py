@@ -59,7 +59,6 @@ class Informations(commands.Cog):
     @commands.guild_only()
     async def botadmins(self, ctx):
         translations = await self.bot.get_translation("botadmins", ctx.guild.id)
-
         bots = [f"{member.mention} `({member.id})`" for member in ctx.guild.members if (member.guild_permissions.administrator) and (member.bot)]
         if not bots:
             await ctx.send(f'>' + translations['Il n\'y a pas de bot avec la permission administrateur sur le serveur'] + '.')
@@ -83,9 +82,7 @@ class Informations(commands.Cog):
     @commands.guild_only()
     async def boosters(self, ctx):
         translations = await self.bot.get_translation("boosters", ctx.guild.id)
-
         boosters = [f"{subscriber.mention} ({translations['boost depuis [data_date]'].replace('[data_date]', f'<t:{round(subscriber.premium_since.timestamp())}:R>')})" for subscriber in ctx.guild.premium_subscribers]
-
         if not boosters:
             await ctx.send(f"> " + {translations["Il n'y a pas de booster sur ce serveur"]})
             return
@@ -110,7 +107,6 @@ class Informations(commands.Cog):
     async def banlist(self, ctx):
         banned_users = await ctx.guild.bans().flatten()
         banned_users = [f"[{ban_entry.user.display_name}{f'#{ban_entry.user.discriminator}' if ban_entry.user.discriminator != '0' else ''}](discord:/users/{ban_entry.user.id}) `({ban_entry.user.id})`" for ban_entry in banned_users]
-
         paginator_creator = PaginatorCreator()
         paginator = await paginator_creator.create_paginator(
             title = f"Bannissements",
@@ -129,9 +125,7 @@ class Informations(commands.Cog):
     @commands.guild_only()
     async def rolemembers(self, ctx, role: discord.Role):
         translations = await self.bot.get_translation("rolemembers", ctx.guild.id)
-
         members = [f"{member.mention} (`{member.id}`)" for member in role.members]
-
         if not members:
             await ctx.send(f">" +  translations["Il n'y a aucun membre avec le rôle"] + f" {role.mention}", allowed_mentions = None)
             return
@@ -154,7 +148,6 @@ class Informations(commands.Cog):
     @commands.guild_only()
     async def serverinfo(self, ctx):
         translation = await self.bot.get_translation("serverinfo", ctx.guild.id)
-
         member_online, member_idle, member_dnd = 0, 0, 0
         vanity_url = f"{translation['Non débloqué']}"
         if "VANITY_URL" in ctx.guild.features:
@@ -223,7 +216,6 @@ class Informations(commands.Cog):
         embed.timestamp = datetime.now()
         if ctx.guild.banner:
             embed.set_image(url = ctx.guild.banner.url)
-
         await ctx.send(embed = embed)
 
 
@@ -278,7 +270,6 @@ class Informations(commands.Cog):
     @commands.guild_only()
     async def channel(self, ctx, channel : discord.TextChannel = None):
         translation = await self.bot.get_translation("channel", ctx.guild.id)
-        
         if not channel:
             channel = ctx.channel
 
@@ -302,7 +293,6 @@ class Informations(commands.Cog):
     @commands.guild_only()
     async def vocinfo(self, ctx):
         translation = await self.bot.get_translation("vocinfo", ctx.guild.id)
-
         embed = discord.Embed(
             title = f"{translation['Statistiques vocales']}",
             color = await self.bot.get_theme(ctx.guild.id),
@@ -339,7 +329,6 @@ class Informations(commands.Cog):
     @commands.guild_only()
     async def botinfo(self, ctx):
         translation = await self.bot.get_translation("botinfo", ctx.guild.id)
-
         embed = discord.Embed(
             title = self.bot.user.display_name,
             description = translation["Bot discord avancé, fiable et complet."],
@@ -449,7 +438,6 @@ class Informations(commands.Cog):
     @commands.guild_only()
     async def banner(self, ctx, user : discord.User = None):
         translation = await self.bot.get_translation("banner", ctx.guild.id)
-
         if not user:
             user = ctx.author
         try: user = await self.bot.fetch_user(user.id) # Fix
@@ -476,7 +464,6 @@ class Informations(commands.Cog):
     @commands.guild_only()
     async def serverpic(self, ctx, server : discord.Guild = None):
         translation = await self.bot.get_translation("serverpic", ctx.guild.id)
-        
         if not server:
             server = ctx.guild
         if not ctx.guild.icon:
@@ -563,6 +550,7 @@ class Informations(commands.Cog):
         )
 
         await paginator.send(ctx)
+
 
 def setup(bot):
     bot.add_cog(Informations(bot))
