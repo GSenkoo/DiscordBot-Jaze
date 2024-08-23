@@ -105,7 +105,8 @@
                 "button_color": "VARCHAR(10) DEFAULT 'blue'",
                 "channel": "BIGINT DEFAULT 0",
                 "non_verified_role": "BIGINT DEFAULT 0",
-                "verified_role": "BIGINT DEFAULT 0"
+                "verified_role": "BIGINT DEFAULT 0",
+                "auto_config": "BOOLEAN DEFAULT false"
             }
         },
         "suggestions": {
@@ -127,6 +128,18 @@
                 "status": "TEXT",
                 "strict": "BOOLEAN DEFAULT false",
                 "role": "BIGINT"
+            }
+        },
+        "role_interaction": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL", "message_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "data": "TEXT"
+            }
+        },
+        "role_react": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL", "message_id": "BIGINT NOT NULL UNIQUE", "emoji": "VARCHAR(10) NOT NULL"},
+            "keys": {
+                "role": "TEXT"
             }
         }
     }

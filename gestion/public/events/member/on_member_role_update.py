@@ -1,5 +1,4 @@
 import discord
-from datetime import datetime
 from discord.ext import commands
 
 
@@ -8,7 +7,7 @@ class on_member_role_update(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_member_update(self, before, after):
+    async def on_member_update(self, before : discord.Member, after : discord.Member):
         if (before.roles == after.roles) or (not after.roles):
             return
         

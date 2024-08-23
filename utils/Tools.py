@@ -131,7 +131,7 @@ class Tools:
             "{MemberCreatedAt}": member.created_at.strftime('%d/%m/%Y %H:%M'),
             "{MemberCreatedAtf}": f"<t:{round(member.created_at.timestamp())}>",
             "{MemberCreatedAtR}": f"<t:{round(member.created_at.timestamp())}:R>",
-            "{MemberRolesCount}": str(len(member.roles)),
+            "{MemberRolesCount}": str(len(member.roles)) if member.roles else "0",
             "{MemberStatus}": str(member.status).replace('dnd', 'ne pas déranger').replace('offline', 'hors ligne').replace('online', 'en ligne').replace('idle', 'inactif'),
             "{MemberActivity}": member.activity.name if member.activity else 'Aucune activité'
         }
@@ -165,7 +165,28 @@ class Tools:
             text = text.replace(key, value)
 
         return text
+    
 
+    def embed_from_dict(self, embed_dict : dict) -> discord.Embed:
+        embed = discord.Embed(
+            title = embed_dict["title"],
+            description = embed_dict["description"],
+            color = embed_dict["color"],
+            timestamp = embed_dict["timestamp"],
+            footer = discord.EmbedFooter(text = embed_dict["footer"]["text"], icon_url = embed_dict["footer"]["icon_url"]) if embed_dict["footer"]["text"] else None,
+            author = discord.EmbedAuthor(name = embed_dict["author"]["name"], icon_url = embed_dict["author"]["icon_url"], url = embed_dict["author"]["url"]) if embed_dict["author"]["name"] else None
+        )
+
+        if embed_dict["thumbnail"]:
+            embed.set_thumbnail(url = embed_dict["thumbnail"])
+        if embed_dict["image"]:
+            embed.set_image(url = embed_dict["image"])
+
+        for field_data in embed_dict["fields"]:
+            embed.add_field(name = field_data["name"], value = field_data["value"], inline = field_data["inline"])
+
+        return embed
+    
 
     async def send_join_message(self, guild, member):       
         joins_sql_data = await self.bot.db.execute(f"SELECT * FROM joins WHERE guild_id = {guild.id}", fetch = True)
@@ -183,7 +204,8 @@ class Tools:
             await member.send(self.multiple_replaces(joins_data["message_dm"], vars_to_replace), view = view)
 
         embed = None
-        embed_dict = json.loads(joins_data["embed"])
+        try: embed_dict = json.loads(joins_data["embed"])
+        except: embed_dict = {}
         if len(embed_dict):
             embed_dict["title"] = self.multiple_replaces(embed_dict["title"], vars_to_replace)
             embed_dict["description"] = self.multiple_replaces(embed_dict["description"], vars_to_replace)
@@ -193,23 +215,8 @@ class Tools:
             for index in range(len(embed_dict["fields"])):
                 embed_dict["fields"][index]["name"] = self.multiple_replaces(embed_dict["fields"][index]["name"], vars_to_replace)
                 embed_dict["fields"][index]["value"] = self.multiple_replaces(embed_dict["fields"][index]["value"], vars_to_replace)
-        
-            embed = discord.Embed(
-                title = embed_dict["title"],
-                description = embed_dict["description"],
-                color = embed_dict["color"],
-                timestamp = embed_dict["timestamp"],
-                footer = discord.EmbedFooter(text = embed_dict["footer"]["text"], icon_url = embed_dict["footer"]["icon_url"]) if embed_dict["footer"]["text"] else None,
-                author = discord.EmbedAuthor(name = embed_dict["author"]["name"], icon_url = embed_dict["author"]["icon_url"], url = embed_dict["author"]["url"]) if embed_dict["author"]["name"] else None
-            )
 
-            if embed_dict["thumbnail"]:
-                embed.set_thumbnail(url = embed_dict["thumbnail"])
-            if embed_dict["image"]:
-                embed.set_image(url = embed_dict["image"])
-
-            for field_data in embed_dict["fields"]:
-                embed.add_field(name = field_data["name"], value = field_data["value"], inline = field_data["inline"])
+            embed = self.embed_from_dict(embed_dict)
 
         join_channel = guild.get_channel(joins_data["channel"])
         if not join_channel:
@@ -218,3 +225,37 @@ class Tools:
                 
         message_content = self.multiple_replaces(joins_data["message"], vars_to_replace)
         await join_channel.send(content = message_content, embed = embed)
+
+
+    async def send_leave_message(self, guild, member):       
+        leaves_sql_data = await self.bot.db.execute(f"SELECT * FROM leaves WHERE guild_id = {guild.id}", fetch = True)
+        leaves_table_columns = await self.bot.db.get_table_columns("leaves")
+        leaves_data = dict(set(zip(leaves_table_columns, leaves_sql_data[0])))
+        
+        del leaves_data["guild_id"]
+
+        member_vars_dict = await self.get_member_vars_dict(member)
+        guild_vars_dict = await self.get_guild_vars_dict(guild)
+        vars_to_replace = {**member_vars_dict, **guild_vars_dict}
+
+        embed = None
+        try: embed_dict = json.loads(leaves_data["embed"])
+        except: embed_dict = {}
+        if len(embed_dict):
+            embed_dict["title"] = self.multiple_replaces(embed_dict["title"], vars_to_replace)
+            embed_dict["description"] = self.multiple_replaces(embed_dict["description"], vars_to_replace)
+            embed_dict["footer"]["text"] = self.multiple_replaces(embed_dict["footer"]["text"], vars_to_replace)
+            embed_dict["author"]["name"] = self.multiple_replaces(embed_dict["author"]["name"], vars_to_replace)
+
+            for index in range(len(embed_dict["fields"])):
+                embed_dict["fields"][index]["name"] = self.multiple_replaces(embed_dict["fields"][index]["name"], vars_to_replace)
+                embed_dict["fields"][index]["value"] = self.multiple_replaces(embed_dict["fields"][index]["value"], vars_to_replace)
+
+            embed = self.embed_from_dict(embed_dict)
+
+        leave_channel = guild.get_channel(leaves_data["channel"])
+        if not leave_channel:
+            return
+
+        message_content = self.multiple_replaces(leaves_data["message"], vars_to_replace)
+        await leave_channel.send(content = message_content, embed = embed)

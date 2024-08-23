@@ -199,7 +199,8 @@ class on_interaction_giveaway(commands.Cog):
             
             message_embed = message.embeds[0]
             message_embed.description = "Gagnant" + ("s" if len(winners) > 1 else "") + " : " + (", ".join([winner for winner in winners]) if winners else "*Aucun gagnant*")
-
+            message_embed.fields[0].value = f"<t:{round(giveaway['end_at'].timestamp())}:R>"
+            
             if participants:
                 await self.bot.db.set_data("giveaway", "ended", True, guild_id = message.guild.id, channel_id = message.channel.id, message_id = message.id)
                 

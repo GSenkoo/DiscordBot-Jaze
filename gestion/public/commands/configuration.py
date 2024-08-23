@@ -1074,7 +1074,7 @@ class Configuration(commands.Cog):
                         await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                         await restore()
                         return
-                
+
                     finally: delete_message(ask_message)
                     delete_message(response_message)
 
@@ -1153,6 +1153,7 @@ class Configuration(commands.Cog):
                         for key, value in manage_captcha_view.data.items():
                             if key == "guild_id": continue
                             await manage_captcha_view.bot.db.set_data("captcha", key, value, guild_id = interaction.guild.id)
+                        await manage_captcha_view.bot.db.set_data("captcha", "auto_config", True, guild_id = interaction.guild.id)
                         
                         await interaction.message.edit(
                             embed = discord.Embed(
@@ -1200,14 +1201,15 @@ class Configuration(commands.Cog):
                         for key, value in manage_captcha_view.data.items():
                             if key == "guild_id": continue
                             await manage_captcha_view.bot.db.set_data("captcha", key, value, guild_id = interaction.guild.id)
-                        
+                        await manage_captcha_view.bot.db.set_data("captcha", "auto_config", False, guild_id = interaction.guild.id)
+
                         await interaction.message.edit(embed = discord.Embed(title = "Votre système de vérification des nouveaux membres est prêt", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)), view = None)
                         await interaction.response.defer()
                         
                 await interaction.message.edit(
                     embed = discord.Embed(
                         title = "Configuration recommandée",
-                        description = f"***Souhaitez-vous configurer automatiquement les permissions du rôle <@&{manage_captcha_view.data['non_verified_role']}> et des salons de ce serveur ?***\n\nLe processus consiste à masquer tous les salons pour les nouveaux membres non vérifiés, à l'exception du salon de vérification. Une fois la vérification terminée, les salons masqués deviennent accessibles aux utilisateurs vérifiés, tandis que le salon de vérification leur est ensuite rendu invisible.\n\n*Notez que les salons actuellement invisibles pour @everyone ne seront pas affectés par cette configuration.*",
+                        description = f"***Souhaitez-vous configurer automatiquement les permissions du rôle <@&{manage_captcha_view.data['non_verified_role']}> et des salons de ce serveur ?***\n\nLe processus consiste à masquer tous les salons pour les nouveaux membres non vérifiés, à l'exception du salon de vérification. Une fois la vérification terminée, les salons masqués deviennent accessibles aux utilisateurs vérifiés, tandis que le salon de vérification leur est ensuite rendu invisible (les nouveaux salons seront automatiquements configurés).\n\n*Notez que les salons actuellement invisibles pour @everyone ne seront pas affectés par cette configuration.*",
                         color = await manage_captcha_view.bot.get_theme(interaction.guild.id)
                     ),
                     view = AutoConfig()
@@ -1495,7 +1497,7 @@ class Configuration(commands.Cog):
                 if select.values[0] == "channel":
                     await interaction.response.defer()
 
-                    message = await ctx.send("> Dans quel **salon** souhaitez-vous envoyer le message de bienvenue? Envoyez `cancel` pour annuler.")
+                    message = await ctx.send("> Dans quel **salon** souhaitez-vous envoyer le message d'adieu? Envoyez `cancel` pour annuler.")
                     try: response = await self.bot.wait_for("message", check = response_check, timeout = 60)
                     except asyncio.TimeoutError():
                         await ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
@@ -1560,7 +1562,7 @@ class Configuration(commands.Cog):
                         5. **Et voilà, votre configuration est terminée.**
                     """), ephemeral = True)
 
-                if select.values[0] == "del_embed":
+                if select.values[0] == "remove_embed":
                     await self.bot.db.set_data("leaves", "embed", None, guild_id = interaction.guild.id)
                     await interaction.message.edit(embed = await get_leaves_embed(self.data))
                     await interaction.response.defer()
@@ -1608,6 +1610,82 @@ class Configuration(commands.Cog):
 
         leaves_data = await get_leaves_data()
         await ctx.send(embed = await get_leaves_embed(leaves_data), view = ChangeLeavesSettings(self.bot, leaves_data))
+
+
+    @commands.command(description = "Configurer l'ajout automatique d'un rôle lors de l'ajout d'une réaction sur un message")
+    @commands.guild_only()
+    async def rolereact(self, ctx, action : str, emoji : discord.Emoji = None, role : discord.Role = None, message : discord.Message = None):
+        action = action.lower()
+        if action not in ["add", "del", "list", "reset"]:
+            await ctx.send(f"> L'action donnée est invalide. Les actions disponibles sont : `add`/`del`/`list`/`reset`.")
+            return
+        
+        if (action in ["add", "del"]) and ((not emoji) or (not role) or (not message)):
+            await ctx.send("> Si votre action est \"add\" ou \"del\", alors tous les paramètres de la commande deviennent obligatoires.")
+            return
+        
+        if action != "add":
+            roles_react_data_sql = await self.bot.db.execute(f"SELECT * FROM role_react WHERE guild_id = {ctx.guild.id}", fetch = True)
+            if not roles_react_data_sql:
+                await ctx.send("> Vous n'avez pas encore configuré de role-react sur ce serveur.")
+                return
+        
+        if action == "list": 
+            role_react_table_columns = await self.bot.db.get_table_columns("role_react")
+            roles_react_data = [dict(set(zip(role_react_table_columns, role_react_data))) for role_react_data in roles_react_data_sql]
+            roles_react_data = [
+                f"{index}. <#{role_react_data['channel_id']}> > [Lien du message](https://discord.com/channels/{role_react_data['guild_id']}/{role_react_data['channel_id']}/{role_react_data['message_id']}) : {role_react_data['emoji']} : <@&{role_react_data['role']}>" for index, role_react_data in enumerate(roles_react_data)
+            ]
+
+            embed = discord.Embed(
+                title = "Liste des role-react",
+                color = await self.bot.get_theme(ctx.guild.id),
+                description = "\n".join(roles_react_data)
+            )
+
+            await ctx.send(embed = embed)
+
+        if action == "reset":
+            await self.bot.db.execute(f"DELETE FROM role_react WHERE guild_id = {ctx.guild.id}")
+            await ctx.send("> Le système de role-react a correctement été supprimés.")
+
+        if action == "add":
+            already_exists = await self.bot.db.execute(f"SELECT * FROM role_react WHERE guild_id = {ctx.guild.id} AND channel_id = {message.channel.id} AND message_id = {message.id} AND emoji = {emoji}")
+            if already_exists:
+                await ctx.send("> Il éxiste déjà un role-react comme cela.")
+                return
+            
+            await self.bot.db.execute("INSERT INTO role_react (guild_id, channel_id, message_id, emoji, role) VALUES (%s, %s, %s, %s, %s)", (ctx.guild.id, message.channel.id, message.id, str(emoji), role.id))
+            
+            reaction_already_added = False
+            for reaction in message.reactions:
+                if reaction.emoji == emoji and ctx.guild.me.id in [user.id for user in reaction.users]:
+                    reaction_already_added = True
+                    break
+            if not reaction_already_added:
+                await message.add_reaction()
+
+            await ctx.send("> Votre role-react a bien été créé.")
+        
+        if action == "del":
+            await self.bot.db.execute(f"DELETE FROM role_react WHERE guild_id = {ctx.guild.id} AND channel_id = {message.channel.id} AND message_id = {message.id} AND emoji = {emoji}")
+            await ctx.send("> Le role-react donné a bien été supprimé.")
+            
+            
+        """
+        "role_react": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL", "message_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "role": "TEXT"
+            }
+        }
+        """
+
+
+    @commands.command(description = "Gérer l'ajout de rôles à l'aide de boutons/sélécteurs")
+    @commands.guild_only()
+    async def roleinteract(self, ctx):
+        pass
 
 
 def setup(bot):
