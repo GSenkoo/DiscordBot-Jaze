@@ -1225,10 +1225,9 @@ class Configuration(commands.Cog):
         await ctx.send(embed = await get_captcha_embed(data), view = ManageCaptchaView(ctx, data, self.bot))
 
 
-    @commands.command(description = "Configurer les messages automatiques de bienvenue")
+    @commands.command(description = "Configurer l'envoi automatique de message de bienvenue")
     @commands.guild_only()
     async def joins(self, ctx):
-
         async def get_join_data() -> dict:
             results = await self.bot.db.execute(f"SELECT * FROM joins WHERE guild_id = {ctx.guild.id}", fetch = True)
             if not results:
@@ -1334,7 +1333,6 @@ class Configuration(commands.Cog):
                     
                     self.data["channel"] = channel.id
                     await interaction.message.edit(embed = await get_join_embed(self.data))
-                    await ctx.send("> Le salon des **messages de bienvenues** a été modifié.", delete_after = 3)
 
                 if select.values[0] in ["message", "message_dm"]:
                     await interaction.response.defer()
@@ -1355,14 +1353,12 @@ class Configuration(commands.Cog):
 
                     if response.content.lower() == "remove":
                         self.data[select.values[0]] = None
-                        await ctx.send(f"> Le contenu de votre **{option_name}** a été retiré.", delete_after = 3)
                     else:
                         if len(response.content) > 2000:
                             await ctx.send(f"> Votre **{option_name}** ne peut pas dépasser les 2000 caractères.", delete_after = 3)
                             return
                         
                         self.data[select.values[0]] = response.content
-                        await ctx.send(f"> Le contenu de votre **{option_name}** a été mis à jour.", delete_after = 3)
 
                     await interaction.message.edit(embed = await get_join_embed(self.data))
                 
@@ -1405,10 +1401,15 @@ class Configuration(commands.Cog):
                         if not self.data["message_dm"]:
                             await interaction.response.send_message("> Vous avez activé l'envoi de message privé, donc vous devez fournir un message à envoyer.", ephemeral = True)
                             return
+                        
+                    embed_enabled = len(await self.bot.db.get_data("joins", "embed", False, True, guild_id = interaction.guild.id))
+                    if (not embed_enabled) and (not self.data["message"]):
+                        await interaction.response.send_message("> Vous devez fournir un message de bienvenue ou alors un embed de bienvenue.", ephemeral = True)
+                        return
 
                 for key, value in self.data.items():
-                    if key == "guild_id": continue
-                    await self.bot.db.set_data("joins", key, value if type(value) != dict else json.dumps(value), guild_id = interaction.guild.id)
+                    if key in ["guild_id", "embed"]: continue
+                    await self.bot.db.set_data("joins", key, value, guild_id = interaction.guild.id)
                 
                 embed = await get_join_embed(self.data)
                 embed.title = "Paramètres de bienvenue sauvegardés"
@@ -1424,11 +1425,189 @@ class Configuration(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de bienvenue annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
+                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de bienvenue annulé", color = await self.bot.get_theme(ctx.guild.id)), view = None)
                 await interaction.response.defer()
 
         data = await get_join_data()
         await ctx.send(embed = await get_join_embed(data), view = JoinSettings(data, self.bot))
+
+
+    @commands.command(description = "Configurer l'envoi automatique de message d'adieu")
+    @commands.guild_only()
+    async def leaves(self, ctx):
+        async def get_leaves_data() -> dict:
+            leaves_data = await self.bot.db.execute(f"SELECT * FROM leaves WHERE guild_id = {ctx.guild.id}", fetch = True)
+            if not leaves_data:
+                return {
+                    "enabled": False,
+                    "channel": None,
+                    "message": "Aurevoir {MemberMention}"
+                }
+            
+            leaves_table_columns = await self.bot.db.get_table_columns("leaves")
+            leaves_data = dict(set(zip(leaves_table_columns, leaves_data[0])))
+            return leaves_data
+
+        async def get_leaves_embed(data) -> discord.Embed:
+            embed = discord.Embed(
+                title = "Paramètres d'adieu",
+                color = await self.bot.get_theme(ctx.guild.id),
+                description = f"*Vous pouvez vous aider de la commande `{ctx.clean_prefix}variables` pour voir les variables disponibles.*"
+            )
+
+            embed.add_field(name = "Système mis en place", value = "Oui" if data["enabled"] else "Non")
+            embed.add_field(name = "Salon", value = f"<#{data['channel']}>" if data["channel"] else "*Aucun salon configuré*")
+            embed.add_field(
+                name = "Message",
+                value = (
+                    data["message"]
+                    if (len(data["message"]) <= 500) 
+                    else (data["message"][:500] + f"... (et {len(data['message']) - 500} caractères)")
+                ) if data["message"] else "*Aucun message configuré*"
+            )
+            embed.add_field(name = "Embed", value = "Configuré" if len(await self.bot.db.get_data("leaves", "embed", False, True, guild_id = ctx.guild.id)) else "Non configuré")
+            return embed
+
+        class ChangeLeavesSettings(MyViewClass):
+            def __init__(self, bot, data: dict):
+                super().__init__(timeout = 180)
+                self.bot = bot
+                self.data = data
+
+            @discord.ui.select(
+                placeholder = "Choisir une option",
+                options = [
+                    discord.SelectOption(label = "Système mis en place", emoji = "❔", value = "enabled"),
+                    discord.SelectOption(label = "Salon", emoji = "📌", value = "channel"),
+                    discord.SelectOption(label = "Message", emoji = "💬", value = "message"),
+                    discord.SelectOption(label = "Ajouter un embed", emoji = "📝", value = "add_embed"),
+                    discord.SelectOption(label = "Retirer l'embed", emoji = "❌", value = "remove_embed")
+                ]
+            )
+            async def leaves_select_callback(self, select, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                def response_check(message):
+                    return (message.author == interaction.user) and (message.channel == interaction.channel) and (message.content)
+
+                if select.values[0] == "channel":
+                    await interaction.response.defer()
+
+                    message = await ctx.send("> Dans quel **salon** souhaitez-vous envoyer le message de bienvenue? Envoyez `cancel` pour annuler.")
+                    try: response = await self.bot.wait_for("message", check = response_check, timeout = 60)
+                    except asyncio.TimeoutError():
+                        await ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
+                        return
+                    except: return
+                    finally: delete_message(message)
+                    delete_message(response)
+
+                    if response.content.lower() == "cancel":
+                        await ctx.send("> Action annulée.", delete_after = 3)
+                        return
+                    
+                    searcher = Searcher(self.bot, ctx)
+                    channel = await searcher.search_channel(response.content, interaction.guild)
+
+                    if not channel:
+                        await ctx.send("> Action annulée, merci de fournir un salon valide.", delete_after = 3)
+                        return
+                    
+                    self.data["channel"] = channel.id
+                    await interaction.message.edit(embed = await get_leaves_embed(self.data))
+
+                if select.values[0] == "message":
+                    await interaction.response.defer()
+
+                    message = await ctx.send(f"> Quel sera le nouveau contenu de votre **message d'adieu** ? Envoyez `cancel` pour annuler et `remove` pour retirer le contenu actuel.")
+
+                    try: response = await self.bot.wait_for("message", check = response_check, timeout = 60)
+                    except asyncio.TimeoutError():
+                        await ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
+                        return
+                    finally: delete_message(message)
+                    delete_message(response)
+
+                    if response.content.lower() == "cancel":
+                        await ctx.send("> Action annulée.", delete_after = 3)
+                        return
+
+                    if response.content.lower() == "remove":
+                        self.data["message"] = None
+                    else:
+                        if len(response.content) > 2000:
+                            await ctx.send(f"> Votre **message d'adieu** ne peut pas dépasser les 2000 caractères.", delete_after = 3)
+                            return
+                        self.data["message"] = response.content
+
+                    await interaction.message.edit(embed = await get_leaves_embed(self.data))
+                
+                if select.values[0] == "enabled":
+                    self.data["enabled"] = not self.data["enabled"]
+                    await interaction.message.edit(embed = await get_leaves_embed(self.data))
+                    await interaction.response.defer()
+
+                if select.values[0] == "add_embed":
+                    await interaction.response.send_message(textwrap.dedent("""
+                        **Configurer un embed d'adieu est un jeu d'enfant. Suivez simplement ces étapes :**
+
+                        1. **Lancez la commande `+embed`.**
+                        2. **Personnalisez votre embed** grâce au menu interactif qui s'affiche.
+                        3. **Appuyez sur le bouton "Envoyer"** pour finaliser votre création.
+                        4. **Cliquez sur "Définir comme embed d'adieu"** pour l'appliquer.
+                        5. **Et voilà, votre configuration est terminée.**
+                    """), ephemeral = True)
+
+                if select.values[0] == "del_embed":
+                    await self.bot.db.set_data("leaves", "embed", None, guild_id = interaction.guild.id)
+                    await interaction.message.edit(embed = await get_leaves_embed(self.data))
+                    await interaction.response.defer()
+
+            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.success)
+            async def save_callback(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                if self.data["enabled"]:
+                    if (not self.data["channel"]) and (not interaction.guild.get_channel(self.data["channel"])):
+                        await interaction.response.send_message("> Merci de donner un salon de d'adieu valide.", ephemeral = True)
+                        return
+                    if not interaction.guild.get_channel(self.data["channel"]).permissions_for(interaction.guild.me).send_messages:
+                        await interaction.response.send_message(f"> Je n'ai pas les permissions nécessaires pour envoyer des messages dans le salon <#{self.data['channel']}>", ephemeral = True)
+                        return
+                        
+                    embed_enabled = len(await self.bot.db.get_data("leaves", "embed", False, True, guild_id = interaction.guild.id))
+                    if (not embed_enabled) and (not self.data["message"]):
+                        await interaction.response.send_message("> Vous devez fournir un message d'adieu ou alors un embed d'adieu.", ephemeral = True)
+                        return
+
+                for key, value in self.data.items():
+                    if key in ["guild_id", "embed"]: continue
+                    await self.bot.db.set_data("leaves", key, value, guild_id = interaction.guild.id)
+                
+                embed = await get_leaves_embed(self.data)
+                embed.title = "Paramètres d'adieu sauvegardés"
+                await interaction.message.edit(
+                    embed = embed,
+                    view = None
+                )
+                await interaction.response.defer()
+
+            @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
+            async def delete_button_callback(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système d'adieu annulé", color = await self.bot.get_theme(ctx.guild.id)), view = None)
+                await interaction.response.defer()
+
+
+        leaves_data = await get_leaves_data()
+        await ctx.send(embed = await get_leaves_embed(leaves_data), view = ChangeLeavesSettings(self.bot, leaves_data))
 
 
 def setup(bot):

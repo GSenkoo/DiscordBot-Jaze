@@ -54,6 +54,7 @@
         "botadmins",
         "embed",
         "renew",
+        "sync",
         "noderank",
         "theme",
         "prefix",

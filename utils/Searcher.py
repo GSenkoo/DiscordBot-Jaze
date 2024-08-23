@@ -142,10 +142,26 @@ class Searcher():
             try: channel = await guild.fetch_channel(int(query_rmention))
             except: pass
 
-        if channel:
+        if channel and type(channel) != discord.CategoryChannel:
             return channel
         
-        for channel in guild.roles:
+        for channel in guild.channels:
+            if type(channel) == discord.CategoryChannel:
+                continue
+            if channel.name == query:
+                return channel
+        
+        return None
+    
+
+    async def search_category(self, query, guild : discord.Guild = None) -> Union[discord.CategoryChannel, None]:
+        if not guild: guild = self.ctx.guild
+        
+        query_rmention = query.replace("<#", "").replace(">", "")
+
+        for channel in guild.channels:
+            if type(channel) != discord.CategoryChannel:
+                continue
             if channel.name == query:
                 return channel
             if query_rmention.isdigit():

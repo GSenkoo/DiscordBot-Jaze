@@ -974,7 +974,7 @@ class Utilitaire(commands.Cog):
                     @discord.ui.button(
                         label = "Envoyer à un utilisateur",
                         emoji = "📧",
-                        row  = 1
+                        row  = 0
                     )
                     async def button_user_callback(self, button, interaction):
                         if interaction.user != ctx.author:
@@ -1018,7 +1018,7 @@ class Utilitaire(commands.Cog):
                         emoji = "📝",
                         row = 1
                     )
-                    async def button_set_join_embed_callback(self, button, interaction):
+                    async def button_set_joins_embed_callback(self, button, interaction):
                         if interaction.user != ctx.author:
                             await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                             return
@@ -1036,6 +1036,34 @@ class Utilitaire(commands.Cog):
                         await interaction.message.edit(
                             embed = discord.Embed(
                                 title = f"L'embed de bienvenue a correctement été définis",
+                                color = await bot.get_theme(ctx.guild.id)
+                            ),
+                            view = None
+                        )
+
+                    @discord.ui.button(
+                        label = "Définir comme embed d'adieu",
+                        emoji = "📝",
+                        row = 1
+                    )
+                    async def button_set_leaves_embed_callback(self, button, interaction):
+                        if interaction.user != ctx.author:
+                            await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                            return
+                        
+                        permission_manager = PermissionsManager(bot)
+                        configuration_cog = bot.get_cog("Configuration")
+                        leaves_command = [command for command in configuration_cog.get_commands() if command.name == "leaves"][0]
+                        bot_prefix = await bot.get_prefix(ctx.message)
+
+                        if not await permission_manager.can_use_cmd(ctx, leaves_command):
+                            await interaction.response.send_message(f"> Pour définir un embed d'adieu, vous devez avoir accès à la commande `{bot_prefix}leaves`.")
+                            return                        
+
+                        await bot.db.set_data("leaves", "embed", json.dumps(embed_menu.embed), guild_id = interaction.guild.id)
+                        await interaction.message.edit(
+                            embed = discord.Embed(
+                                title = f"L'embed d'adieu a correctement été définis",
                                 color = await bot.get_theme(ctx.guild.id)
                             ),
                             view = None

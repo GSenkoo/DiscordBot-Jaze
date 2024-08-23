@@ -210,7 +210,7 @@ class Moderation(commands.Cog):
         await ctx.send("> Tentative de débannissement de tous les utilisateurs banni effectué." + (f"\n> Je compte un total de {unbanned} utilisateur(s) débanni. " if unbanned else "") + (f"\n> Je n'ai pas pu bannir {total_banned - unbanned} utilisateurs." if total_banned - unbanned else ""))
 
     
-    @commands.command(description = "Kick un membre du serveur")
+    @commands.command(description = "Expulser un membre du serveur")
     @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.guild)
     @commands.bot_has_permissions(kick_members = True)
     @commands.guild_only()

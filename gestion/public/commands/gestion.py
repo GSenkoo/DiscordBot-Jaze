@@ -196,7 +196,108 @@ class Gestion(commands.Cog):
         await channel.delete()
 
         await new_channel.send(f"> Le salon a était renew par {ctx.author.mention}.", allowed_mentions = AM.none(), delete_after = 10)
+
+
+    @commands.command(description = "Synchroniser un salon, tous les salons d'une catégorie ou tous les salons", usage = "<channel/category/all>", aliases = ["synchronize"])
+    @commands.guild_only()
+    @commands.bot_has_permissions(manage_channels = True)
+    async def sync(self, ctx, param):
+        """
+        Exemples : 
+        `sync #salon`
+        `sync #category`
+        `sync all`
+        """
+        searcher = Searcher(self.bot, ctx)
+
+        # ------------------------------------- Channel
+        channel = await searcher.search_channel(param)
+        if channel:
+            if not channel.category:
+                await ctx.send(f"> Le salon {channel.mention} n'est pas dans une catégorie.")
+                return
+            if channel.permissions_synced:
+                await ctx.send(f"> Le salon {channel.mention} est déjà synchronisé avec sa catégorie.")
+                return
             
+            try: await channel.edit(sync_permissions = True)
+            except:
+                await ctx.send(f"> Impossible de synchroniser le salon {channel.mention} avec sa catégorie.")
+                return
+            await ctx.send(f"> Le salon {channel.mention} a bien été synchronisé avec sa catégorie.")
+            return
+        
+        # ------------------------------------- Category
+        category = await searcher.search_category(param)
+        if category:
+            if not category.channels:
+                await ctx.send(f"> La catégorie **{category.name}** ne possède pas de salon.")
+                return
+            if not [channel for channel in category.channels if not channel.permissions_synced]:
+                await ctx.send(f"> Les salons de la catégorie **{category.name}** sont déjà tous synchronisés.")
+                return
+            
+            message = None
+            if len(category.channels) >= 3:
+                message = await ctx.send(f"> Synchronisation des salons de la catégorie **{category.name}** en cours...")
+
+            synchronized = 0
+            synchronization_failed = 0
+
+            for channel in category.channels:
+                if channel.permissions_synced:
+                    continue
+                try: 
+                    await channel.edit(sync_permissions = True)
+                    synchronized += 1
+                except: synchronization_failed += 1
+
+            if message:
+                try: await message.delete()
+                except: pass
+
+            await ctx.send(
+                f"> Tentative de synchronisation de la catégorie **{category.name}** effectuée."
+                + (f"\n> J'ai synchronisé un total de {synchronized} salon(s)." if synchronized else "")
+                + (f"\n> Je n'ai pas pu synchroniser {synchronization_failed} salon(s)." if synchronization_failed else "")
+            )
+            return
+
+        # ------------------------------------- ALL
+        if param.lower() != "all":
+            await ctx.send(f"> Le salon ou la catégorie donnée est invalide. Pour tous les salons utilisez `{ctx.clean_prefix}sync all`.")
+            return
+        
+        channel_to_sync = [channel for channel in ctx.guild.channels if (type(channel) != discord.CategoryChannel) and (not channel.permissions_synced) and (channel.category)]
+        if not channel_to_sync:
+            await ctx.send(f"> Il n'y a pas de salon nécessitant une synchronisation avec sa catégorie.")
+            return
+        
+        message = None
+        if len(channel_to_sync) >= 3:
+            message = await ctx.send(f"> Synchronisation de tous les salons du serveur en cours...")
+            
+        synchronized = 0
+        synchronization_failed = 0
+        for channel in channel_to_sync:
+            if channel.permissions_synced:
+                continue
+            try: 
+                await channel.edit(sync_permissions = True)
+                synchronized += 1
+            except: synchronization_failed += 1
+
+        if message:
+            try: await message.delete()
+            except: pass
+
+        await ctx.send(
+            f"> Tentative de synchronisation de tous les salons effectuée."
+            + (f"\n> J'ai synchronisé un total de {synchronized} salon(s)." if synchronized else "")
+            + (f"\n> Je n'ai pas pu synchroniser {synchronization_failed} salon(s)." if synchronization_failed else "")
+        )
+
+
 
     @commands.command(description = "Configurer et ensuite lancer un giveaway")
     @commands.guild_only()
@@ -555,7 +656,7 @@ class Gestion(commands.Cog):
         else: await paginator.send(ctx)
 
 
-    @commands.command(description = "Ajouter/Retirer un ou plusieurs rôle à tous les membres")
+    @commands.command(description = "Ajouter/Retirer un ou plusieurs rôle à tous les membres/bots")
     @commands.guild_only()
     async def massiverole(self, ctx):
         class_self = self

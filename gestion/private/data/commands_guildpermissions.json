@@ -54,6 +54,7 @@
     "botadmins": ["manage_roles"],
     "embed": ["manage_guild"],
     "renew": ["manage_channels"],
+    "sync": ["manage_channels"],
     "noderank": ["manage_guild"],
     "theme": ["manage_guild"],
     "prefix": ["manage_guild"],

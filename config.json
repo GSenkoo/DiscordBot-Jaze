@@ -87,6 +87,15 @@
                 "send_after_captcha": "BOOLEAN DEFAULT false"
             }
         },
+        "leaves": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
+            "keys": {
+                "enabled": "BOOLEAN DEFAULT false",
+                "channel": "BIGINT DEFAULT 0",
+                "message": "VARCHAR(2000) DEFAULT 'Aurevoir {MemberMention}'",
+                "embed": "TEXT"
+            }
+        },
         "captcha": {
             "primary_keys": {"guild_id": "BIGINT NOT NULL UNIQUE"},
             "keys": {
