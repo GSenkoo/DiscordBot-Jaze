@@ -125,8 +125,7 @@ class Database:
                     await connection.commit()
                 if fetch:
                     result = await cursor.fetchall()
-                    return result
-                
+                    return result   
 
 
     async def set_data(self, table : str, column : str, new_value, commit : bool = True, **keys_indicator) -> None:

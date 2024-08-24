@@ -591,7 +591,7 @@ class Gestion(commands.Cog):
         giveaway_link = f"[giveaway {giveaway['reward']}](https://discord.com/channels/{giveaway['guild_id']}/{giveaway['channel_id']}/{giveaway['message_id']})"
 
         if giveaway["ended"]:
-            await ctx.send(f"> Le giveaway {giveaway_link} est déjà terminé.")
+            await ctx.send(f"> Le {giveaway_link} est déjà terminé.")
             return
 
         now = datetime.now()

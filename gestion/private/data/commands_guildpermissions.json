@@ -71,6 +71,7 @@
     "variables": ["manage_guild"],
     "soutien": ["manage_guild", "manage_roles"],
     "autoreact": ["manage_guild", "manage_channels"],
+    "rolereact": ["manage_guild", "manage_roles"],
     "joins": ["manage_guild", "manage_channels"],
     "leaves": ["manage_guild", "manage_channels"],
     "captcha": ["manage_guild", "moderate_members", "manage_channels"],

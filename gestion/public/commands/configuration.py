@@ -2,6 +2,7 @@ import discord
 import json
 import asyncio
 import textwrap
+
 from discord.ui.item import Item
 from discord.ext import commands
 from discord import AllowedMentions as AM
@@ -9,6 +10,7 @@ from utils.Paginator import PaginatorCreator
 from utils.Searcher import Searcher
 from utils.MyViewClass import MyViewClass
 from utils.Tools import Tools
+from utils.GPChecker import GPChecker
 
 def delete_message(message):
     async def task():
@@ -224,6 +226,13 @@ class Configuration(commands.Cog):
             if role.id in join_roles:
                 await ctx.send(f"> Le rôle {role.mention} est déjà dans la liste des rôles automatiquements ajoutés aux nouveaux membres.", allowed_mentions = AM.none())
                 return
+            
+            gp_checker = GPChecker(ctx, self.bot)
+            check = await gp_checker.we_can_add_role(role)
+            if check != True:
+                await ctx.send(check, allowed_mentions = AM.none())
+                return
+            
             captcha_role_id = await self.bot.db.get_data("captcha", "non_verified_role", guild_id = ctx.guild.id)
             if role.id == captcha_role_id:
                 await ctx.send("> Le rôle des utilisateurs non vérifiés (dans le système de captcha) ne peut pas être dans la liste des rôles automatiquements ajoutés.")
@@ -1612,27 +1621,35 @@ class Configuration(commands.Cog):
         await ctx.send(embed = await get_leaves_embed(leaves_data), view = ChangeLeavesSettings(self.bot, leaves_data))
 
 
-    @commands.command(description = "Configurer l'ajout automatique d'un rôle lors de l'ajout d'une réaction sur un message")
+    @commands.command(description = "Configurer l'ajout automatique d'un rôle lors de l'ajout d'une réaction sur un message", usage = "<add/del/list/reset> <emoji> <role> <message>")
     @commands.guild_only()
-    async def rolereact(self, ctx, action : str, emoji : discord.Emoji = None, role : discord.Role = None, message : discord.Message = None):
+    @commands.bot_has_guild_permissions(manage_roles = True)
+    async def rolereact(self, ctx, action : str, emoji : str = None, role : discord.Role = None, message : discord.Message = None):
         action = action.lower()
         if action not in ["add", "del", "list", "reset"]:
             await ctx.send(f"> L'action donnée est invalide. Les actions disponibles sont : `add`/`del`/`list`/`reset`.")
             return
-        
         if (action in ["add", "del"]) and ((not emoji) or (not role) or (not message)):
             await ctx.send("> Si votre action est \"add\" ou \"del\", alors tous les paramètres de la commande deviennent obligatoires.")
             return
         
+        if (action in ["add", "del"]):
+            tools = Tools(self.bot)
+            emoji = await tools.get_emoji(emoji)
+            if not emoji:
+                await ctx.send(f"> L'emoji donné est invalide.")
+                return
+        
         if action != "add":
             roles_react_data_sql = await self.bot.db.execute(f"SELECT * FROM role_react WHERE guild_id = {ctx.guild.id}", fetch = True)
             if not roles_react_data_sql:
-                await ctx.send("> Vous n'avez pas encore configuré de role-react sur ce serveur.")
+                await ctx.send("> Il n'y a pas de role-react configuré sur ce serveur.")
                 return
         
+        # ------------------------------------- ACTION : LIST
         if action == "list": 
             role_react_table_columns = await self.bot.db.get_table_columns("role_react")
-            roles_react_data = [dict(set(zip(role_react_table_columns, role_react_data))) for role_react_data in roles_react_data_sql]
+            roles_react_data = [dict(set(zip(role_react_table_columns, role_react_data))) for role_react_data in roles_react_data_sql] 
             roles_react_data = [
                 f"{index}. <#{role_react_data['channel_id']}> > [Lien du message](https://discord.com/channels/{role_react_data['guild_id']}/{role_react_data['channel_id']}/{role_react_data['message_id']}) : {role_react_data['emoji']} : <@&{role_react_data['role']}>" for index, role_react_data in enumerate(roles_react_data)
             ]
@@ -1642,44 +1659,37 @@ class Configuration(commands.Cog):
                 color = await self.bot.get_theme(ctx.guild.id),
                 description = "\n".join(roles_react_data)
             )
-
             await ctx.send(embed = embed)
 
+        # ------------------------------------- ACTION : RESET
         if action == "reset":
             await self.bot.db.execute(f"DELETE FROM role_react WHERE guild_id = {ctx.guild.id}")
             await ctx.send("> Le système de role-react a correctement été supprimés.")
 
+        # ------------------------------------- ACTION : ADD ROLE REACT
         if action == "add":
-            already_exists = await self.bot.db.execute(f"SELECT * FROM role_react WHERE guild_id = {ctx.guild.id} AND channel_id = {message.channel.id} AND message_id = {message.id} AND emoji = {emoji}")
+            already_exists = await self.bot.db.execute(f"SELECT * FROM role_react WHERE guild_id = %s AND channel_id = %s AND message_id = %s AND emoji = %s", (ctx.guild.id, message.channel.id, message.id, str(emoji),), fetch = True)
             if already_exists:
                 await ctx.send("> Il éxiste déjà un role-react comme cela.")
                 return
             
+            gp_checker = GPChecker(ctx, self.bot)
+            check = await gp_checker.we_can_add_role(role)
+            if check != True:
+                await ctx.send(check, allowed_mentions = AM.none())
+                return
+            
             await self.bot.db.execute("INSERT INTO role_react (guild_id, channel_id, message_id, emoji, role) VALUES (%s, %s, %s, %s, %s)", (ctx.guild.id, message.channel.id, message.id, str(emoji), role.id))
             
-            reaction_already_added = False
-            for reaction in message.reactions:
-                if reaction.emoji == emoji and ctx.guild.me.id in [user.id for user in reaction.users]:
-                    reaction_already_added = True
-                    break
-            if not reaction_already_added:
-                await message.add_reaction()
+            try: await message.add_reaction(emoji)
+            except: pass
 
             await ctx.send("> Votre role-react a bien été créé.")
         
+        # ------------------------------------- ACTION : DEL ROLE REACT
         if action == "del":
             await self.bot.db.execute(f"DELETE FROM role_react WHERE guild_id = {ctx.guild.id} AND channel_id = {message.channel.id} AND message_id = {message.id} AND emoji = {emoji}")
             await ctx.send("> Le role-react donné a bien été supprimé.")
-            
-            
-        """
-        "role_react": {
-            "primary_keys": {"guild_id": "BIGINT NOT NULL", "channel_id": "BIGINT NOT NULL", "message_id": "BIGINT NOT NULL UNIQUE"},
-            "keys": {
-                "role": "TEXT"
-            }
-        }
-        """
 
 
     @commands.command(description = "Gérer l'ajout de rôles à l'aide de boutons/sélécteurs")

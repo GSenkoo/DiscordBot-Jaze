@@ -85,11 +85,18 @@ class GPChecker:
         return True
 
     
-    async def we_can_add_role(self, member : discord.Member, role : discord.Role) -> Union[str, True]:
+    async def we_can_add_role_to(self, member : discord.Member, role : discord.Role) -> Union[str, True]:
         if not role.is_assignable(): return f"> Le rôle {role.mention} n'est pas un rôle assignable."
         if role in getattr(member, "roles", []): return "> " + ("Vous avez" if member == self.ctx.author else f"{member.mention} a") + f" déjà le rôle {role.mention}."
         
         if not await self.has_higher_hierarchic(self.ctx.author, member): return "> Vous ne pouvez pas ajouter des rôles à un membre qui est suppérieur ou égal à vous hiérarchiquement."
+        if role.position >= self.ctx.guild.me.top_role.position: return "> Je ne peux pas ajouter un rôle qui est suppérieur ou égal hiérarchiquement à mon rôle le plus élevé."
+
+        return True
+    
+
+    async def we_can_add_role(self, role : discord.Role) -> Union[str, True]:
+        if not role.is_assignable(): return f"> Le rôle {role.mention} n'est pas un rôle assignable."        
         if role.position >= self.ctx.guild.me.top_role.position: return "> Je ne peux pas ajouter un rôle qui est suppérieur ou égal hiérarchiquement à mon rôle le plus élevé."
 
         return True

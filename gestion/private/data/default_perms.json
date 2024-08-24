@@ -71,6 +71,7 @@
         "variables",
         "soutien",
         "autoreact",
+        "rolereact",
         "captcha",
         "joins",
         "leaves",

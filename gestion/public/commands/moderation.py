@@ -343,7 +343,7 @@ class Moderation(commands.Cog):
             member = ctx.author
 
         checker = GPChecker(ctx, self.bot)
-        check = await checker.we_can_add_role(member, role)
+        check = await checker.we_can_add_role_to(member, role)
         if check != True:
             await ctx.send(check, allowed_mentions = AM.none())
             return
