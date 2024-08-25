@@ -440,9 +440,8 @@ class Configuration(commands.Cog):
                                     continue
                                 previous_view.suggestion_data["moderator_roles"].append(role.id)
 
-                            await interaction.message.edit(view = previous_view, embed = await get_suggestion_settings_embed(previous_view.suggestion_data))
-                            await interaction.response.defer()
-
+                            await interaction.edit(view = previous_view, embed = await get_suggestion_settings_embed(previous_view.suggestion_data))
+                            
                         @discord.ui.button(label = "Choisissez un rôle", style = discord.ButtonStyle.primary, disabled = True)
                         async def button_callback(self, button, interaction):
                             pass
@@ -558,8 +557,7 @@ class Configuration(commands.Cog):
                 suggestion_embed = await get_suggestion_settings_embed(self.suggestion_data)
                 suggestion_embed.title = "Paramètres de suggestions sauvegardés"
 
-                await interaction.message.edit(embed = suggestion_embed, view = None)
-                await interaction.response.defer()
+                await interaction.edit(embed = suggestion_embed, view = None)
             
             @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
             async def delete_button_callback(self, button, interaction):
@@ -567,8 +565,7 @@ class Configuration(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de suggestion annulée", color = await bot.get_theme(ctx.guild.id)), view = None)
-                await interaction.response.defer()
+                await interaction.edit(embed = discord.Embed(title = "Configuration du système de suggestion annulée", color = await bot.get_theme(ctx.guild.id)), view = None)
 
         await ctx.send(embed = await get_suggestion_settings_embed(suggestion_data), view = Suggestions(suggestion_data))
 
@@ -1621,7 +1618,7 @@ class Configuration(commands.Cog):
         await ctx.send(embed = await get_leaves_embed(leaves_data), view = ChangeLeavesSettings(self.bot, leaves_data))
 
 
-    @commands.command(description = "Configurer l'ajout automatique d'un rôle lors de l'ajout d'une réaction sur un message", usage = "<add/del/list/reset> <emoji> <role> <message>")
+    @commands.command(description = "Configurer l'ajout automatique d'un rôle lors de l'ajout d'une réaction sur un message (max : 25)", usage = "<add/del/list/reset> <emoji> <role> <message>")
     @commands.guild_only()
     @commands.bot_has_guild_permissions(manage_roles = True)
     async def rolereact(self, ctx, action : str, emoji : str = None, role : discord.Role = None, message : discord.Message = None):
@@ -1692,10 +1689,121 @@ class Configuration(commands.Cog):
             await ctx.send("> Le role-react donné a bien été supprimé.")
 
 
-    @commands.command(description = "Gérer l'ajout de rôles à l'aide de boutons/sélécteurs")
-    @commands.guild_only()
+    @commands.command(description = "Configurer des boutons et sélécteurs permettants aux membres de prendre des rôles eux-mêmes")
+    @commands.guild_only() 
     async def roleinteract(self, ctx):
-        pass
+        """"""
+
+        """
+        ROLE INTERACT DATA FORMAT : 
+        {
+            "buttons": [
+                {
+                    "id": 1,
+                    "label": "Role 1",
+                    "emoji": "emoji_here",
+                    "role_data": {
+                        "role": role_id_here,
+                        "required_role": required_role_id_here,
+                        "ignored_role": ignored_role_id_here
+                    }
+                }
+            ],
+            "selectors": [
+                {
+                    "id": 1,
+                    "placeholder": "Click here",
+                    "min_values": 0,
+                    "max_values": 1,
+                    "roles_data": [
+                        {"role": role_id_here, "required_role": required_role_id_here, "ignored_role": ignored_role_id_here}
+                        ... (max : 25)
+                    ]
+                }
+                ...
+            ]
+        }
+        """
+
+        async def get_main_embed(data) -> discord.Embed:
+            embed = discord.Embed(
+                title = "Configuration de boutons/sélécteurs à rôle",
+                description = "*Un sélécteur conte comme 5 boutons. Discord vous limites à maximum 25 boutons par message.*"
+                + "\n\n"
+                + f"> *Votre nombre de bouton :* ***{len(data['buttons'])}***\n"
+                + f"> *Votre nombre de sélécteur :* ***{len(data['selectors'])}***",
+                color = await self.bot.get_theme(ctx.guild.id),
+                thumbnail = discord.EmbedMedia(url = ctx.guild.icon.url) if ctx.guild.icon else None
+            )
+            return embed
+        
+        async def get_role_interact_select_options(data):
+            options = []
+
+            for button in data["buttons"]:
+                options.append(discord.SelectOption(label = f"Bouton - {button['id']}", emoji = "👤"))
+            for selector in data["selectors"]:
+                options.append(discord.SelectOption(label = f"Sélécteur - {selector['id']}", emoji = "👤"))
+            
+            if not options:
+                return [discord.SelectOption(label = "Aucun bouton/sélécteur", default = True, value = "nope")]
+            return options
+        
+        data = {
+            "buttons": [],
+            "selectors": []
+        }
+
+        options = await get_role_interact_select_options(data)
+        class ManageRoleInteract(MyViewClass):
+            def __init__(self, bot, data):
+                super().__init__(timeout = 180)
+                self.bot = bot
+                self.data = data
+
+            @discord.ui.select(
+                placeholder = "Choisir un bouton/sélécteur",
+                options = options
+            )
+            async def choose_interact_callback(self, select, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                if select.values[0] == "nope":
+                    await interaction.response.defer()
+                    return
+                
+            @discord.ui.select(
+                placeholder = "Gérer les sélécteurs et boutons",
+                options = [
+                    discord.SelectOption(label = "Ajouter un bouton", emoji = "➕", value = "add_button"),
+                    discord.SelectOption(label = "Ajouter un sélécteur", emoji = "➕", value = "add_selector"),
+                    discord.SelectOption(label = "Retirer un bouton", emoji = "➖", value = "remove_button"),
+                    discord.SelectOption(label = "Retirer un sélécteur", emoji = "➖", value = "remove_selector"),
+                ]
+            )
+            async def manage_interact_callback(self, select, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+            @discord.ui.button(emoji = "✅", style = discord.ButtonStyle.success)
+            async def confirm_callback(self, button, interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+            @discord.ui.button(style = discord.ButtonStyle.danger, emoji = "🗑")
+            async def cancel_callback(self, button, interaction):
+                if interaction.user != self.ctx.author:
+                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                    return
+                
+                await interaction.message.edit(embed = discord.Embed(title = "Configuration annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
+                await interaction.response.defer()
+                
+        await ctx.send(embed = await get_main_embed(data), view = ManageRoleInteract(self.bot, data))
 
 
 def setup(bot):

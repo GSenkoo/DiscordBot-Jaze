@@ -27,6 +27,7 @@
         "joke",
         "pfc",
         "bingo",
+        "speedtest",
         "suggest"
     ],
     "1": [
@@ -72,6 +73,7 @@
         "soutien",
         "autoreact",
         "rolereact",
+        "roleinteract",
         "captcha",
         "joins",
         "leaves",

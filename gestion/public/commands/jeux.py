@@ -1,12 +1,14 @@
 import discord
 import os
-from discord.ui.item import Item
 import dotenv
 import asyncio
 import random
+import json
+
 from datetime import datetime
 from discord.ext import commands
 from blagues_api import BlaguesAPI, BlagueType
+from utils.MyViewClass import MyViewClass
 
 
 dotenv.load_dotenv()
@@ -243,6 +245,57 @@ class Jeux(commands.Cog):
                 await interaction.message.edit(embed = await get_pfc_embed(self.author_pts, self.oponent_pts, self.choosing, self.move, self.oponent_move))
 
         await ctx.send(embed = await get_pfc_embed(0, 0, ctx.author), view = PfcGame(timeout = 30))
+
+
+    @commands.command(description = "Tester votre vitesse de réaction")
+    @commands.guild_only()
+    async def speedtest(self, ctx):
+        embed  = discord.Embed(
+            title = "Test de réaction",
+            description = "*Dans une durée totalement aléatoire, l'un des boutons ci-dessous va s'activer. Appuyez sur le bouton dès le moment où vous le verrez.*",
+            color = await self.bot.get_theme(ctx.guild.id),
+            thumbnail = discord.EmbedMedia(url = ctx.author.avatar.url) if ctx.author.avatar else None
+        )
+
+        react_view = MyViewClass()
+        for i in range(25):
+            react_view.add_item(
+                discord.ui.Button(
+                    emoji = random.choice(['🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍒', '🍍']),
+                    style = random.choice([discord.ButtonStyle.primary, discord.ButtonStyle.danger, discord.ButtonStyle.success]),
+                    disabled = True
+                )
+            )
+
+        message = await ctx.send(embed = embed, view = react_view)
+        before = datetime.now().timestamp()
+        seconds_to_wait = random.randint(2, 4)
+        button_index_to_edit = random.randint(0, 24)
+
+        async def response_callback(interaction):
+            if interaction.user != ctx.author:
+                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                return
+            
+            now = datetime.now().timestamp()
+            speed_in_ms = round((now - before - seconds_to_wait) * 1000)
+
+            with open("gestion/private/data/speedtest_joke.json", encoding = "utf-8") as file:
+                jokes = json.load(file)["jokes"]
+
+            embed.description = f"Votre vitesse de réaction a été de **{speed_in_ms}ms**.\n" \
+            + ("En moins de 500ms, c'est un exploit." if speed_in_ms < 500 else "") \
+            + ("En moins de 1000ms, c'est pas mal." if 500 <= speed_in_ms < 1000 else "") \
+            + (random.choice(jokes) if speed_in_ms >= 1000 else "")
+            
+            await interaction.edit(embed = embed, view = None)
+
+            
+        react_view.children[button_index_to_edit].disabled = False
+        react_view.children[button_index_to_edit].callback = response_callback
+        await asyncio.sleep(seconds_to_wait)
+
+        await message.edit(view = react_view)
 
 
 def setup(bot):

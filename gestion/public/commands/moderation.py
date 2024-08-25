@@ -127,7 +127,7 @@ class Moderation(commands.Cog):
 
 
     @commands.command(description = "Bannir un membre du serveur")
-    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.guild)
+    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.user)
     @commands.bot_has_permissions(ban_members = True)
     @commands.guild_only()
     async def ban(self, ctx, user : discord.User, *, reason = None):
@@ -166,7 +166,7 @@ class Moderation(commands.Cog):
     @commands.command(description = "Débannir un membre du serveur")
     @commands.guild_only()
     @commands.bot_has_permissions(ban_members = True)
-    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.guild)
+    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.user)
     async def unban(self, ctx, user : discord.User):
         banned_users = []
         async for banned in ctx.guild.bans():
@@ -211,7 +211,7 @@ class Moderation(commands.Cog):
 
     
     @commands.command(description = "Expulser un membre du serveur")
-    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.guild)
+    @commands.cooldown(rate = 5, per = 60, type = commands.BucketType.user)
     @commands.bot_has_permissions(kick_members = True)
     @commands.guild_only()
     async def kick(self, ctx, member : discord.Member, *, reason = None):

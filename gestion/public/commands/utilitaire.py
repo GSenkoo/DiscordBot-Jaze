@@ -372,7 +372,7 @@ class Utilitaire(commands.Cog):
 
     @commands.command(description = "Obtenir des/un utilisateur(s) choisi au hasard")
     @commands.guild_only()
-    async def randommember(self, ctx, count : int = None, type = commands.BucketType.guild):
+    async def randommember(self, ctx, count : int = None, type = commands.BucketType.user):
         if count is None: count = 1
 
         if not 1 <= count <= 50:
@@ -487,7 +487,6 @@ class Utilitaire(commands.Cog):
             await ctx.send(f"> Les boutons et sélecteurs du [message](https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}) donné ont tous étés retirés.")
         except: 
             await ctx.send(f"> Il me paraît pour le moment impossible de modifier le [message](https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}) donné.")
-
 
 
 def setup(bot):

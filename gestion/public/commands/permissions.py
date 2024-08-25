@@ -287,6 +287,7 @@ class Permissions(commands.Cog):
                         color = await bot.get_theme(ctx.guild.id),
                         description = textwrap.dedent(f"""
                             *Chaque rôle, utilisateur ou permission de serveur doit appartenir à une seule permission hiérarchique. Ainsi, si vous ajoutez un élément déjà présent dans une autre permission hiérarchique, il sera automatiquement retiré de cette dernière.*
+                            
                             ### Informations sur la permission
                             *Commandes* : **{len(perm_commands)}**
                             *Rôles* : **{len(perm_authorzation_data['roles'])}/15**
@@ -1431,7 +1432,7 @@ class Permissions(commands.Cog):
                 await interaction.message.edit(embed = await get_custom_permission_embed(original_permission), view = EditCustomPerm())
                 await interaction.response.defer()
                 
-            @discord.ui.button(label = "Ajouter", emoji = "➕")
+            @discord.ui.button(label = "Ajouter", emoji = "➕", style = discord.ButtonStyle.primary)
             async def add_custom_perm_button_callback(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
@@ -1488,7 +1489,7 @@ class Permissions(commands.Cog):
 
                 await interaction.message.edit(embed = await get_main_embed_customperms(), view = self)
                 
-            @discord.ui.button(label = "Retirer", emoji = "➖")
+            @discord.ui.button(label = "Retirer", emoji = "➖", style = discord.ButtonStyle.danger)
             async def remove_custom_perm_button_callback(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
