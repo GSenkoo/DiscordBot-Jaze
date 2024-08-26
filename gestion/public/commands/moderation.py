@@ -82,8 +82,7 @@ class Moderation(commands.Cog):
                     user_sanctions.pop(int(select.values[0]))
                     await bot.db.set_data("member", "sanctions", json.dumps(user_sanctions), guild_id = interaction.guild.id, user_id = user.id)
                     
-                    await interaction.response.defer()
-                    await interaction.message.edit(
+                    await interaction.edit(
                         embed = discord.Embed(
                             author = discord.EmbedAuthor(name = user.display_name, icon_url = user.avatar.url if user.avatar else None),
                             color = await bot.get_theme(interaction.guild.id),
@@ -100,8 +99,7 @@ class Moderation(commands.Cog):
                     
                     await bot.db.set_data("member", "sanctions", json.dumps([]), guild_id = interaction.guild.id, user_id = user.id)
 
-                    await interaction.response.defer()
-                    await interaction.message.edit(
+                    await interaction.edit(
                         embed = discord.Embed(
                             title = "Sanctions",
                             author = discord.EmbedAuthor(name = user.display_name, icon_url = user.avatar.url if user.avatar else None),

@@ -148,8 +148,7 @@ class Gestion(commands.Cog):
                     return
                 
                 button.disabled = True
-                await interaction.response.defer()
-                await interaction.message.edit("> Restauration des permissions en cours...", view = self)
+                await interaction.edit("> Restauration des permissions en cours...", view = self)
 
                 for channel in interaction.guild.channels:
                     if channel.id not in self.permissions_data:
@@ -162,7 +161,7 @@ class Gestion(commands.Cog):
                         overwrite = channel_overwrites,
                         reason = f"Restauration de permission par {interaction.user.display_name} ({interaction.user.id})"
                     )
-                try: await interaction.message.edit(f"> Restauration de {len(self.permissions_data)} salons terminés.", view = self)
+                try: await interaction.edit(f"> Restauration de {len(self.permissions_data)} salons terminés.", view = self)
                 except: pass
         
         try:
@@ -762,8 +761,7 @@ class Gestion(commands.Cog):
                     if self.massiverole_data["action"] == "add": self.massiverole_data["action"] = "remove"
                     else: self.massiverole_data["action"] = "add"
 
-                    await interaction.message.edit(embed = await get_massiverole_embed(self.massiverole_data))
-                    await interaction.response.defer()
+                    await interaction.edit(embed = await get_massiverole_embed(self.massiverole_data))
                 
                 if select.values[0] == "target":
                     previous_view = self
@@ -785,8 +783,7 @@ class Gestion(commands.Cog):
                                 return
                             
                             previous_view.massiverole_data["target"] = "_".join(select.values)
-                            await interaction.message.edit(view = previous_view, embed = await get_massiverole_embed(previous_view.massiverole_data))
-                            await interaction.response.defer()
+                            await interaction.edit(view = previous_view, embed = await get_massiverole_embed(previous_view.massiverole_data))
                             
                         @discord.ui.button(label = "Choisissez des cibles", style = discord.ButtonStyle.primary, disabled = True)
                         async def button_indicator_callback(self, button, interaction):
@@ -798,11 +795,9 @@ class Gestion(commands.Cog):
                                 await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                                 return
                             
-                            await interaction.message.edit(view = previous_view)
-                            await interaction.response.defer()
-                        
-                    await interaction.message.edit(view = ChooseTarget())
-                    await interaction.response.defer()
+                            await interaction.edit(view = previous_view)
+
+                    await interaction.edit(view = ChooseTarget())
 
                 if select.values[0] in ["roles", "ignored_roles", "required_roles"]:
                     def get_option_name(option_id):
@@ -866,11 +861,9 @@ class Gestion(commands.Cog):
                                 await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                                 return
                             
-                            await interaction.message.edit(view = previous_view)
-                            await interaction.response.defer()
+                            await interaction.edit(view = previous_view)
                         
-                    await interaction.message.edit(view = ChooseRole())
-                    await interaction.response.defer()
+                    await interaction.edit(view = ChooseRole())
 
             @discord.ui.button(label = "Lancer", emoji = "👥")
             async def launch_button_callback(self, button, interaction):
@@ -909,8 +902,7 @@ class Gestion(commands.Cog):
                     return embed
 
                 class_self.massiverole_loading[interaction.guild.id] = True
-                await interaction.message.edit(embed = await get_massiverole_loading_embed(0), view = StopMassiveRole(timeout = None))
-                await interaction.response.defer()
+                await interaction.edit(embed = await get_massiverole_loading_embed(0), view = StopMassiveRole(timeout = None))
 
                 added_count = 0
                 for member in interaction.guild.members:
@@ -963,8 +955,7 @@ class Gestion(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                await interaction.message.edit(embed = discord.Embed(title = "Configuration du massiverole annulée", color = await bot.get_theme(interaction.guild.id)), view = None)
-                await interaction.response.defer()
+                await interaction.edit(embed = discord.Embed(title = "Configuration du massiverole annulée", color = await bot.get_theme(interaction.guild.id)), view = None)
 
         await ctx.send(embed = await get_massiverole_embed(massiverole_data), view = MangageMassiveRole(massiverole_data))
 
@@ -1676,20 +1667,18 @@ class Gestion(commands.Cog):
                             await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                             return
                         
-                        await interaction.message.edit(
+                        await interaction.edit(
                             embed = formate_embed(embed_menu.embed),
                             view = embed_menu
                         )
-                        await interaction.response.defer()
            
-                await interaction.message.edit(
+                await interaction.edit(
                     embed = discord.Embed(
                         title = "> Que souhaitez-vous faire de cet embed?",
                         color = await bot.get_theme(ctx.guild.id)
                     ),
                     view = ChooseDestination()
                 )
-                await interaction.response.defer()
 
             @discord.ui.button(label = "Annuler", emoji = "❌", style = discord.ButtonStyle.secondary)
             async def cancel(self, button, interaction):
@@ -1707,8 +1696,7 @@ class Gestion(commands.Cog):
                 }
 
                 self = get_an_update_of_backups_buttons(self)
-                await interaction.response.defer()
-                await interaction.message.edit(embed = formate_embed(self.embed), view = self)
+                await interaction.edit(embed = formate_embed(self.embed), view = self)
 
             @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
             async def delete(self, button, interaction):
@@ -1716,7 +1704,6 @@ class Gestion(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                await interaction.response.defer()
                 await delete_message(interaction.message)
 
             @discord.ui.button(label = "Revenir en arrière", emoji = "↩", style = discord.ButtonStyle.secondary, row = 2, custom_id = "back", disabled = True)
@@ -1729,14 +1716,12 @@ class Gestion(commands.Cog):
                     await interaction.response.send_message("> Aucune sauvegarde disponible.", ephemeral = True)
                     return
 
-                await interaction.response.defer()
-
                 self.embeds_backup_of_backup.append(self.embed.copy())
                 self.embed = self.embeds_backup[-1].copy()
                 del self.embeds_backup[-1]
 
                 self = get_an_update_of_backups_buttons(self)
-                await interaction.message.edit(embed = formate_embed(self.embed), view = self)
+                await interaction.edit(embed = formate_embed(self.embed), view = self)
 
             @discord.ui.button(label = "Restaurer", emoji = "↪", style = discord.ButtonStyle.secondary, row = 2, custom_id = "restaure", disabled = True)
             async def restaure(self, button, interaction):
@@ -1747,15 +1732,13 @@ class Gestion(commands.Cog):
                 if not self.embeds_backup_of_backup:
                     await interaction.response.send_message("> Il n'y a aucun embed a restorer pour le moment.", ephemeral = True)
                     return
-
-                await interaction.response.defer()
                 
                 self.embeds_backup.append(self.embed.copy())
                 self.embed = self.embeds_backup_of_backup[-1].copy()
                 del self.embeds_backup_of_backup[-1]
 
                 self = get_an_update_of_backups_buttons(self)
-                await interaction.message.edit(embed = formate_embed(self.embed), view = self)
+                await interaction.edit(embed = formate_embed(self.embed), view = self)
 
         await ctx.send(embed = embed, view = EmbedCreator())
 

@@ -292,13 +292,12 @@ class Utilitaire(commands.Cog):
                 
                 try: translation_deepl = await get_translation_async(self.text, select.values[0])
                 except:
-                    await interaction.message.edit(
+                    await interaction.edit(
                         embed = discord.Embed(
                             title = translation["La traduction de votre texte n'a pas pu aboutir"] + ".",
                             color = self.bot.get_theme(self.ctx.guild.id)
                         )
                     )
-                    await interaction.response.defer()
 
                 embed = discord.Embed(
                     title = translation["Traduction de texte"],
@@ -307,9 +306,8 @@ class Utilitaire(commands.Cog):
                 embed.add_field(name = translation["Texte d'origine"], value = self.text)
                 embed.add_field(name = translation["Texte traduit ([data_langage])"].replace("[data_langage]", select.values[0]), value = translation_deepl)
 
-                await interaction.message.edit(embed = embed, view = self)
-                await interaction.response.defer()
-
+                await interaction.edit(embed = embed, view = self)
+                
         await ctx.send(embed = embed, view = ChooseLangage(self.bot, ctx, text, translator))
 
 

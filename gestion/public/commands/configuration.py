@@ -24,11 +24,11 @@ class Configuration(commands.Cog):
         self.bot = bot
 
 
-    @commands.command(description = "Définir les rôles qui ne seront pas retirés lors des derank et blrank", usage = "<add/del/reset/list> [role]")
+    @commands.command(description = "Définir les rôles qui ne seront pas retirés lors des derank et blrank", usage = "<add/del/list/reset> [role]")
     @commands.guild_only()
     async def noderank(self, ctx, action : str, role : discord.Role = None):
         if action.lower() not in ["add", "del", "list", "reset"]:
-            await ctx.send(f"> Action invalide, voici un rappel d'utilisation : `{await self.bot.get_prefix(ctx.message)}noderank <add/del/reset/list> [role]`.")
+            await ctx.send(f"> Action invalide, voici un rappel d'utilisation : `{await self.bot.get_prefix(ctx.message)}noderank <add/del/list/reset> [role]`.")
             return
         
         if (action.lower() not in ["list", "reset"]) and (not role):
@@ -139,11 +139,11 @@ class Configuration(commands.Cog):
         await ctx.send(f"> Le type de help a bien été défini sur **{helptype}**.")
 
 
-    @commands.command(description = "Ajouter/Supprimer des salons où les membres seront mentionné à l'arrivée", usage = "<add/del/reset/list> [channel]")
+    @commands.command(description = "Ajouter/Supprimer des salons où les membres seront mentionné à l'arrivée", usage = "<add/del/list/reset> [channel]")
     @commands.guild_only()
     async def ghostping(self, ctx, action : str, channel : discord.TextChannel = None):
         if action.lower() not in ["add", "del", "list", "reset"]:
-            await ctx.send(f"> Action invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}ghostping <add/del/reset/list> [channel]`")
+            await ctx.send(f"> Action invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}ghostping <add/del/list/reset> [channel]`")
             return
         
         if not channel:
@@ -193,11 +193,11 @@ class Configuration(commands.Cog):
         await self.bot.db.set_data("guild", "ghostping_channels", json.dumps(ghostping_channels), guild_id = ctx.guild.id)
 
     
-    @commands.command(description = "Définir des rôles qui seront automatiquements ajoutés aux nouveaux membres", usage = "<add/del/reset/list> [role]")
+    @commands.command(description = "Définir des rôles qui seront automatiquements ajoutés aux nouveaux membres", usage = "<add/del/list/reset> [role]")
     @commands.guild_only()
     async def joinrole(self, ctx, action, role : discord.Role = None):
         if action.lower() not in ["add", "del", "list", "reset"]:
-            await ctx.send(f"> Action invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}joinrole <add/del/reset/list> [role]`")
+            await ctx.send(f"> Action invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}joinrole <add/del/list/reset> [role]`")
             return
 
         if (action.lower() in ["add", "del"]) and (not role):
@@ -259,14 +259,14 @@ class Configuration(commands.Cog):
         await self.bot.db.set_data("guild", "join_roles", json.dumps(join_roles), guild_id = ctx.guild.id)
 
 
-    @commands.command(description = "Configurer l'ajout automatique d'un emoji spécifique dans un salon", usage = "<add/del/reset/list> [emoji] [channel]")
+    @commands.command(description = "Configurer l'ajout automatique d'un emoji spécifique dans un salon", usage = "<add/del/list/reset> [emoji] [channel]")
     @commands.guild_only()
     async def autoreact(self, ctx, action : str, emoji : str = None, channel : discord.TextChannel = None):
         tools = Tools(self.bot)
         action = action.lower()
 
         if action not in ["add", "del", "list", "reset"]:
-            await ctx.send(f"> Action invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}autoreact <add/del/reset/list> [emoji] [channel]`")
+            await ctx.send(f"> Action invalide, rappel d'utilisation de la commande : `{await self.bot.get_prefix(ctx.message)}autoreact <add/del/list/reset> [emoji] [channel]`")
             return
         
         if not channel: channel = ctx.channel
@@ -479,8 +479,7 @@ class Configuration(commands.Cog):
                                     continue
                                 previous_view.suggestion_data["moderator_roles"].remove(int(role_id))
                             
-                            await interaction.message.edit(view = previous_view, embed = await get_suggestion_settings_embed(previous_view.suggestion_data))
-                            await interaction.response.defer()
+                            await interaction.edit(view = previous_view, embed = await get_suggestion_settings_embed(previous_view.suggestion_data))
                         
                         @discord.ui.button(label = "Choisissez un rôle", style = discord.ButtonStyle.primary, disabled = True)
                         async def button_info_callback(self, button, interaction):
@@ -541,7 +540,7 @@ class Configuration(commands.Cog):
 
                 await interaction.message.edit(embed = await get_suggestion_settings_embed(self.suggestion_data))
             
-            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.success)
+            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.primary)
             async def button_save_callback(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
@@ -629,8 +628,7 @@ class Configuration(commands.Cog):
                 
                 if select.values[0] in ["enabled", "strict"]:
                     self.soutien_data[select.values[0]] = not self.soutien_data[select.values[0]]
-                    await interaction.message.edit(embed = await get_soutien_embed(self.soutien_data, interaction.guild))
-                    await interaction.response.defer()
+                    await interaction.edit(embed = await get_soutien_embed(self.soutien_data, interaction.guild))
 
                 if select.values[0] == "role":
                     previous_view = self
@@ -662,8 +660,7 @@ class Configuration(commands.Cog):
                                 return
                             
                             previous_view.soutien_data["role"] = role.id
-                            await interaction.message.edit(embed = await get_soutien_embed(previous_view.soutien_data, interaction.guild), view = previous_view)
-                            await interaction.response.defer()
+                            await interaction.edit(embed = await get_soutien_embed(previous_view.soutien_data, interaction.guild), view = previous_view)
                             
                         @discord.ui.button(label = "Choisissez un rôle", style = discord.ButtonStyle.primary, disabled = True)
                         async def button_indicator_callback(self, button, interaction):
@@ -675,11 +672,9 @@ class Configuration(commands.Cog):
                                 await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                                 return
                             
-                            await interaction.message.edit(view = previous_view)
-                            await interaction.response.defer()
+                            await interaction.edit(view = previous_view)
 
-                    await interaction.message.edit(view = ChooseRole(timeout = 180))
-                    await interaction.response.defer()
+                    await interaction.edit(view = ChooseRole(timeout = 180))
                 
                 if select.values[0] == "add_status":
                     if len(soutien_data["status"]) >= 25:
@@ -733,8 +728,7 @@ class Configuration(commands.Cog):
                                     continue
                                 previous_view.soutien_data["status"].remove(value)
 
-                            await interaction.message.edit(embed = await get_soutien_embed(previous_view.soutien_data, interaction.guild), view = previous_view)
-                            await interaction.response.defer()
+                            await interaction.edit(embed = await get_soutien_embed(previous_view.soutien_data, interaction.guild), view = previous_view)
 
                         @discord.ui.button(label = "Choisissez un status", style = discord.ButtonStyle.primary, disabled = True)
                         async def callback_indication_button(self, button, interaction):
@@ -746,13 +740,11 @@ class Configuration(commands.Cog):
                                 await ctx.send("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                                 return
                             
-                            await interaction.message.edit(view = previous_view)
-                            await interaction.response.defer()
+                            await interaction.edit(view = previous_view)
 
-                    await interaction.message.edit(view = ChooseStatusToDelete())
-                    await interaction.response.defer()
+                    await interaction.edit(view = ChooseStatusToDelete())
 
-            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.success)
+            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.primary)
             async def save_callback(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
@@ -779,8 +771,7 @@ class Configuration(commands.Cog):
                 message_embed = interaction.message.embeds[0]
                 message_embed.title = "Système de soutien sauvegardé"
 
-                await interaction.message.edit(embed = message_embed, view = None)
-                await interaction.response.defer()
+                await interaction.edit(embed = message_embed, view = None)
 
             @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
             async def delete_button_callback(self, button, interaction):
@@ -788,8 +779,7 @@ class Configuration(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de soutien annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
-                await interaction.response.defer()
+                await interaction.edit(embed = discord.Embed(title = "Configuration du système de soutien annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
 
         await ctx.send(embed = await get_soutien_embed(soutien_data, ctx.guild), view = ManageSoutien(soutien_data = soutien_data))
 
@@ -855,8 +845,7 @@ class Configuration(commands.Cog):
                 
                 if select.values[0] == "enabled":
                     self.data["enabled"] = not self.data["enabled"]
-                    await interaction.message.edit(embed = await get_captcha_embed(self.data))
-                    await interaction.response.defer()
+                    await interaction.edit(embed = await get_captcha_embed(self.data))
 
                 if select.values[0].startswith("button"):
                     option_name = [option.label.lower().split(" ")[0] for option in select.options if option.value == select.values[0]][0]
@@ -937,8 +926,7 @@ class Configuration(commands.Cog):
                                 return
 
                             manage_captcha_view.data["channel"] = channel.id
-                            await interaction.message.edit(view = manage_captcha_view, embed = await get_captcha_embed(manage_captcha_view.data))
-                            await interaction.response.defer()
+                            await interaction.edit(view = manage_captcha_view, embed = await get_captcha_embed(manage_captcha_view.data))
                             
                         @discord.ui.button(label = "Salon de vérification", style = discord.ButtonStyle.primary, disabled = True)
                         async def indication_button_callback(self, button, interaction):
@@ -950,11 +938,9 @@ class Configuration(commands.Cog):
                                 await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", delete_after = 3)
                                 return
 
-                            await interaction.message.edit(view = manage_captcha_view)
-                            await interaction.response.defer()  
+                            await interaction.edit(view = manage_captcha_view)
                         
-                    await interaction.message.edit(view = ChooseChannelView())
-                    await interaction.response.defer()
+                    await interaction.edit(view = ChooseChannelView())
                         
                 if "role" in select.values[0]:
                     manage_captcha_view = self
@@ -997,8 +983,7 @@ class Configuration(commands.Cog):
                                 return
                             
                             manage_captcha_view.data[manage_captcha_select.values[0]] = role_id
-                            await interaction.message.edit(embed = await get_captcha_embed(manage_captcha_view.data), view = manage_captcha_view)
-                            await interaction.response.defer()
+                            await interaction.edit(embed = await get_captcha_embed(manage_captcha_view.data), view = manage_captcha_view)
                             
                         @discord.ui.button(label = option_name, style = discord.ButtonStyle.primary, disabled = True)
                         async def indication_button_callback(self, button, interaction):
@@ -1015,8 +1000,7 @@ class Configuration(commands.Cog):
                                 return
 
                             manage_captcha_view.data[manage_captcha_select.values[0]] = None
-                            await interaction.message.edit(embed = await get_captcha_embed(manage_captcha_view.data), view = manage_captcha_view)
-                            await interaction.response.defer()
+                            await interaction.edit(embed = await get_captcha_embed(manage_captcha_view.data), view = manage_captcha_view)
 
                         @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
                         async def comeback_button_callback(self, button, interaction):
@@ -1024,11 +1008,9 @@ class Configuration(commands.Cog):
                                 await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", delete_after = 3)
                                 return
 
-                            await interaction.message.edit(view = manage_captcha_view)
-                            await interaction.response.defer()  
+                            await interaction.edit(view = manage_captcha_view)
 
-                    await interaction.message.edit(view = ChooseRoleView())
-                    await interaction.response.defer()
+                    await interaction.edit(view = ChooseRoleView())
 
             @discord.ui.button(label = "Confirmer", emoji = "✅")
             async def save_button_callback(self, button, interaction):
@@ -1044,7 +1026,6 @@ class Configuration(commands.Cog):
                         embed = discord.Embed(title = "Paramètres du système de vérification sauvegardé", color = await self.bot.get_theme(interaction.guild.id)),
                         view = None
                     )
-                    await interaction.response.defer()
                     return
                 
                 # -------------------------- Vérification des valeurs obligatoires à vérifier ---------------------------------
@@ -1066,8 +1047,7 @@ class Configuration(commands.Cog):
                         children.disabled = False
                     await interaction.message.edit(view = self)
 
-                await interaction.message.edit(view = self)
-                await interaction.response.defer()
+                await interaction.edit(view = self)
 
                 # -------------------------- Demande à l'utilisateur le lien du message sur lequel il y'aura la bouton de vérfication
                 def response_check(message):
@@ -1152,8 +1132,7 @@ class Configuration(commands.Cog):
                         captcha_view.add_item(discord.ui.Button(label = manage_captcha_view.data["button_text"], emoji = manage_captcha_view.data["button_emoji"], style = getattr(discord.ButtonStyle, manage_captcha_view.data["button_color"]), custom_id = "captcha_verify"))
                         try: await message.edit(view = captcha_view)
                         except:
-                            await interaction.message.edit(embed = discord.Embed(title = "Configuration annulée, Impossible d'ajouter le bouton de vérification au message précédement donné.", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)), view = None)
-                            await interaction.response.defer()
+                            await interaction.edit(embed = discord.Embed(title = "Configuration annulée, Impossible d'ajouter le bouton de vérification au message précédement donné.", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)), view = None)
                             return
                         
                         for key, value in manage_captcha_view.data.items():
@@ -1161,14 +1140,13 @@ class Configuration(commands.Cog):
                             await manage_captcha_view.bot.db.set_data("captcha", key, value, guild_id = interaction.guild.id)
                         await manage_captcha_view.bot.db.set_data("captcha", "auto_config", True, guild_id = interaction.guild.id)
                         
-                        await interaction.message.edit(
+                        await interaction.edit(
                             embed = discord.Embed(
                                 title = "Configuration automatique des permissions en cours...",
                                 color = await manage_captcha_view.bot.get_theme(interaction.guild.id)
                             ),
                             view = None
                         )
-                        await interaction.response.defer()
 
                         for channel in interaction.guild.channels:
                             if type(channel) == discord.CategoryChannel: continue
@@ -1209,8 +1187,7 @@ class Configuration(commands.Cog):
                             await manage_captcha_view.bot.db.set_data("captcha", key, value, guild_id = interaction.guild.id)
                         await manage_captcha_view.bot.db.set_data("captcha", "auto_config", False, guild_id = interaction.guild.id)
 
-                        await interaction.message.edit(embed = discord.Embed(title = "Votre système de vérification des nouveaux membres est prêt", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)), view = None)
-                        await interaction.response.defer()
+                        await interaction.edit(embed = discord.Embed(title = "Votre système de vérification des nouveaux membres est prêt", color = await manage_captcha_view.bot.get_theme(interaction.guild.id)), view = None)
                         
                 await interaction.message.edit(
                     embed = discord.Embed(
@@ -1227,8 +1204,7 @@ class Configuration(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de vérification annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
-                await interaction.response.defer()
+                await interaction.edit(embed = discord.Embed(title = "Configuration du système de vérification annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
         
         await ctx.send(embed = await get_captcha_embed(data), view = ManageCaptchaView(ctx, data, self.bot))
 
@@ -1261,8 +1237,8 @@ class Configuration(commands.Cog):
                 description = 
                 "***Commandes qui ne pourraient que vous êtres utiles***\n"
                 + f"> `{bot_prefix}variables`\n"
-                + f"> `{bot_prefix}joinrole <add/del/reset/list> [role]`\n"
-                + f"> `{bot_prefix}ghostping <add/del/reset/list> [channel]`"
+                + f"> `{bot_prefix}joinrole <add/del/list/reset> [role]`\n"
+                + f"> `{bot_prefix}ghostping <add/del/list/reset> [channel]`"
             )
 
             channel = ctx.guild.get_channel(data["channel"])
@@ -1372,8 +1348,7 @@ class Configuration(commands.Cog):
                 
                 if select.values[0] in ["enabled", "message_dm_enabled", "send_after_captcha"]:
                     self.data[select.values[0]] = not self.data[select.values[0]]
-                    await interaction.message.edit(embed = await get_join_embed(self.data))
-                    await interaction.response.defer()
+                    await interaction.edit(embed = await get_join_embed(self.data))
 
                 if select.values[0] == "embed":
                     await interaction.response.send_message(textwrap.dedent("""
@@ -1388,10 +1363,9 @@ class Configuration(commands.Cog):
 
                 if select.values[0] == "del_embed":
                     await self.bot.db.set_data("joins", "embed", None, guild_id = interaction.guild.id)
-                    await interaction.message.edit(embed = await get_join_embed(self.data))
-                    await interaction.response.defer()
+                    await interaction.edit(embed = await get_join_embed(self.data))
 
-            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.success)
+            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.primary)
             async def save_callback(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
@@ -1421,11 +1395,10 @@ class Configuration(commands.Cog):
                 
                 embed = await get_join_embed(self.data)
                 embed.title = "Paramètres de bienvenue sauvegardés"
-                await interaction.message.edit(
+                await interaction.edit(
                     embed = embed,
                     view = None
                 )
-                await interaction.response.defer()
 
             @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
             async def delete_button_callback(self, button, interaction):
@@ -1433,8 +1406,7 @@ class Configuration(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système de bienvenue annulé", color = await self.bot.get_theme(ctx.guild.id)), view = None)
-                await interaction.response.defer()
+                await interaction.edit(embed = discord.Embed(title = "Configuration du système de bienvenue annulé", color = await self.bot.get_theme(ctx.guild.id)), view = None)
 
         data = await get_join_data()
         await ctx.send(embed = await get_join_embed(data), view = JoinSettings(data, self.bot))
@@ -1554,8 +1526,7 @@ class Configuration(commands.Cog):
                 
                 if select.values[0] == "enabled":
                     self.data["enabled"] = not self.data["enabled"]
-                    await interaction.message.edit(embed = await get_leaves_embed(self.data))
-                    await interaction.response.defer()
+                    await interaction.edit(embed = await get_leaves_embed(self.data))
 
                 if select.values[0] == "add_embed":
                     await interaction.response.send_message(textwrap.dedent("""
@@ -1570,10 +1541,9 @@ class Configuration(commands.Cog):
 
                 if select.values[0] == "remove_embed":
                     await self.bot.db.set_data("leaves", "embed", None, guild_id = interaction.guild.id)
-                    await interaction.message.edit(embed = await get_leaves_embed(self.data))
-                    await interaction.response.defer()
+                    await interaction.edit(embed = await get_leaves_embed(self.data))
 
-            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.success)
+            @discord.ui.button(label = "Sauvegarder", style = discord.ButtonStyle.primary)
             async def save_callback(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
@@ -1598,11 +1568,10 @@ class Configuration(commands.Cog):
                 
                 embed = await get_leaves_embed(self.data)
                 embed.title = "Paramètres d'adieu sauvegardés"
-                await interaction.message.edit(
+                await interaction.edit(
                     embed = embed,
                     view = None
                 )
-                await interaction.response.defer()
 
             @discord.ui.button(emoji = "🗑", style = discord.ButtonStyle.danger)
             async def delete_button_callback(self, button, interaction):
@@ -1610,15 +1579,13 @@ class Configuration(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                await interaction.message.edit(embed = discord.Embed(title = "Configuration du système d'adieu annulé", color = await self.bot.get_theme(ctx.guild.id)), view = None)
-                await interaction.response.defer()
-
+                await interaction.edit(embed = discord.Embed(title = "Configuration du système d'adieu annulé", color = await self.bot.get_theme(ctx.guild.id)), view = None)
 
         leaves_data = await get_leaves_data()
         await ctx.send(embed = await get_leaves_embed(leaves_data), view = ChangeLeavesSettings(self.bot, leaves_data))
 
 
-    @commands.command(description = "Configurer l'ajout automatique d'un rôle lors de l'ajout d'une réaction sur un message (max : 25)", usage = "<add/del/list/reset> <emoji> <role> <message>")
+    @commands.command(description = "Configurer l'ajout automatique d'un rôle lors de l'ajout d'une réaction sur un message (max : 25)", usage = "<add/del/list/reset> [emoji] [role] [message]")
     @commands.guild_only()
     @commands.bot_has_guild_permissions(manage_roles = True)
     async def rolereact(self, ctx, action : str, emoji : str = None, role : discord.Role = None, message : discord.Message = None):
@@ -1728,7 +1695,7 @@ class Configuration(commands.Cog):
         async def get_main_embed(data) -> discord.Embed:
             embed = discord.Embed(
                 title = "Configuration de boutons/sélécteurs à rôle",
-                description = "*Un sélécteur conte comme 5 boutons. Discord vous limites à maximum 25 boutons par message.*"
+                description = "*Un sélécteur compte comme 5 boutons. Discord vous limites à maximum 25 boutons par message.*"
                 + "\n\n"
                 + f"> *Votre nombre de bouton :* ***{len(data['buttons'])}***\n"
                 + f"> *Votre nombre de sélécteur :* ***{len(data['selectors'])}***",
@@ -1741,9 +1708,9 @@ class Configuration(commands.Cog):
             options = []
 
             for button in data["buttons"]:
-                options.append(discord.SelectOption(label = f"Bouton - {button['id']}", emoji = "👤"))
+                options.append(discord.SelectOption(label = f"Bouton - {button['id']}", emoji = "👤", description = "Rôle défini" if button["role_data"]["role"] else "Rôle non défini", value = "button_" + button['id']))
             for selector in data["selectors"]:
-                options.append(discord.SelectOption(label = f"Sélécteur - {selector['id']}", emoji = "👤"))
+                options.append(discord.SelectOption(label = f"Sélécteur - {selector['id']}", emoji = "👥", description = f"Rôle(s) défini : {len(selector['roles_data']) if selector['roles_data'] else 'Aucun'}", value = "selector_" + selector["id"]))
             
             if not options:
                 return [discord.SelectOption(label = "Aucun bouton/sélécteur", default = True, value = "nope")]
@@ -1760,6 +1727,10 @@ class Configuration(commands.Cog):
                 super().__init__(timeout = 180)
                 self.bot = bot
                 self.data = data
+                
+                async def update_select():
+                    self.children[0].options = await get_role_interact_select_options(self.data)
+                self.update_select = update_select
 
             @discord.ui.select(
                 placeholder = "Choisir un bouton/sélécteur",
@@ -1773,14 +1744,14 @@ class Configuration(commands.Cog):
                 if select.values[0] == "nope":
                     await interaction.response.defer()
                     return
+            
                 
             @discord.ui.select(
                 placeholder = "Gérer les sélécteurs et boutons",
                 options = [
                     discord.SelectOption(label = "Ajouter un bouton", emoji = "➕", value = "add_button"),
                     discord.SelectOption(label = "Ajouter un sélécteur", emoji = "➕", value = "add_selector"),
-                    discord.SelectOption(label = "Retirer un bouton", emoji = "➖", value = "remove_button"),
-                    discord.SelectOption(label = "Retirer un sélécteur", emoji = "➖", value = "remove_selector"),
+                    discord.SelectOption(label = "Retirer un bouton/sélécteur", emoji = "➖", value = "remove_selector"),
                 ]
             )
             async def manage_interact_callback(self, select, interaction):
@@ -1788,20 +1759,119 @@ class Configuration(commands.Cog):
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-            @discord.ui.button(emoji = "✅", style = discord.ButtonStyle.success)
+                option_name = [option for option in select.options if option.value == select.values[0]][0].label
+                interaction_type_text = option_name.split(" ")[2]
+
+                interaction_type = select.values[0].split("_")[1]
+                action_type = select.values[0].split("_")[0]
+                components_ids = [component["id"] for component in self.data[interaction_type + "s"]] # tous les identifiants des boutons OU sélécteurs
+                
+                if action_type == "add":
+                    if (interaction_type == "button") and (len(self.data["buttons"]) + len(self.data["selectors"]) * 5 == 25):
+                        await interaction.response.send_message(f"> Vous ne pouvez plus ajouter de bouton.", ephemeral = True)
+                        return
+                    if (interaction_type == "selector") and (len(self.data["buttons"]) + len(self.data["selectors"]) * 5 > 20):
+                        await interaction.response.send_message(f"> Vous ne pouvez plus ajouter de sélécteur.", ephemeral = True)
+                        return  
+                    
+                    await interaction.response.defer()
+
+                    ask_message = await ctx.send(f"> Quel est le nom du {interaction_type_text} que vous souhaitez ajouter?")
+                    def response_check(message):
+                        return (message.author == interaction.user) and (message.content) and (message.channel == interaction.channel)
+                    try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
+                    except asyncio.TimeoutError():
+                        await ctx.send("> Action annulée, 1 minute s'est écoulée.")
+                        return
+                    finally: delete_message(ask_message)
+                    delete_message(response_message)
+
+                    if len(response_message.content) > 20:
+                        await ctx.send(f"> Le nom attribué à un {interaction_type} ne peut pas dépasser les 20 caractères.", delete_after = 3)
+                        return
+                    if response_message.content in components_ids:
+                        await ctx.send(f"> Il éxiste déjà un {interaction_type} avec le nom `{response_message.content}`.", allowed_mentions = AM.none(), delete_after = 3)
+                        return
+                    
+                    if interaction_type == "button":
+                        self.data["buttons"].append(
+                            {
+                                "id": response_message.content,
+                                "label": "Rôle",
+                                "emoji": None,
+                                "role_data": {"role": None, "required_role": None, "ignored_role": None}
+                            }
+                        )
+                        await self.update_select()
+                        await interaction.message.edit(embed = await get_main_embed(self.data), view = self)
+
+                    if interaction_type == "selector":
+                        self.data["selectors"].append(
+                            {
+                                "id": response_message.content,
+                                "placeholder": "Choisir des rôles",
+                                "min_values": 0,
+                                "max_values": 1,
+                                "roles_data": []
+                            }
+                        )
+                        await self.update_select()
+                        await interaction.message.edit(embed = await get_main_embed(self.data), view = self)
+
+                if action_type == "remove":
+                    if (not self.data["buttons"]) and (not self.data["selectors"]):
+                        await interaction.response.send_message("> ")
+
+                    options = await get_role_interact_select_options(self.data)
+                    manage_role_interact_view = self
+
+                    class ChooseOneToRemove(MyViewClass):
+                        @discord.ui.select(
+                            placeholder = "Choisir un sélécteur/bouton",
+                            options = options
+                        )
+                        async def choose_option_to_del_callback(self, select, interaction):
+                            if interaction.user != ctx.author:
+                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                return
+
+                            interaction_type = select.values[0].split("_")[0]
+                            component_id = select.values[0].split("_")[1]
+
+                            for index, component_data in enumerate(manage_role_interact_view.data[interaction_type + "s"]):
+                                if component_data["id"] == component_id:
+                                    manage_role_interact_view.data[interaction_type + "s"].pop(index)
+                                    break
+
+                            await manage_role_interact_view.update_select()
+                            await interaction.edit(embed = await get_main_embed(manage_role_interact_view.data), view = manage_role_interact_view)
+                            
+                        @discord.ui.button(label = "Choisissez un sélécteur/bouton", style = discord.ButtonStyle.primary)
+                        async def button_indicator_callback(self, button, interaction):
+                            pass
+
+                        @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
+                        async def back_callback(self, button, interaction):
+                            if interaction.user != ctx.author:
+                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                                return    
+                            await interaction.edit(view = manage_role_interact_view)
+
+                    await interaction.edit(view = ChooseOneToRemove())
+
+            @discord.ui.button(label = "Confirmer", style = discord.ButtonStyle.primary)
             async def confirm_callback(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
-                
+            
             @discord.ui.button(style = discord.ButtonStyle.danger, emoji = "🗑")
             async def cancel_callback(self, button, interaction):
                 if interaction.user != self.ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                     return
                 
-                await interaction.message.edit(embed = discord.Embed(title = "Configuration annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
-                await interaction.response.defer()
+                await interaction.edit(embed = discord.Embed(title = "Configuration annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
                 
         await ctx.send(embed = await get_main_embed(data), view = ManageRoleInteract(self.bot, data))
 

@@ -75,11 +75,9 @@ class Jeux(commands.Cog):
                             await ctx.send("> Vous n'êtes pas autorisés à intéragir avec ceci.")
                             return
                         
-                        await interaction.message.edit(embed = await get_embed_joke())
-                        await interaction.response.defer()
+                        await interaction.edit(embed = await get_embed_joke())
 
-                await interaction.message.edit(embed = await get_embed_joke(), view = Regen())
-                await interaction.response.defer()
+                await interaction.edit(embed = await get_embed_joke(), view = Regen())
             
         await ctx.send(
             embed = discord.Embed(
@@ -214,14 +212,11 @@ class Jeux(commands.Cog):
                     return
                 if self.choosing != interaction.user:
                     await interaction.response.send_message("> Merci de patienter, ce n'est pas encore à vous de jouer.", ephemeral = True)
-                    return
-                
-                await interaction.response.defer()
-                
+                    return                
 
                 if interaction.user == ctx.author:
                     self.choosing = ctx.guild.me if not member else member
-                    await interaction.message.edit(embed = await get_pfc_embed(self.author_pts, self.oponent_pts, self.choosing))
+                    await interaction.edit(embed = await get_pfc_embed(self.author_pts, self.oponent_pts, self.choosing))
                     self.move = select.values[0]
 
                     if not member:
@@ -239,10 +234,10 @@ class Jeux(commands.Cog):
                 self.choosing = ctx.author
 
                 if 3 in [self.oponent_pts, self.author_pts]:
-                    await interaction.message.edit(embed = await get_pfc_embed(self.author_pts, self.oponent_pts, self.choosing, self.move, self.oponent_move), view = None)
+                    await interaction.edit(embed = await get_pfc_embed(self.author_pts, self.oponent_pts, self.choosing, self.move, self.oponent_move), view = None)
                     return
                 
-                await interaction.message.edit(embed = await get_pfc_embed(self.author_pts, self.oponent_pts, self.choosing, self.move, self.oponent_move))
+                await interaction.edit(embed = await get_pfc_embed(self.author_pts, self.oponent_pts, self.choosing, self.move, self.oponent_move))
 
         await ctx.send(embed = await get_pfc_embed(0, 0, ctx.author), view = PfcGame(timeout = 30))
 
