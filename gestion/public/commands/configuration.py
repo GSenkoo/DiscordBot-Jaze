@@ -6,11 +6,16 @@ import textwrap
 from discord.ui.item import Item
 from discord.ext import commands
 from discord import AllowedMentions as AM
+
 from utils.Paginator import PaginatorCreator
 from utils.Searcher import Searcher
 from utils.MyViewClass import MyViewClass
 from utils.Tools import Tools
 from utils.GPChecker import GPChecker
+
+from fragments.configuration.rolemenu.ManageRoleMenu import ManageRoleMenu
+from fragments.configuration.rolemenu.functions import get_main_embed
+
 
 def delete_message(message):
     async def task():
@@ -1658,222 +1663,17 @@ class Configuration(commands.Cog):
 
     @commands.command(description = "Configurer des boutons et sélécteurs permettants aux membres de prendre des rôles eux-mêmes")
     @commands.guild_only() 
-    async def roleinteract(self, ctx):
-        """"""
-
+    async def rolemenu(self, ctx):
+        await ctx.send(embed = await get_main_embed(self.bot, ctx), view = ManageRoleMenu(self.bot, ctx))
         """
-        ROLE INTERACT DATA FORMAT : 
-        {
-            "buttons": [
-                {
-                    "id": 1,
-                    "label": "Role 1",
-                    "emoji": "emoji_here",
-                    "role_data": {
-                        "role": role_id_here,
-                        "required_role": required_role_id_here,
-                        "ignored_role": ignored_role_id_here
-                    }
-                }
-            ],
-            "selectors": [
-                {
-                    "id": 1,
-                    "placeholder": "Click here",
-                    "min_values": 0,
-                    "max_values": 1,
-                    "roles_data": [
-                        {"role": role_id_here, "required_role": required_role_id_here, "ignored_role": ignored_role_id_here}
-                        ... (max : 25)
-                    ]
-                }
-                ...
-            ]
-        }
+        Schema of the system (in fragments.configuration.rolemenu) :
+
+                            ManageRoleMenu() + functions.py
+                            /             \
+                           /               \
+                    ManageButton()    ManageSelector()
+                    + functions.py    + functions.py      
         """
-
-        async def get_main_embed(data) -> discord.Embed:
-            embed = discord.Embed(
-                title = "Configuration de boutons/sélécteurs à rôle",
-                description = "*Un sélécteur compte comme 5 boutons. Discord vous limites à maximum 25 boutons par message.*"
-                + "\n\n"
-                + f"> *Votre nombre de bouton :* ***{len(data['buttons'])}***\n"
-                + f"> *Votre nombre de sélécteur :* ***{len(data['selectors'])}***",
-                color = await self.bot.get_theme(ctx.guild.id),
-                thumbnail = discord.EmbedMedia(url = ctx.guild.icon.url) if ctx.guild.icon else None
-            )
-            return embed
-        
-        async def get_role_interact_select_options(data):
-            options = []
-
-            for button in data["buttons"]:
-                options.append(discord.SelectOption(label = f"Bouton - {button['id']}", emoji = "👤", description = "Rôle défini" if button["role_data"]["role"] else "Rôle non défini", value = "button_" + button['id']))
-            for selector in data["selectors"]:
-                options.append(discord.SelectOption(label = f"Sélécteur - {selector['id']}", emoji = "👥", description = f"Rôle(s) défini : {len(selector['roles_data']) if selector['roles_data'] else 'Aucun'}", value = "selector_" + selector["id"]))
-            
-            if not options:
-                return [discord.SelectOption(label = "Aucun bouton/sélécteur", default = True, value = "nope")]
-            return options
-        
-        data = {
-            "buttons": [],
-            "selectors": []
-        }
-
-        options = await get_role_interact_select_options(data)
-        class ManageRoleInteract(MyViewClass):
-            def __init__(self, bot, data):
-                super().__init__(timeout = 180)
-                self.bot = bot
-                self.data = data
-                
-                async def update_select():
-                    self.children[0].options = await get_role_interact_select_options(self.data)
-                self.update_select = update_select
-
-            @discord.ui.select(
-                placeholder = "Choisir un bouton/sélécteur",
-                options = options
-            )
-            async def choose_interact_callback(self, select, interaction):
-                if interaction.user != ctx.author:
-                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
-                    return
-                
-                if select.values[0] == "nope":
-                    await interaction.response.defer()
-                    return
-            
-                
-            @discord.ui.select(
-                placeholder = "Gérer les sélécteurs et boutons",
-                options = [
-                    discord.SelectOption(label = "Ajouter un bouton", emoji = "➕", value = "add_button"),
-                    discord.SelectOption(label = "Ajouter un sélécteur", emoji = "➕", value = "add_selector"),
-                    discord.SelectOption(label = "Retirer un bouton/sélécteur", emoji = "➖", value = "remove_selector"),
-                ]
-            )
-            async def manage_interact_callback(self, select, interaction):
-                if interaction.user != ctx.author:
-                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
-                    return
-                
-                option_name = [option for option in select.options if option.value == select.values[0]][0].label
-                interaction_type_text = option_name.split(" ")[2]
-
-                interaction_type = select.values[0].split("_")[1]
-                action_type = select.values[0].split("_")[0]
-                components_ids = [component["id"] for component in self.data[interaction_type + "s"]] # tous les identifiants des boutons OU sélécteurs
-                
-                if action_type == "add":
-                    if (interaction_type == "button") and (len(self.data["buttons"]) + len(self.data["selectors"]) * 5 == 25):
-                        await interaction.response.send_message(f"> Vous ne pouvez plus ajouter de bouton.", ephemeral = True)
-                        return
-                    if (interaction_type == "selector") and (len(self.data["buttons"]) + len(self.data["selectors"]) * 5 > 20):
-                        await interaction.response.send_message(f"> Vous ne pouvez plus ajouter de sélécteur.", ephemeral = True)
-                        return  
-                    
-                    await interaction.response.defer()
-
-                    ask_message = await ctx.send(f"> Quel est le nom du {interaction_type_text} que vous souhaitez ajouter?")
-                    def response_check(message):
-                        return (message.author == interaction.user) and (message.content) and (message.channel == interaction.channel)
-                    try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
-                    except asyncio.TimeoutError():
-                        await ctx.send("> Action annulée, 1 minute s'est écoulée.")
-                        return
-                    finally: delete_message(ask_message)
-                    delete_message(response_message)
-
-                    if len(response_message.content) > 20:
-                        await ctx.send(f"> Le nom attribué à un {interaction_type} ne peut pas dépasser les 20 caractères.", delete_after = 3)
-                        return
-                    if response_message.content in components_ids:
-                        await ctx.send(f"> Il éxiste déjà un {interaction_type} avec le nom `{response_message.content}`.", allowed_mentions = AM.none(), delete_after = 3)
-                        return
-                    
-                    if interaction_type == "button":
-                        self.data["buttons"].append(
-                            {
-                                "id": response_message.content,
-                                "label": "Rôle",
-                                "emoji": None,
-                                "role_data": {"role": None, "required_role": None, "ignored_role": None}
-                            }
-                        )
-                        await self.update_select()
-                        await interaction.message.edit(embed = await get_main_embed(self.data), view = self)
-
-                    if interaction_type == "selector":
-                        self.data["selectors"].append(
-                            {
-                                "id": response_message.content,
-                                "placeholder": "Choisir des rôles",
-                                "min_values": 0,
-                                "max_values": 1,
-                                "roles_data": []
-                            }
-                        )
-                        await self.update_select()
-                        await interaction.message.edit(embed = await get_main_embed(self.data), view = self)
-
-                if action_type == "remove":
-                    if (not self.data["buttons"]) and (not self.data["selectors"]):
-                        await interaction.response.send_message("> ")
-
-                    options = await get_role_interact_select_options(self.data)
-                    manage_role_interact_view = self
-
-                    class ChooseOneToRemove(MyViewClass):
-                        @discord.ui.select(
-                            placeholder = "Choisir un sélécteur/bouton",
-                            options = options
-                        )
-                        async def choose_option_to_del_callback(self, select, interaction):
-                            if interaction.user != ctx.author:
-                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
-                                return
-
-                            interaction_type = select.values[0].split("_")[0]
-                            component_id = select.values[0].split("_")[1]
-
-                            for index, component_data in enumerate(manage_role_interact_view.data[interaction_type + "s"]):
-                                if component_data["id"] == component_id:
-                                    manage_role_interact_view.data[interaction_type + "s"].pop(index)
-                                    break
-
-                            await manage_role_interact_view.update_select()
-                            await interaction.edit(embed = await get_main_embed(manage_role_interact_view.data), view = manage_role_interact_view)
-                            
-                        @discord.ui.button(label = "Choisissez un sélécteur/bouton", style = discord.ButtonStyle.primary)
-                        async def button_indicator_callback(self, button, interaction):
-                            pass
-
-                        @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
-                        async def back_callback(self, button, interaction):
-                            if interaction.user != ctx.author:
-                                await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
-                                return    
-                            await interaction.edit(view = manage_role_interact_view)
-
-                    await interaction.edit(view = ChooseOneToRemove())
-
-            @discord.ui.button(label = "Confirmer", style = discord.ButtonStyle.primary)
-            async def confirm_callback(self, button, interaction):
-                if interaction.user != ctx.author:
-                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
-                    return
-            
-            @discord.ui.button(style = discord.ButtonStyle.danger, emoji = "🗑")
-            async def cancel_callback(self, button, interaction):
-                if interaction.user != self.ctx.author:
-                    await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
-                    return
-                
-                await interaction.edit(embed = discord.Embed(title = "Configuration annulée", color = await self.bot.get_theme(ctx.guild.id)), view = None)
-                
-        await ctx.send(embed = await get_main_embed(data), view = ManageRoleInteract(self.bot, data))
 
 
 def setup(bot):

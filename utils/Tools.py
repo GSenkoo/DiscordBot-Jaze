@@ -1,10 +1,11 @@
 import json
 import discord
 import emoji
+import asyncio
+
 from discord.ext import commands
 from typing import Union
 from datetime import timedelta, datetime
-
 
 class Tools:
     def __init__(self, bot):
@@ -107,6 +108,12 @@ class Tools:
         
         return None
 
+    def create_delete_message_task(self, message):
+        async def task():
+            try: await message.delete()
+            except: pass
+        loop = asyncio.get_event_loop()
+        loop.create_task(task())
 
     async def get_emoji(self, query):
         if emoji.is_emoji(query):

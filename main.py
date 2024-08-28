@@ -3,13 +3,14 @@ import os
 
 from dotenv import load_dotenv
 from discord.ext import commands
-from utils.FilesManager import manage_files
-from utils.PermissionsManager import PermissionsManager
-from utils.HelpCommand import CustomHelp
-from utils.MartialBot import MartialBot
+
+from utils import manage_files
+from utils import PermissionsManager
+from utils import CustomHelp
+from utils import LemmeDo
 
 
-bot = MartialBot(command_prefix = "+", intents = discord.Intents.all(), help_command = CustomHelp())
+bot = LemmeDo(command_prefix = "+", intents = discord.Intents.all(), help_command = CustomHelp())
 
 @bot.check
 async def can_use_cmd(ctx):
@@ -17,6 +18,5 @@ async def can_use_cmd(ctx):
     return await permission_manager.can_use_cmd(ctx)
 
 manage_files(bot, "load")
-
 load_dotenv()
 bot.run(token = os.getenv("TOKEN"))

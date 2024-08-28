@@ -1432,7 +1432,7 @@ class Gestion(commands.Cog):
                 # Mettre à jours l'embed
                 await interaction.message.edit(embed = formate_embed(self.embed), view = self)
 
-            @discord.ui.button(label = "Envoyer", emoji = "✅", style = discord.ButtonStyle.secondary)
+            @discord.ui.button(label = "Envoyer", emoji = "✅", style = discord.ButtonStyle.success)
             async def send(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
@@ -1680,7 +1680,7 @@ class Gestion(commands.Cog):
                     view = ChooseDestination()
                 )
 
-            @discord.ui.button(label = "Annuler", emoji = "❌", style = discord.ButtonStyle.secondary)
+            @discord.ui.button(label = "Annuler", emoji = "❎", style = discord.ButtonStyle.danger)
             async def cancel(self, button, interaction):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)

@@ -8,7 +8,6 @@ from datetime import datetime
 from discord.ext import commands
 from utils.PermissionsManager import PermissionsManager
 from utils.Paginator import PaginatorCreator
-from utils.MartialBot import MartialBot
 
 
 class MyViewClass(discord.ui.View):

@@ -3,7 +3,7 @@ import json
 from discord.ext import commands
 from utils.Database import Database
 
-class MartialBot(commands.AutoShardedBot):
+class LemmeDo(commands.AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
