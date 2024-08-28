@@ -50,9 +50,10 @@ from .functions import get_selector_embed
 from .ManageButton import ManageButton
 from .ManageSelector import ManageSelector
 
+
 class ManageRoleMenu(MyViewClass):
     def __init__(self, bot, ctx):
-        super().__init__(timeout = 180)
+        super().__init__(timeout = 600)
         self.bot = bot
         self.ctx = ctx
         self.data = {"buttons": [], "selectors": []}
@@ -120,7 +121,7 @@ class ManageRoleMenu(MyViewClass):
             await interaction.response.defer()
 
             # -------------------------------------------------- Ask
-            ask_message = await self.ctx.send(f"> Quel est le nom du {interaction_type_translated} que vous souhaitez ajouter?")
+            ask_message = await self.ctx.send(f"> Quel sera le **nom** du {interaction_type_translated} que vous souhaitez ajouter?")
             def response_check(message):
                 return (message.author == interaction.user) and (message.content) and (message.channel == interaction.channel)
             try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)

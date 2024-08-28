@@ -13,8 +13,8 @@ async def get_main_embed(bot, ctx, data = None) -> discord.Embed:
         title = "Configuration de boutons/sélécteurs à rôle",
         description = "*Un sélécteur compte comme 5 boutons. Discord vous limites à maximum 25 boutons par message.*"
         + "\n\n"
-        + f"> *Votre nombre de bouton :* ***{len(data['buttons'])}***\n"
-        + f"> *Votre nombre de sélécteur :* ***{len(data['selectors'])}***",
+        + f"> *Votre nombre de sélécteur :* ***{len(data['selectors'])}***\n"
+        + f"> *Votre nombre de bouton :* ***{len(data['buttons'])}***\n",
         color = await bot.get_theme(ctx.guild.id),
         thumbnail = discord.EmbedMedia(url = ctx.guild.icon.url) if ctx.guild.icon else None
     )
@@ -68,8 +68,8 @@ async def get_selector_embed(selector_data, ctx, bot) -> discord.Embed:
     )
 
     embed.add_field(name = "Texte du sélécteur", value = selector_data["placeholder"])
-    embed.add_field(name = f"Rôle{('s' if selector_data['min_values'] > 1 else '')} minimum", value = str(selector_data['min_values']))
-    embed.add_field(name = f"Rôle{('s' if selector_data['max_values'] > 1 else '')} maximum", value = str(selector_data['max_values']))
+    embed.add_field(name = f"Choix maximum", value = str(selector_data['max_values']))
+    embed.add_field(name = f"Choix minimum", value = str(selector_data['min_values']))    
     embed.add_field(name = f"Nombre d'option{('s' if len(selector_data['options_data']) > 1 else '')}", value = str(len(selector_data['options_data'])))
 
     return embed

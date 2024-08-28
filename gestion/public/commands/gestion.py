@@ -595,7 +595,7 @@ class Gestion(commands.Cog):
 
         now = datetime.now()
         await self.bot.db.set_data("giveaway", "end_at", now.strftime("%Y-%m-%d %H:%M:%S"), guild_id = ctx.guild.id, channel_id = giveaway_message.channel.id, message_id = giveaway_message.id)
-        await ctx.send(f"> Le giveaway {giveaway_link} a est désormais terminé.")
+        await ctx.send(f"> Le {giveaway_link} est désormais terminé.")
 
 
     @commands.command(description = "Reroll un giveaway toujours actif", usage = "<message>")
