@@ -45,9 +45,13 @@ Schema of the system (in fragments.configuration.rolemenu) :
                    /               \ 
             ManageButton()    ManageSelector()
             + functions.py    + functions.py
-                  \                /
-                   \              /
-                 ManageButtonRoles()   
+                   |                 \
+                   |                  \
+                   |            ManageSelectorOption() + functions.py
+                   |            /     
+                   |           /   
+                   |          /
+                  ManageRoles()   
 """
 
 import discord
@@ -76,6 +80,16 @@ class ManageRoleMenu(MyViewClass):
             self.children[0].options = get_role_menu_select_options(self.data)
         self.update_select = update_select
         self.update_select()
+
+        def disable_childrens():
+            for children in self.children:
+                children.disabled = True
+        self.disable_childrens = disable_childrens
+
+        def enable_chilrens():
+            for children in self.children:
+                children.disabled = False
+        self.enable_childrens = enable_chilrens
 
 
     @discord.ui.select(
@@ -232,6 +246,50 @@ class ManageRoleMenu(MyViewClass):
         if interaction.user != self.ctx.author:
             await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
             return
+        
+        for selector_data in self.data["selectors"]:
+            if not selector_data["options_data"]:
+                await interaction.response.send_message(f"> Votre sélécteur **{selector_data['id']}** n'a pas d'options configuré.", ephemeral = True)
+                return
+
+            for option_data in selector_data["options_data"]:
+                if not option_data["role"]:
+                    await interaction.response.send_message(f"> Dans votre sélécteur **{selector_data['id']}**, l'option **{option_data['label']}** n'a pas de rôle à ajouter/supprimer configuré.", ephemeral = True)
+                    return
+
+        for button_data in self.data["buttons"]:
+            if not button_data["role"]:
+                await interaction.response.send_message(f"> Le bouton **{button_data['id']}** ne possède pas de rôle à ajouter/retirer configuré.", ephemeral = True)
+                return
+            
+        self.disable_childrens()
+        await interaction.edit(view = self)
+
+        # --------------------------------------- Demande d'une réponse
+        ask_message = await self.ctx.send("> Quel est **lien du message** sur lequel vous souhaitez ajouter ces boutons/sélécteurs? Envoyez un salon si vous souhaitez envoyer les sélécteurs indépendament et `cancel` si vous souhaitez annuler cette action.")
+        tools = Tools(self.bot)
+
+        def response_check(message):
+            return (message.author == interaction.user) and (message.channel == interaction.channel) and (message.content)
+        
+        try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
+        except asyncio.TimeoutError():
+            await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
+            tools.create_delete_message_task(ask_message)
+            return
+        tools.create_delete_message_task(response_message)
+
+        # --------------------------------------- Traitement de la réponse
+        if response_message.content.lower() == "cancel":
+            self.enable_childrens()
+            await interaction.message.edit(view = self)
+            return
+        
+        # TODO: Send the buttons !
+        
+
+        
+
 
 
     @discord.ui.button(style = discord.ButtonStyle.danger, emoji = "🗑")

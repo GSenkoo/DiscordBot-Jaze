@@ -15,7 +15,7 @@ class error_handler(commands.Cog):
             try: await ctx.author.send(f"> Je n'ai pas les permissions nécessaires pour envoyer des messages dans le salon <#{ctx.channel.id}>.")
             except: pass
 
-        with open("gestion/private/data/permissions_translations.json") as file:
+        with open("cogs/private/data/permissions_translations.json", encoding = "utf-8") as file:
             permissions_translations = json.load(file)
   
         match type(error):

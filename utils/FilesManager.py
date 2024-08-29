@@ -7,7 +7,7 @@ from discord.ext import commands
 def manage_files(
     bot: commands.Bot,
     action: str,
-    command_folder: str = "gestion",
+    command_folder: str = "cogs",
     ignored_files_names : list= []
 ) -> Tuple[int, int, float]:
     """

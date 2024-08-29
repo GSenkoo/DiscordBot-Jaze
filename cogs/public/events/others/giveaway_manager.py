@@ -19,7 +19,6 @@ from discord.ext import commands, tasks
     "button_text": "VARCHAR(80) DEFAULT 'Participer'",
     "winners_count": "INTEGER DEFAULT 1",
     "participations": "MEDIUMTEXT",
-    "imposed_winner": "BIGINT DEFAULT 0",
     "required_role": "BIGINT DEFAULT 0",
     "prohibited_role": "BIGINT DEFAULT 0",
     "in_vocal_required": "BOOLEAN DEFAULT 0"
@@ -183,8 +182,8 @@ class on_interaction_giveaway(commands.Cog):
                 await message.reply("> Giveaway terminé, aucun gagnant. Il n'y a pas eu de participants.")
                 await self.bot.db.execute("DELETE FROM giveaway WHERE guild_id = %s AND channel_id = %s AND message_id = %s", (giveaway["guild_id"], giveaway["channel_id"], giveaway["message_id"]))
             else:
-                if (giveaway["winners_count"] == 1) or (giveaway["imposed_winner"]) or (len(participants) == 1):
-                    winners.append("<@" + str(random.choice(participants) if not giveaway['imposed_winner'] else giveaway['imposed_winner']) + ">")
+                if (giveaway["winners_count"] == 1) or (len(participants) == 1):
+                    winners.append("<@" + str(random.choice(participants)) + ">")
                     await message.reply(f"> Giveaway terminé, le gagnant du giveaway **{giveaway['reward']}** est {winners[0]}.")
                 else:
                     if giveaway["winners_count"] >= len(participants):

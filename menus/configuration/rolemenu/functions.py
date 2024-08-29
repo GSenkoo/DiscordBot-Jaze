@@ -1,4 +1,5 @@
 import discord
+from utils import MyViewClass
 from typing import List
 
 
@@ -11,7 +12,7 @@ async def get_main_embed(bot, ctx, data = None) -> discord.Embed:
 
     embed = discord.Embed(
         title = "Configuration de boutons/sélécteurs à rôle",
-        description = "*Un sélécteur compte comme 5 boutons. Discord vous limites à maximum 25 boutons par message.*"
+        description = "*Un sélécteur compte comme 5 boutons et Discord vous limites à maximum 25 boutons par message. Les rôles requis/ignorés ne sont pas pris en comptes sur les options de sélécteurs permettant de faire plus d'un choix.*"
         + "\n\n"
         + f"> *Votre nombre de sélécteur :* ***{len(data['selectors'])}***\n"
         + f"> *Votre nombre de bouton :* ***{len(data['buttons'])}***\n",
@@ -112,3 +113,37 @@ async def get_selector_option_embed(selector_option_data, ctx, bot) -> discord.E
     embed.add_field(name = "Rôle ignoré", value = f"<@&{selector_option_data['ignored_role']}>" if selector_option_data['ignored_role'] else "*Aucun rôle*")
 
     return embed
+
+
+async def formate_components(data) -> MyViewClass:
+    """Fonction permettant de convertir les données de boutons/sélécteurs en vrai boutons/sélécteurs
+
+    Format du custom_id des roles-buttons :
+    - "role_button_1241484256182669402_1265398039066054676_1276176305376722984"
+    -              ^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^
+    -              Rôle à ajouter      Rôle obligatoire    Rôle interdit
+    """
+    view = MyViewClass()
+
+    for button_data in data["buttons"]:
+        view.add_item(
+            discord.ui.Button(
+                label = button_data["label"],
+                emoji = button_data["emoji"],
+                style = getattr(discord.ButtonStyle, button_data["color"]),
+                custom_id = f"role_button"
+                    + f"_{button_data['role']}"
+                    + f"_{button_data['required_role'] if button_data['required_role'] else 0}"
+                    + f"_{button_data['ignored_role'] if button_data['ignored_role'] else 0}"
+            )
+        )
+
+    
+    for selector_data in data["selectors"]:
+        selector = discord.ui.Select(
+            placeholder = selector_data["placeholder"],
+            min_values = selector_data["min_values"],
+            max_values = selector_data["max_values"],
+            custom_id = "selector_roles"
+        )
+

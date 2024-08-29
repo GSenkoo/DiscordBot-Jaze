@@ -607,7 +607,7 @@ class Permissions(commands.Cog):
             cogs_to_commands[getattr(cog_instance, "qualified_name")] = [command.name for command in cog_instance.get_commands()]
 
         # ------------------ Charger les commandes réservés aux propriéataire (qui ne peuvent pas donc être déplacés)
-        with open("gestion/private/data/default_perms.json") as file:
+        with open("cogs/private/data/default_perms.json", encoding = "utf-8") as file:
             data = json.load(file)
             buyer_commands = data["11"]
 
@@ -734,7 +734,7 @@ class Permissions(commands.Cog):
                                             if original_permission == "0":
                                                 commands_not_added = []
                                                 
-                                                with open("gestion/private/data/default_perms.json") as file:
+                                                with open("cogs/private/data/default_perms.json", encoding = "utf-8") as file:
                                                     data = json.load(file)
 
                                                 # Pour des raisons de sécuritée, on empêche l'ajout des commandes par défaut n'étant pas public vers la permission public.

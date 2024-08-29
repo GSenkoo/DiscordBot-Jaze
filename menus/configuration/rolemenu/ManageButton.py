@@ -17,6 +17,7 @@ class ManageButton(MyViewClass):
         self.data = data
         self.manage_role_menu_view = manage_role_menu_view
 
+
     @discord.ui.select(
         placeholder = "Modifier le bouton",
         options = [
@@ -81,7 +82,7 @@ class ManageButton(MyViewClass):
             await interaction.message.edit(embed = await get_button_embed(self.data, self.ctx, self.bot))
 
         if "role" in select.values[0]:
-            await interaction.edit(view = ManageRoles(self.bot, self.ctx, select.values[0], option_name, self))
+            await interaction.edit(view = ManageRoles(self.bot, self.ctx, select.values[0], option_name, self, get_button_embed))
         
 
     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")

@@ -63,7 +63,7 @@ class PermissionsManager:
         }
         ```
         """
-        with open("gestion/private/data/default_perms.json", encoding = "utf-8") as file:
+        with open("cogs/private/data/default_perms.json", encoding = "utf-8") as file:
             return json.load(file)
 
 
@@ -168,7 +168,7 @@ class PermissionsManager:
 
         perms_enabled = await self.bot.db.get_data("guild", "perms_enabled", guild_id = ctx.guild.id)
         if not perms_enabled:
-            with open("gestion/private/data/commands_guildpermissions.json") as file:
+            with open("cogs/private/data/commands_guildpermissions.json", encoding = "utf-8") as file:
                 commands_guildpermissions = json.load(file)
 
             command_required_permissions = commands_guildpermissions[ctx.command.name]

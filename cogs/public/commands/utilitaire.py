@@ -255,7 +255,7 @@ class Utilitaire(commands.Cog):
                 result = await loop.run_in_executor(pool, get_translation, text, target)
             return result
 
-        with open("gestion/private/data/deepl_langage_select.json", encoding = "utf-8") as file:
+        with open("cogs/private/data/deepl_langage_select.json", encoding = "utf-8") as file:
             langages_dict = json.load(file)
 
         class ChooseLangage(discord.ui.View):

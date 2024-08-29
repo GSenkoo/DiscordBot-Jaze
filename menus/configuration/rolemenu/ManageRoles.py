@@ -36,14 +36,9 @@ class ManageRoles(MyViewClass):
             await interaction.response.send_message(check, ephemeral = True)
             return
         
-        options_translated = {"required_role": "rôle requis", "ignored_role": "rôle ignoré", "role": "rôle du bouton"}
-        if self.choosed_value != "required_role":
-            if (self.previous_view.data["required_role"] if self.previous_view.data["required_role"] else "nah") == select.values[0].id:
-                await interaction.response.send_message(f"> Le {options_translated[self.choosed_value]} ne peut pas être le même que le {options_translated['required_role']}.", ephemeral = True)
-                return
-        else:
-            if (self.previous_view.data["required_role"] if self.previous_view.data["required_role"] else "nah") in [self.previous_view.data["role"], self.previous_view.data["ignored_role"]]:
-                await interaction.response.send_message(f"> Le {options_translated[self.choosed_value]} ne peut pas être le même que le {options_translated['required_role']}.", ephemeral = True)
+        if self.choosed_value != "role":
+            if (self.choosed_value == "ignored_role" and self.previous_view.data["required_role"] == select.values[0].id) or (self.choosed_value == "required_role" and self.previous_view.data["ignored_role"] == select.values[0].id):
+                await interaction.response.send_message("> Le rôle requis et le rôle ignoré ne peuvent pas être identiques.", ephemeral = True)
                 return
         
         self.previous_view.data[self.choosed_value] = select.values[0].id

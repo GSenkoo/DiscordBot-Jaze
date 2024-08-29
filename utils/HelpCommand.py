@@ -154,9 +154,9 @@ class CustomHelp(commands.HelpCommand):
 
         advanced_perms_enabled = await self.context.bot.db.get_data("guild", "perms_enabled", guild_id = self.context.guild.id)
         if not advanced_perms_enabled:
-            with open("gestion/private/data/permissions_translations.json", encoding = "utf-8") as file:
+            with open("cogs/private/data/permissions_translations.json", encoding = "utf-8") as file:
                 perms_translation = json.load(file)
-            with open("gestion/private/data/commands_guildpermissions.json", encoding = "utf-8") as file:
+            with open("cogs/private/data/commands_guildpermissions.json", encoding = "utf-8") as file:
                 commands_guildpermissions = json.load(file)
             
             command_allowed_perms = [perms_translation[perm] for perm in commands_guildpermissions[str(command)]]

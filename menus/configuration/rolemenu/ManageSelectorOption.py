@@ -88,7 +88,7 @@ class ManageSelectorOption(MyViewClass):
         
         # ----------------------------------- ROLE / REQUIRED ROLE / IGNORED ROLE
         if "role" in select.values[0]:
-            await interaction.edit(view = ManageRoles(self.bot, self.ctx, select.values[0], option_name, self))
+            await interaction.edit(view = ManageRoles(self.bot, self.ctx, select.values[0], option_name, self, get_selector_option_embed))
 
 
     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")

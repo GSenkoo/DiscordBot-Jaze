@@ -275,7 +275,7 @@ class Jeux(commands.Cog):
             now = datetime.now().timestamp()
             speed_in_ms = round((now - before - seconds_to_wait) * 1000)
 
-            with open("gestion/private/data/speedtest_joke.json", encoding = "utf-8") as file:
+            with open("cogs/private/data/speedtest_joke.json", encoding = "utf-8") as file:
                 jokes = json.load(file)["jokes"]
 
             embed.description = f"Votre vitesse de réaction a été de **{speed_in_ms}ms**.\n" \

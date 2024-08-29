@@ -100,19 +100,19 @@ class ManageSelector(MyViewClass):
 
                 number = int(response_message.content)                
                 if select.values[0] == "min_values":
-                    if not 0 <= number <= 24:
-                        await self.ctx.send("> Votre nombre de choix minimum doit être entre 0 (inclu) et 24 (inclu).", delete_after = 3)
+                    if not 0 <= number <= 25:
+                        await self.ctx.send("> Votre nombre de choix minimum doit être entre 0 (inclu) et 25 (inclu).", delete_after = 3)
                         return
-                    if number >= self.selector_data["max_values"]:
-                        await self.ctx.send("> Votre nombre de choix minimum doit être strictement inférieur à votre nombre de choix maximum.", delete_after = 3)
+                    if number > self.selector_data["max_values"]:
+                        await self.ctx.send("> Votre nombre de choix minimum doit être inférieur ou égal à votre nombre de choix maximum.", delete_after = 3)
                         return
                 
                 if select.values[0] == "max_values":
                     if not 1 <= number <= 25:
                         await self.ctx.send("> Votre nombre de choix maximum doit être compris entre 1 (inclu) et 25 (inclu).", delete_after = 3)
                         return
-                    if number <= self.selector_data["min_values"]:
-                        await self.ctx.send("> Votre nombre de choix maximum doit strictement être suppérieur à votre nombre de choix maximum.", delete_after = 3)
+                    if number < self.selector_data["min_values"]:
+                        await self.ctx.send("> Votre nombre de choix maximum doit être suppérieur ou égal à votre nombre de choix maximum.", delete_after = 3)
                         return
                 
                 self.selector_data[select.values[0]] = number

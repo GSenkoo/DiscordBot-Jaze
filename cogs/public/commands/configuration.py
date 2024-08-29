@@ -13,8 +13,8 @@ from utils.MyViewClass import MyViewClass
 from utils.Tools import Tools
 from utils.GPChecker import GPChecker
 
-from fragments.configuration.rolemenu.ManageRoleMenu import ManageRoleMenu
-from fragments.configuration.rolemenu.functions import get_main_embed
+from menus.configuration.rolemenu.ManageRoleMenu import ManageRoleMenu
+from menus.configuration.rolemenu.functions import get_main_embed
 
 
 def delete_message(message):

@@ -318,7 +318,6 @@ class Gestion(commands.Cog):
             embed.add_field(name = "Couleur (Bouton)", value = data["button_color"].capitalize())
             embed.add_field(name = "Texte (Bouton)", value = data["button_text"])
             embed.add_field(name = "Nombre de gagnants", value = str(data["winners_count"]))
-            embed.add_field(name = "Gagnant imposé", value = f"<@{data['imposed_winner']}>" if data["imposed_winner"] else "*Aucun gagnant imposé*")
             embed.add_field(name = "Rôle requis", value = f"<@&{data['required_role']}>" if data["required_role"] else "*Aucun rôle*")
             embed.add_field(name = "Rôle interdit", value = f"<@&{data['prohibited_role']}>" if data["prohibited_role"] else "*Aucun rôle*")
             embed.add_field(name = "Imposer la présence en vocal", value = "Oui" if data["in_vocal_required"] else "Non")
@@ -334,7 +333,6 @@ class Gestion(commands.Cog):
             "button_color": "grey", # blue, green, gray or red
             "button_text": "Participer",
             "winners_count": 1,
-            "imposed_winner": 0,
             "required_role": 0,
             "prohibited_role": 0,
             "in_vocal_required": False
@@ -361,7 +359,6 @@ class Gestion(commands.Cog):
                     discord.SelectOption(label = "Couleur (Bouton)", value = "button_color", emoji = "🎨"),
                     discord.SelectOption(label = "Texte (Bouton)", value = "button_text", emoji = "📝"),
                     discord.SelectOption(label = "Nombre de gagnant", value = "winners_count", emoji = "👥"),
-                    discord.SelectOption(label = "Gagnant imposé", value = "imposed_winner", emoji = "👤"),
                     discord.SelectOption(label = "Rôle requis", value = "required_role", emoji = "⛓"),
                     discord.SelectOption(label = "Rôle interdit", value = "prohibited_role", emoji = "🚫"),
                     discord.SelectOption(label = "Imposition de la présence en vocal", value = "in_vocal_required", emoji = "🔊"),
@@ -394,7 +391,7 @@ class Gestion(commands.Cog):
                     "interaction_type": "Types d'intéractions disponibles : `bouton` et `réaction`",
                     "button_color": "Couleurs disponibles : `bleu`, `rouge`, `vert` et `gris`",
                     "in_vocal_required": "Réponses possibles : `oui` et `non`",
-                    "remove_option": "Les options qui peuvent être retiré sont : `gagnant imposé`, `rôle requis` et `rôle interdit`"
+                    "remove_option": "Les options qui peuvent être retiré sont : `rôle requis` et `rôle interdit`"
                 }
 
                 ask_message = await ctx.send(
@@ -403,7 +400,7 @@ class Gestion(commands.Cog):
                 )
 
                 try: response_message = await bot.wait_for("message", timeout = 60, check = check_message_validity)
-                except asyncio.TimeoutError:
+                except asyncio.TimeoutError():
                     await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
                     return
                 finally: await delete_message(ask_message)
@@ -480,20 +477,8 @@ class Gestion(commands.Cog):
                     if not 1 <= int(response_message.content) <= 50:
                         await ctx.send("> Action annulée, votre nombre de gagnant doit être entre 1 et 50.", delete_after = 2)
                         return
-                    if self.giveaway_data["imposed_winner"]:
-                        await ctx.send("> Action annulée, votre nombre de gagnant doit forcément être définis à 1 si vous prédéfinissez un gagnant.", delete_after = 2)
-                        return
                     
                     self.giveaway_data["winners_count"] = int(response_message.content)
-
-                if select.values[0] == "imposed_winner":
-                    user = await searcher.search_user(response_message.content)
-                    if not user:
-                        await ctx.send("> Action annulée, utilisateur invalide.", delete_after = 2)
-                        return
-
-                    self.giveaway_data["imposed_winner"] = user.id
-                    self.giveaway_data["winners_count"] = 1
 
                 if select.values[0] in ["required_role", "prohibited_role"]:
                     role = await searcher.search_role(response_message.content)
@@ -523,8 +508,6 @@ class Gestion(commands.Cog):
                         self.giveaway_data["required_role"] = None
                     elif response_message.content.lower() in ["rôle interdit", "role interdit", "rôle interdits", "rôle interdit", "prohibited role", "prohibited roles"]:
                         self.giveaway_data["prohibited_role"] = None
-                    elif response_message.content.lower() in ["gagnant imposé", "gagnant impose", "gagnants imposé", "gagnants impose", "imposed winner", "imposed winners"]:
-                        self.giveaway_data["imposed_winner"] = None
                     else:
                         await ctx.send("> Action annulée, réponse invalide.", delete_after = 2)
                         return
@@ -631,8 +614,8 @@ class Gestion(commands.Cog):
             return
         
         participants = json.loads(giveaway["participations"])
-        if (giveaway["winners_count"] == 1) or (giveaway["imposed_winner"]) or (len(participants) == 1):
-            await message.reply(f"> Giveaway reroll, le gagnant du giveaway **{giveaway['reward']}** est <@" + str(random.choice(participants) if not giveaway["imposed_winner"] else giveaway["imposed_winner"]) + ">")
+        if (giveaway["winners_count"] == 1) or (len(participants) == 1):
+            await message.reply(f"> Giveaway reroll, le gagnant du giveaway **{giveaway['reward']}** est <@" + str(random.choice(participants)) + ">")
         else:
             if len(participants) <= giveaway["winners_count"]:
                 winners = [f"<@{user}>" for user in participants]
@@ -642,8 +625,8 @@ class Gestion(commands.Cog):
                     winner = random.choice(participants)
                     winners.append(f"<@{winner}>")
                     participants.remove(winner)
-
             await message.reply(f"> Giveaway reroll, les gagnants du giveaway **{giveaway['reward']}** sont : " + ", ".join(winners[:-1]) + " et " + winners[-1])
+        
         if message.channel != ctx.channel:
             await ctx.send(f"> Le giveaway **{giveaway['reward']}** a été reroll dans le salon {channel.mention}.")
 
