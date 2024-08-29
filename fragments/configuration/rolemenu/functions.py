@@ -79,7 +79,6 @@ def get_formated_selector_options(options_data) -> List[discord.SelectOption]:
     """
     Fonction permettant d'obtenir une liste des options d'un sélécteur que le configurateur a configuré
     """
-
     options = []
     for option in options_data:
         options.append(
@@ -94,3 +93,22 @@ def get_formated_selector_options(options_data) -> List[discord.SelectOption]:
     if not options:
         return [discord.SelectOption(label = "Aucune option configurée", value = "nope", default = True)]
     return options
+
+
+async def get_selector_option_embed(selector_option_data, ctx, bot) -> discord.Embed:
+    """
+    Fonction permettant d'obtenir l'embed de configuration d'une option d'un sélécteur
+    """
+    embed = discord.Embed(
+        title = f"Option - {selector_option_data['label']}",
+        color = await bot.get_theme(ctx.guild.id)
+    )
+
+    embed.add_field(name = "Texte", value = selector_option_data["label"])
+    embed.add_field(name = "Description", value = selector_option_data["description"] if selector_option_data["description"] else "*Aucune description*")
+    embed.add_field(name = "Emoji", value = selector_option_data["emoji"] if selector_option_data["emoji"] else "*Aucun emoji*")
+    embed.add_field(name = "Rôle", value = f"<@&{selector_option_data['role']}>" if selector_option_data['role'] else "*Aucun rôle (obligatoire)*")
+    embed.add_field(name = "Rôle requis", value = f"<@&{selector_option_data['required_role']}>" if selector_option_data['required_role'] else "*Aucun rôle*")
+    embed.add_field(name = "Rôle ignoré", value = f"<@&{selector_option_data['ignored_role']}>" if selector_option_data['ignored_role'] else "*Aucun rôle*")
+
+    return embed

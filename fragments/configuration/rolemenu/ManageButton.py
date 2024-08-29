@@ -7,14 +7,14 @@ from utils import GPChecker
 
 from .functions import get_button_embed
 from .functions import get_main_embed
-from .ManageButtonRoles import ManageButtonRoles
+from .ManageRoles import ManageRoles
 
 class ManageButton(MyViewClass):
-    def __init__(self, bot, ctx, button_data, manage_role_menu_view):
+    def __init__(self, bot, ctx, data, manage_role_menu_view):
         super().__init__(timeout = 180)
         self.bot = bot
         self.ctx = ctx
-        self.button_data = button_data
+        self.data = data
         self.manage_role_menu_view = manage_role_menu_view
 
     @discord.ui.select(
@@ -38,7 +38,7 @@ class ManageButton(MyViewClass):
         option_name = [option.label for option in select.options if option.value == select.values[0]][0]
         if select.values[0] in ["label", "emoji", "color"]:
             await interaction.response.defer()
-            message = await self.ctx.send(f"> Quel **{option_name}** souhaitez-vous définir à votre bouton?" + (" Couleurs disponibles : `bleu`, `rouge`, `vert` et `gris`" if select.values[0] == "color" else ""))
+            message = await self.ctx.send(f"> Quel{'le' if select.values == 'color' else ''} **{option_name}** souhaitez-vous définir à votre bouton?" + (" Couleurs disponibles : `bleu`, `rouge`, `vert` et `gris`" if select.values[0] == "color" else ""))
 
             async def response_check(message):
                 return (message.channel == interaction.channel) and (message.author == interaction.user) and (message.content)
@@ -55,7 +55,7 @@ class ManageButton(MyViewClass):
                 if len(response_message.content) > 80:
                     await self.ctx.send("> Le texte d'un bouton ne peut pas faire plus de 80 caractères.", delete_after = 3)
                     return
-                self.button_data["label"] = response_message.content
+                self.data["label"] = response_message.content
             
             # -------------------------------------- Button - Emoji
             if select.values[0] == "emoji":
@@ -65,23 +65,23 @@ class ManageButton(MyViewClass):
                 if not emoji:
                     await self.ctx.send("> L'emoji donné est invalide.", delete_after = 3)
                     return
-                self.button_data["emoji"] = str(emoji)
+                self.data["emoji"] = str(emoji)
 
             # -------------------------------------- Button - Color
             if select.values[0] == "color":
                 query = response_message.content.lower()
-                if   query in ["bleu", "blue", "blurple"]: self.button_data["color"] = "blurple"
-                elif query in ["rouge", "red"]: self.button_data["color"] = "red"
-                elif query in ["vert", "green"]: self.button_data["color"] = "green"
-                elif query in ["grey", "gris"]: self.button_data["color"] = "grey"
+                if   query in ["bleu", "blue", "blurple"]: self.data["color"] = "blurple"
+                elif query in ["rouge", "red"]: self.data["color"] = "red"
+                elif query in ["vert", "green"]: self.data["color"] = "green"
+                elif query in ["grey", "gris"]: self.data["color"] = "grey"
                 else:
                     await self.ctx.send("> La couleur de bouton donné est invalide.", delete_after = 3)
                     return
 
-            await interaction.message.edit(embed = await get_button_embed(self.button_data, self.ctx, self.bot))
+            await interaction.message.edit(embed = await get_button_embed(self.data, self.ctx, self.bot))
 
         if "role" in select.values[0]:
-            await interaction.edit(view = ManageButtonRoles(self.bot, self.ctx, select.values[0], option_name, self))
+            await interaction.edit(view = ManageRoles(self.bot, self.ctx, select.values[0], option_name, self))
         
 
     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
@@ -90,9 +90,9 @@ class ManageButton(MyViewClass):
             await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
             return
         
-        for index, button_previous_data in enumerate(self.manage_role_menu_view.data["buttons"]):
-            if button_previous_data["id"] == self.button_data["id"]:
-                self.manage_role_menu_view.data["buttons"][index] = self.button_data.copy()
+        for index, previous_data in enumerate(self.manage_role_menu_view.data["buttons"]):
+            if previous_data["id"] == self.data["id"]:
+                self.manage_role_menu_view.data["buttons"][index] = self.data.copy()
                 break
         self.manage_role_menu_view.update_select()
         await interaction.edit(embed = await get_main_embed(self.bot, self.ctx, self.manage_role_menu_view.data), view = self.manage_role_menu_view)

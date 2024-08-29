@@ -9,11 +9,13 @@ from utils import Tools
 from .functions import get_selector_embed
 from .functions import get_formated_selector_options
 from .functions import get_main_embed
+from .functions import get_selector_option_embed
+from .ManageSelectorOption import ManageSelectorOption
 
 
 class ManageSelector(MyViewClass):
     def __init__(self, bot, ctx, selector_data, manage_role_menu_view):
-        super().__init__(timeout = 180)
+        super().__init__(timeout = 300)
         self.bot = bot
         self.ctx = ctx
         self.selector_data = selector_data
@@ -37,6 +39,10 @@ class ManageSelector(MyViewClass):
         if select.values[0] == "nope":
             await interaction.response.defer()
             return
+        
+        option_label = select.values[0].split("_")[2] # Format d'une valeure d'une option : selector_option_{LABEL}
+        option_data = [option for option in self.selector_data["options_data"] if option["label"] == option_label][0]
+        await interaction.edit(embed = await get_selector_option_embed(option_data, self.ctx, self.bot), view = ManageSelectorOption(self.bot, self.ctx, option_data, self))
         
         
     @discord.ui.select(
@@ -112,8 +118,8 @@ class ManageSelector(MyViewClass):
                 self.selector_data[select.values[0]] = number
             
             if select.values[0] == "option_create":
-                if len(response_message.content) > 50:
-                    await self.ctx.send("La taille maximale du texte de votre option doit être inférieur à 50 caractères.", delete_after = 3)
+                if len(response_message.content) > 80:
+                    await self.ctx.send("La taille maximale du texte de votre option doit être inférieur à 80 caractères.", delete_after = 3)
                     return
                 
                 for option_data in self.selector_data["options_data"]:
@@ -133,7 +139,47 @@ class ManageSelector(MyViewClass):
             
             await interaction.message.edit(embed = await get_selector_embed(self.selector_data, self.ctx, self.bot), view = self)
 
-        # TODO: Supprimer une option
+        if select.values[0] == "option_delete":
+            if self.selector_data["options_data"]:
+                await interaction.response.send_message("> Il n'y a actuellement aucune option à supprimer sur sélécteur.", ephemeral = True)
+                return
+
+            manage_selector_view = self
+            class ChooseOptionToDelete(MyViewClass):
+                @discord.ui.select(
+                    placeholder = "Choisir une option",
+                    options = get_formated_selector_options(manage_selector_view.selector_data["options_data"])
+                )
+                async def choose_option_to_delete(self, select, interaction):
+                    if interaction.user != self.ctx.author:
+                        await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                        return
+                    
+                    option_label = select.values[0].split("_")[2] # Format d'une valeure d'une option : selector_option_{LABEL}
+                    for index, options_data in enumerate(manage_selector_view.selector_data["options_data"]):
+                        if options_data["label"] == option_label:
+                            del manage_selector_view[index]
+                            break
+                    
+                    manage_selector_view.update_displayed_options()
+                    await interaction.edit(
+                        embed = await get_selector_embed(manage_selector_view.selector_data, manage_selector_view.ctx, manage_selector_view.bot),
+                        view = manage_selector_view
+                    )
+
+                @discord.ui.button(label = "Choisissez une option", style = discord.ButtonStyle.primary, disabled = True)
+                async def button_indicator_callback(self, button, interaction):
+                    pass
+
+                @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
+                async def back_callback(self, button, interaction):
+                    if interaction.user != manage_selector_view.ctx.author:
+                        await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
+                        return
+
+                    await interaction.edit(view = manage_selector_view)
+
+            await interaction.edit(view = ChooseOptionToDelete())
 
 
     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")

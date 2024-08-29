@@ -3,16 +3,15 @@ import discord
 from utils import GPChecker
 from utils import MyViewClass
 
-from .functions import get_button_embed
-
-class ManageButtonRoles(MyViewClass):
-    def __init__(self, bot, ctx, choosed_value, option_name, manage_button_view):
+class ManageRoles(MyViewClass):
+    def __init__(self, bot, ctx, choosed_value, option_name, previous_view, get_embed_func):
         super().__init__()
         self.bot = bot
         self.ctx = ctx
         self.choosed_value = choosed_value
         self.option_name = option_name
-        self.manage_button_view = manage_button_view
+        self.previous_view = previous_view
+        self.get_embed_func = get_embed_func
 
         self.children[1].label = f"Choisissez un {self.option_name.lower()}"
 
@@ -39,16 +38,16 @@ class ManageButtonRoles(MyViewClass):
         
         options_translated = {"required_role": "rôle requis", "ignored_role": "rôle ignoré", "role": "rôle du bouton"}
         if self.choosed_value != "required_role":
-            if (self.manage_button_view.button_data["required_role"] if self.manage_button_view.button_data["required_role"] else "nah") == select.values[0].id:
+            if (self.previous_view.data["required_role"] if self.previous_view.data["required_role"] else "nah") == select.values[0].id:
                 await interaction.response.send_message(f"> Le {options_translated[self.choosed_value]} ne peut pas être le même que le {options_translated['required_role']}.", ephemeral = True)
                 return
         else:
-            if (self.manage_button_view.button_data["required_role"] if self.manage_button_view.button_data["required_role"] else "nah") in [self.manage_button_view.button_data["role"], self.manage_button_view.button_data["ignored_role"]]:
+            if (self.previous_view.data["required_role"] if self.previous_view.data["required_role"] else "nah") in [self.previous_view.data["role"], self.previous_view.data["ignored_role"]]:
                 await interaction.response.send_message(f"> Le {options_translated[self.choosed_value]} ne peut pas être le même que le {options_translated['required_role']}.", ephemeral = True)
                 return
         
-        self.manage_button_view.button_data[self.choosed_value] = select.values[0].id
-        await interaction.edit(embed = await get_button_embed(self.manage_button_view.button_data, self.ctx, self.bot), view = self.manage_button_view)
+        self.previous_view.data[self.choosed_value] = select.values[0].id
+        await interaction.edit(embed = await self.get_embed_func(self.previous_view.data, self.ctx, self.bot), view = self.previous_view)
         
 
     @discord.ui.button(label = None, style = discord.ButtonStyle.primary, disabled = True)
@@ -56,14 +55,14 @@ class ManageButtonRoles(MyViewClass):
         pass
 
 
-    @discord.ui.button(label = "Retirer", emoji = "❌", style = discord.ButtonStyle.danger)
+    @discord.ui.button(label = "Retirer", style = discord.ButtonStyle.danger)
     async def remove_callback(self, button, interaction):
         if interaction.user != self.ctx.author:
             await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
             return
         
-        self.manage_button_view.button_data[self.choosed_value] = None
-        await interaction.edit(embed = await get_button_embed(self.manage_button_view.button_data, self.ctx, self.bot), view = self.manage_button_view)
+        self.previous_view.data[self.choosed_value] = None
+        await interaction.edit(embed = await self.get_embed_func(self.previous_view.data, self.ctx, self.bot), view = self.previous_view)
         
 
     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
@@ -71,4 +70,4 @@ class ManageButtonRoles(MyViewClass):
         if interaction.user != self.ctx.author:
             await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
             return
-        await interaction.edit(view = self.manage_button_view)
+        await interaction.edit(view = self.previous_view)

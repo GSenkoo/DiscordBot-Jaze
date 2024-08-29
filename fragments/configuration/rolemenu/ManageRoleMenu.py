@@ -41,13 +41,13 @@
 Schema of the system (in fragments.configuration.rolemenu) :
 
                     ManageRoleMenu() + functions.py
-                    /             \
-                    /               \
+                    /             \ 
+                   /               \ 
             ManageButton()    ManageSelector()
             + functions.py    + functions.py
-            /
-            /
-ManageButtonRoles()    
+                  \                /
+                   \              /
+                 ManageButtonRoles()   
 """
 
 import discord
@@ -135,7 +135,7 @@ class ManageRoleMenu(MyViewClass):
             await interaction.response.defer()
 
             # -------------------------------------------------- Ask
-            ask_message = await self.ctx.send(f"> Quel sera le **nom** du {interaction_type_translated} que vous souhaitez ajouter?")
+            ask_message = await self.ctx.send(f"> Quel sera le **nom** du {interaction_type_translated} que vous souhaitez ajouter? Envoyez `cancel` pour annuler.")
             def response_check(message):
                 return (message.author == interaction.user) and (message.content) and (message.channel == interaction.channel)
             try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
@@ -146,6 +146,9 @@ class ManageRoleMenu(MyViewClass):
             tools.create_delete_message_task(response_message)
 
             # -------------------------------------------------- Check
+            if response_message.content.lower() == "cancel":
+                await self.ctx.send("> Action annulée.", delete_after = 3)
+                return
             if len(response_message.content) > 20:
                 await self.ctx.send(f"> Le nom attribué à un {interaction_type} ne peut pas dépasser les 20 caractères.", delete_after = 3)
                 return
@@ -207,7 +210,7 @@ class ManageRoleMenu(MyViewClass):
                             manage_role_menu_view.data[interaction_type + "s"].pop(index)
                             break
 
-                    await manage_role_menu_view.update_select()
+                    manage_role_menu_view.update_select()
                     await interaction.edit(embed = await get_main_embed(manage_role_menu_view.bot, manage_role_menu_view.ctx, manage_role_menu_view.data), view = manage_role_menu_view)
                     
                 @discord.ui.button(label = "Choisissez un sélécteur/bouton", style = discord.ButtonStyle.primary, disabled = True)
