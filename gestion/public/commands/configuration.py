@@ -358,7 +358,7 @@ class Configuration(commands.Cog):
             }
         else:
             suggesiton_columns = await self.bot.db.get_table_columns("suggestions")
-            suggestion_current_data = dict(set(zip(suggesiton_columns, suggestions_found[0])))
+            suggestion_current_data = dict(zip(suggesiton_columns, suggestions_found[0]))
             suggestion_data = {
                 "channel": suggestion_current_data["channel"], "confirm_channel": suggestion_current_data["confirm_channel"],
                 "moderator_roles": json.loads(suggestion_current_data["moderator_roles"]),
@@ -582,7 +582,7 @@ class Configuration(commands.Cog):
             soutien_data = {"enabled": False, "status": [], "strict": False, "role": 0}
         else:
             soutien_columns = await self.bot.db.get_table_columns("soutien")
-            soutien_datas = dict(set(zip(soutien_columns, soutien_data[0])))
+            soutien_datas = dict(zip(soutien_columns, soutien_data[0]))
             if not soutien_datas["status"]: soutien_datas["status"] = "[]"
             soutien_data = {"enabled": soutien_datas["enabled"], "status": json.loads(soutien_datas["status"]), "strict": soutien_datas["strict"], "role": soutien_datas["role"]}
 
@@ -822,7 +822,7 @@ class Configuration(commands.Cog):
             }
         else:
             captcha_table_columns = await self.bot.db.get_table_columns("captcha")
-            data = dict(set(zip(captcha_table_columns, guild_data[0])))
+            data = dict(zip(captcha_table_columns, guild_data[0]))
     
         class ManageCaptchaView(MyViewClass):
             def __init__(self, ctx, data, bot):
@@ -1231,7 +1231,7 @@ class Configuration(commands.Cog):
                 }
             
             joins_columns = await self.bot.db.get_table_columns("joins")
-            return dict(set(zip(joins_columns, results[0])))
+            return dict(zip(joins_columns, results[0]))
         
         async def get_join_embed(data : dict) -> discord.Embed:
             bot_prefix = await self.bot.get_prefix(ctx.message)
@@ -1430,7 +1430,7 @@ class Configuration(commands.Cog):
                 }
             
             leaves_table_columns = await self.bot.db.get_table_columns("leaves")
-            leaves_data = dict(set(zip(leaves_table_columns, leaves_data[0])))
+            leaves_data = dict(zip(leaves_table_columns, leaves_data[0]))
             return leaves_data
 
         async def get_leaves_embed(data) -> discord.Embed:
@@ -1618,7 +1618,7 @@ class Configuration(commands.Cog):
         # ------------------------------------- ACTION : LIST
         if action == "list": 
             role_react_table_columns = await self.bot.db.get_table_columns("role_react")
-            roles_react_data = [dict(set(zip(role_react_table_columns, role_react_data))) for role_react_data in roles_react_data_sql] 
+            roles_react_data = [dict(zip(role_react_table_columns, role_react_data)) for role_react_data in roles_react_data_sql] 
             roles_react_data = [
                 f"{index}. <#{role_react_data['channel_id']}> > [Lien du message](https://discord.com/channels/{role_react_data['guild_id']}/{role_react_data['channel_id']}/{role_react_data['message_id']}) : {role_react_data['emoji']} : <@&{role_react_data['role']}>" for index, role_react_data in enumerate(roles_react_data)
             ]
@@ -1665,15 +1665,6 @@ class Configuration(commands.Cog):
     @commands.guild_only() 
     async def rolemenu(self, ctx):
         await ctx.send(embed = await get_main_embed(self.bot, ctx), view = ManageRoleMenu(self.bot, ctx))
-        """
-        Schema of the system (in fragments.configuration.rolemenu) :
-
-                            ManageRoleMenu() + functions.py
-                            /             \
-                           /               \
-                    ManageButton()    ManageSelector()
-                    + functions.py    + functions.py      
-        """
 
 
 def setup(bot):

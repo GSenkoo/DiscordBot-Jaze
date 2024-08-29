@@ -36,6 +36,20 @@
     ]
 }
 """
+
+"""
+Schema of the system (in fragments.configuration.rolemenu) :
+
+                    ManageRoleMenu() + functions.py
+                    /             \
+                    /               \
+            ManageButton()    ManageSelector()
+            + functions.py    + functions.py
+            /
+            /
+ManageButtonRoles()    
+"""
+
 import discord
 import asyncio
 

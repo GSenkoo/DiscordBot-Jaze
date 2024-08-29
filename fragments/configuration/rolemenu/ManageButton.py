@@ -7,6 +7,7 @@ from utils import GPChecker
 
 from .functions import get_button_embed
 from .functions import get_main_embed
+from .ManageButtonRoles import ManageButtonRoles
 
 class ManageButton(MyViewClass):
     def __init__(self, bot, ctx, button_data, manage_role_menu_view):
@@ -80,66 +81,7 @@ class ManageButton(MyViewClass):
             await interaction.message.edit(embed = await get_button_embed(self.button_data, self.ctx, self.bot))
 
         if "role" in select.values[0]:
-            manage_button_view = self
-            choosed_value = select.values[0]
-            
-
-            class ChooseButtonRole(MyViewClass):
-                @discord.ui.select(
-                    select_type = discord.ComponentType.role_select,
-                    placeholder = f"Choisir un rôle"
-                )
-                async def choose_role_select_callback(self, select, interaction):
-                    if interaction.user != manage_button_view.ctx.author:
-                        await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
-                        return
-                    
-                    role = interaction.guild.get_role(select.values[0].id)
-                    if not role:
-                        await interaction.response.send_message("> Le rôlé donné est invalide ou alors je n'y ai pas accès.", ephemeral = True)
-                        return
-                    
-                    gp_checker = GPChecker(manage_button_view.ctx, manage_button_view.bot)
-                    check = gp_checker.we_can_add_role(role)
-                    if check != True:
-                        await interaction.response.send_message(check, ephemeral = True)
-                        return
-                    
-                    options_translated = {"required_role": "rôle requis", "ignored_role": "rôle ignoré", "role": "rôle du bouton"}
-                    if choosed_value != "required_role":
-                        if (manage_button_view.button_data["required_role"] if manage_button_view.button_data["required_role"] else "nah") == select.values[0].id:
-                            await interaction.response.send_message(f"> Le {options_translated[choosed_value]} ne peut pas être le même que le {options_translated['required_role']}.", ephemeral = True)
-                            return
-                    else:
-                        if (manage_button_view.button_data["required_role"] if manage_button_view.button_data["required_role"] else "nah") in [manage_button_view.button_data["role"], manage_button_view.button_data["ignored_role"]]:
-                            await interaction.response.send_message(f"> Le {options_translated[choosed_value]} ne peut pas être le même que le {options_translated['required_role']}.", ephemeral = True)
-                            return
-                    
-                    manage_button_view.button_data[choosed_value] = select.values[0].id
-                    await interaction.edit(embed = await get_button_embed(manage_button_view.button_data, manage_button_view.ctx, manage_button_view.bot), view = manage_button_view)
-                    
-                @discord.ui.button(label = f"Choisissez un {option_name.lower()}", style = discord.ButtonStyle.primary, disabled = True)
-                async def button_callback(self, button, interaction):
-                    pass
-
-                @discord.ui.button(label = "Retirer", emoji = "❌", style = discord.ButtonStyle.danger)
-                async def remove_callback(self, button, interaction):
-                    if interaction.user != manage_button_view.ctx.author:
-                        await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
-                        return
-                    
-                    manage_button_view.button_data[choosed_value] = None
-                    await interaction.edit(embed = await get_button_embed(manage_button_view.button_data, manage_button_view.ctx, manage_button_view.bot), view = manage_button_view)
-                    
-
-                @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
-                async def comeback_callback(self, button, interaction):
-                    if interaction.user != manage_button_view.ctx.author:
-                        await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
-                        return
-                    await interaction.edit(view = manage_button_view)
-
-            await interaction.edit(view = ChooseButtonRole())
+            await interaction.edit(view = ManageButtonRoles(self.bot, self.ctx, select.values[0], option_name, self))
         
 
     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")

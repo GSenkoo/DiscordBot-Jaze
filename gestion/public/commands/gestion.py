@@ -586,7 +586,7 @@ class Gestion(commands.Cog):
             return
         
         giveaway_table_columns = await self.bot.db.get_table_columns("giveaway")
-        giveaway = dict(set(zip(giveaway_table_columns, giveaway_data[0])))
+        giveaway = dict(zip(giveaway_table_columns, giveaway_data[0]))
         giveaway_link = f"[giveaway {giveaway['reward']}](https://discord.com/channels/{giveaway['guild_id']}/{giveaway['channel_id']}/{giveaway['message_id']})"
 
         if giveaway["ended"]:
@@ -608,7 +608,7 @@ class Gestion(commands.Cog):
             return
         
         giveaway_table_columns = await self.bot.db.get_table_columns("giveaway")
-        giveaway = dict(set(zip(giveaway_table_columns, giveaway_data[0])))
+        giveaway = dict(zip(giveaway_table_columns, giveaway_data[0]))
         giveaway_link = f"[giveaway {giveaway['reward']}](https://discord.com/channels/{giveaway['guild_id']}/{giveaway['channel_id']}/{giveaway['message_id']})"
 
         if not giveaway["ended"]:
@@ -659,7 +659,7 @@ class Gestion(commands.Cog):
             return
         
         giveaways_columns = await self.bot.db.get_table_columns("giveaway")
-        giveaways = [dict(set(zip(giveaways_columns, giveaway_data))) for giveaway_data in giveaways]
+        giveaways = [dict(zip(giveaways_columns, giveaway_data)) for giveaway_data in giveaways]
         giveaways_text_data = []
 
         for giveaway in giveaways:
@@ -670,7 +670,7 @@ class Gestion(commands.Cog):
             title = "Giveaways actifs",
             embed_color = await self.bot.get_theme(ctx.guild.id),
             data_list = giveaways_text_data,
-            comment = "*Les données d'un giveaway restent accessibles jusqu'à 3h après sa fin.\nDonc vous pouvez le reroll uniquements durant ce délai.*"
+            comment = "*Les données d'un giveaway restent accessibles jusqu'à 24h après la fin de celui-ci.\nDonc vous pouvez le reroll uniquements durant ce délai.*"
         )
 
         if type(paginator) == list: await ctx.send(embed = paginator[0])

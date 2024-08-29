@@ -16,7 +16,7 @@ class on_presence_update(commands.Cog):
         if not soutien_datas:
             return
 
-        soutien_data = dict(set(zip(await self.bot.db.get_table_columns("soutien"), soutien_datas[0])))
+        soutien_data = dict(zip(await self.bot.db.get_table_columns("soutien"), soutien_datas[0]))
         if not soutien_data["enabled"]:
             return
         

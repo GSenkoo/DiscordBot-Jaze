@@ -26,7 +26,7 @@ class on_raw_reaction_add(commands.Cog):
             return
         
         reaction_role_table_columns = await self.bot.db.get_table_columns("role_react")
-        role_react_data = dict(set(zip(reaction_role_table_columns, role_react_data_sql[0])))
+        role_react_data = dict(zip(reaction_role_table_columns, role_react_data_sql[0]))
         role = member.guild.get_role(role_react_data["role"])
 
         if not role:

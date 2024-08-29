@@ -71,7 +71,7 @@ class on_interaction_giveaway(commands.Cog):
             await interaction.response.send_message("> Les données de ce giveaway ne sont plus disponibles.", ephemeral = True)
             return
     
-        giveaway = dict(set(zip(await self.bot.db.get_table_columns("giveaway"), current_giveaway[0])))
+        giveaway = dict(zip(await self.bot.db.get_table_columns("giveaway"), current_giveaway[0]))
         participations = json.loads(giveaway["participations"])
         if interaction.user.id in participations:
             participations.remove(interaction.user.id)
@@ -118,7 +118,7 @@ class on_interaction_giveaway(commands.Cog):
         if not current_giveaway:
             return
     
-        giveaway = dict(set(zip(await self.bot.db.get_table_columns("giveaway"), current_giveaway[0])))
+        giveaway = dict(zip(await self.bot.db.get_table_columns("giveaway"), current_giveaway[0]))
         if (giveaway["interaction_type"] != "reaction") or (reaction.emoji != giveaway["emoji"]):
             return
         
@@ -147,7 +147,7 @@ class on_interaction_giveaway(commands.Cog):
             return
         
         giveaway_table_columns = await self.bot.db.get_table_columns("giveaway")
-        giveaways = [dict(set(zip(giveaway_table_columns, giveaway))) for giveaway in giveaways_to_end]
+        giveaways = [dict(zip(giveaway_table_columns, giveaway)) for giveaway in giveaways_to_end]
         
         for giveaway in giveaways:
             message : discord.Message = self.bot.get_message(giveaway["message_id"])
@@ -215,7 +215,7 @@ class on_interaction_giveaway(commands.Cog):
 
     @tasks.loop(seconds = 1200)
     async def giveaway_auto_delete_loop(self):
-        date = datetime.now() - timedelta(hours = 3)
+        date = datetime.now() - timedelta(hours = 24)
         await self.bot.db.execute("DELETE FROM giveaway WHERE end_at < %s", (date,))
 
     @giveaway_auto_delete_loop.before_loop

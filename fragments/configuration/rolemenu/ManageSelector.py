@@ -135,6 +135,7 @@ class ManageSelector(MyViewClass):
 
         # TODO: Supprimer une option
 
+
     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")
     async def back_callback(self, button, interaction):
         if interaction.user != self.ctx.author:

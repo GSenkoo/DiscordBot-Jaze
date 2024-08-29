@@ -198,7 +198,7 @@ class Tools:
     async def send_join_message(self, guild, member):       
         joins_sql_data = await self.bot.db.execute(f"SELECT * FROM joins WHERE guild_id = {guild.id}", fetch = True)
         joins_table_columns = await self.bot.db.get_table_columns("joins")
-        joins_data = dict(set(zip(joins_table_columns, joins_sql_data[0])))
+        joins_data = dict(zip(joins_table_columns, joins_sql_data[0]))
         del joins_data["guild_id"]
 
         member_vars_dict = await self.get_member_vars_dict(member)
@@ -237,7 +237,7 @@ class Tools:
     async def send_leave_message(self, guild, member):       
         leaves_sql_data = await self.bot.db.execute(f"SELECT * FROM leaves WHERE guild_id = {guild.id}", fetch = True)
         leaves_table_columns = await self.bot.db.get_table_columns("leaves")
-        leaves_data = dict(set(zip(leaves_table_columns, leaves_sql_data[0])))
+        leaves_data = dict(zip(leaves_table_columns, leaves_sql_data[0]))
         
         del leaves_data["guild_id"]
 
