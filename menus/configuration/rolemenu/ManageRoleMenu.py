@@ -60,11 +60,13 @@ import asyncio
 from discord import AllowedMentions as AM
 from utils import MyViewClass
 from utils import Tools
+from utils import Searcher
 
 from .functions import get_main_embed
 from .functions import get_button_embed
 from .functions import get_role_menu_select_options
 from .functions import get_selector_embed
+from .functions import create_components
 from .ManageButton import ManageButton
 from .ManageSelector import ManageSelector
 
@@ -93,7 +95,7 @@ class ManageRoleMenu(MyViewClass):
 
 
     @discord.ui.select(
-        placeholder = "Choisir un bouton/sélécteur",
+        placeholder = "Choisir un bouton/sélecteur",
         options = None
     )
     async def choose_interact_callback(self, select, interaction):
@@ -117,11 +119,11 @@ class ManageRoleMenu(MyViewClass):
 
 
     @discord.ui.select(
-        placeholder = "Gérer les sélécteurs et boutons",
+        placeholder = "Gérer les sélecteurs et boutons",
         options = [
             discord.SelectOption(label = "Ajouter un bouton", emoji = "➕", value = "add_button"),
-            discord.SelectOption(label = "Ajouter un sélécteur", emoji = "➕", value = "add_selector"),
-            discord.SelectOption(label = "Retirer un bouton/sélécteur", emoji = "➖", value = "remove_selector"),
+            discord.SelectOption(label = "Ajouter un sélecteur", emoji = "➕", value = "add_selector"),
+            discord.SelectOption(label = "Retirer un bouton/sélecteur", emoji = "➖", value = "remove_selector"),
         ]
     )
     async def manage_interact_callback(self, select, interaction):
@@ -136,14 +138,14 @@ class ManageRoleMenu(MyViewClass):
 
         interaction_type = select.values[0].split("_")[1]
         action_type = select.values[0].split("_")[0]
-        components_ids = [component["id"] for component in self.data[interaction_type + "s"]] # tous les identifiants des boutons OU sélécteurs
+        components_ids = [component["id"] for component in self.data[interaction_type + "s"]] # tous les identifiants des boutons OU sélecteurs
         
         if action_type == "add":
             if (interaction_type == "button") and (len(self.data["buttons"]) + len(self.data["selectors"]) * 5 == 25):
                 await interaction.response.send_message(f"> Vous ne pouvez plus ajouter de bouton.", ephemeral = True)
                 return
             if (interaction_type == "selector") and (len(self.data["buttons"]) + len(self.data["selectors"]) * 5 > 20):
-                await interaction.response.send_message(f"> Vous ne pouvez plus ajouter de sélécteur.", ephemeral = True)
+                await interaction.response.send_message(f"> Vous ne pouvez plus ajouter de sélecteur.", ephemeral = True)
                 return  
             
             await interaction.response.defer()
@@ -208,7 +210,7 @@ class ManageRoleMenu(MyViewClass):
 
             class ChooseOneToRemove(MyViewClass):
                 @discord.ui.select(
-                    placeholder = "Choisir un sélécteur/bouton",
+                    placeholder = "Choisir un sélecteur/bouton",
                     options = options
                 )
                 async def choose_option_to_del_callback(self, select, interaction):
@@ -227,7 +229,7 @@ class ManageRoleMenu(MyViewClass):
                     manage_role_menu_view.update_select()
                     await interaction.edit(embed = await get_main_embed(manage_role_menu_view.bot, manage_role_menu_view.ctx, manage_role_menu_view.data), view = manage_role_menu_view)
                     
-                @discord.ui.button(label = "Choisissez un sélécteur/bouton", style = discord.ButtonStyle.primary, disabled = True)
+                @discord.ui.button(label = "Choisissez un sélecteur/bouton", style = discord.ButtonStyle.primary, disabled = True)
                 async def button_indicator_callback(self, button, interaction):
                     pass
 
@@ -249,12 +251,12 @@ class ManageRoleMenu(MyViewClass):
         
         for selector_data in self.data["selectors"]:
             if not selector_data["options_data"]:
-                await interaction.response.send_message(f"> Votre sélécteur **{selector_data['id']}** n'a pas d'options configuré.", ephemeral = True)
+                await interaction.response.send_message(f"> Votre sélecteur **{selector_data['id']}** n'a pas d'options configuré.", ephemeral = True)
                 return
 
             for option_data in selector_data["options_data"]:
                 if not option_data["role"]:
-                    await interaction.response.send_message(f"> Dans votre sélécteur **{selector_data['id']}**, l'option **{option_data['label']}** n'a pas de rôle à ajouter/supprimer configuré.", ephemeral = True)
+                    await interaction.response.send_message(f"> Dans votre sélecteur **{selector_data['id']}**, l'option **{option_data['label']}** n'a pas de rôle à ajouter/supprimer configuré.", ephemeral = True)
                     return
 
         for button_data in self.data["buttons"]:
@@ -265,8 +267,13 @@ class ManageRoleMenu(MyViewClass):
         self.disable_childrens()
         await interaction.edit(view = self)
 
+        async def error_occured(text):
+            await self.ctx.send(text, delete_after = 3)
+            self.enable_childrens()
+            await interaction.message.edit(view = self) 
+
         # --------------------------------------- Demande d'une réponse
-        ask_message = await self.ctx.send("> Quel est **lien du message** sur lequel vous souhaitez ajouter ces boutons/sélécteurs? Envoyez un salon si vous souhaitez envoyer les sélécteurs indépendament et `cancel` si vous souhaitez annuler cette action.")
+        ask_message = await self.ctx.send("> Quel est **lien du message** sur lequel vous souhaitez ajouter ces boutons/sélecteurs?\n\nEnvoyez **un salon** si vous souhaitez envoyer les sélecteurs/boutons dans un message seul et `cancel` si vous souhaitez annuler cette action.\nÀ prendre en compte : si vous fournissez un message et que celui-ci possède déjà des sélecteur/boutons, ceci seront remplacés.")
         tools = Tools(self.bot)
 
         def response_check(message):
@@ -274,23 +281,59 @@ class ManageRoleMenu(MyViewClass):
         
         try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
         except asyncio.TimeoutError():
-            await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
-            tools.create_delete_message_task(ask_message)
+            await error_occured("> Action annulée, 1 minute s'est écoulée.")
             return
+        finally: tools.create_delete_message_task(ask_message)
         tools.create_delete_message_task(response_message)
 
         # --------------------------------------- Traitement de la réponse
         if response_message.content.lower() == "cancel":
-            self.enable_childrens()
-            await interaction.message.edit(view = self)
+            error_occured("> Action annulée.")
             return
         
-        # TODO: Send the buttons !
+        # -------------------------------- Option - Envoyer les boutons et sélecteurs sur un seul message indépendant
+        searcher = Searcher(self.bot, self.ctx)
+        channel = await searcher.search_channel(response_message.content)
+
+        if channel:
+            try: await channel.send(view = create_components(self.data))
+            except: 
+                await error_occured(f"> Impossible d'envoyer de message dans le salon {channel.mention}.")
+            return
+        
+        # -------------------------------- Option - Ajouter les boutons et sélecteurs à un message.
+        content = response_message.content.removeprefix(f"https://discord.com/channels/{self.ctx.guild.id}/")
+        content = content.split("/")
+
+        if (not len(content) == 2) or (not (content[0].isdigit() and content[1].isdigit())):
+            await error_occured("> Le **lien de message** donné est invalide.")
+            return
         
 
+        channel = interaction.guild.get_channel(int(content[0]))
+        if not channel:
+            await error_occured("> Le **lien de message** donné est invalide, ou alors je n'ai pas accès au salon concerné.")
+            return
         
-
-
+        try: message = await channel.fetch_message(int(content[1]))
+        except:
+            error_occured("> Le **lien de message** donné est invalide.")
+            return
+        
+        if message.author != self.ctx.guild.me:
+            await error_occured("> Je ne suis pas l'auteur du message donné, donc je ne peux pas le modifier.")
+            return
+        
+        try: await message.edit(view = create_components(self.data))
+        except Exception as e: 
+            await error_occured("> Impossible de modifier le message donné, vérifiez mes permissions.")
+            raise e
+            return
+        
+        embed = interaction.message.embeds[0]
+        embed.title = "Configuration terminée"
+        await interaction.message.edit(embed = embed, view = None)
+        
 
     @discord.ui.button(style = discord.ButtonStyle.danger, emoji = "🗑")
     async def cancel_callback(self, button, interaction):

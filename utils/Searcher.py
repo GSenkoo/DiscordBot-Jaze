@@ -136,7 +136,7 @@ class Searcher():
         """
         if not guild: guild = self.ctx.guild
         
-        query_rmention = query.replace("<#", "").replace(">", "")
+        query_rmention = query.replace("<#", "").replace(">", "").removeprefix(f"https://discord.com/channels/{guild.id}/")
         channel = None
         if query_rmention.isdigit():
             try: channel = await guild.fetch_channel(int(query_rmention))

@@ -8,6 +8,9 @@ from typing import Union
 from datetime import timedelta, datetime
 
 class Tools:
+    """
+    Classe "outils" où sont stockés des fonctions utiles souvent utilisées
+    """
     def __init__(self, bot):
         self.bot = bot
 
@@ -266,3 +269,31 @@ class Tools:
 
         message_content = self.multiple_replaces(leaves_data["message"], vars_to_replace)
         await leave_channel.send(content = message_content, embed = embed)
+
+
+    def get_message_components(message : discord.Message) -> dict:
+        """
+        Returned dictionnary format : 
+            ```
+            {
+                "buttons": List[discord.ui.Button],
+                "selectors": List[discord.ui.SelectMenu]
+            }
+            ```
+        """
+        data = {
+            "buttons": [],
+            "selectors": []
+        }
+
+        for components in message.components:
+            if not type(components) == discord.ActionRow:
+                return
+            
+            for children in components.children:
+                if type(children) == discord.ui.Button:
+                    data["buttons"].append(children)
+                if type(children) == discord.ui.Select:
+                    data["selectors"].append(children)
+
+        return data

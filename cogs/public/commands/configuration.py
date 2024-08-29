@@ -1059,7 +1059,7 @@ class Configuration(commands.Cog):
                     return (message.author == interaction.user) and (message.channel == interaction.channel) and (message.content)
                 message = None
                 while not message:
-                    ask_message = await self.ctx.send(f"> Quel est le **lien ou l'identifiant du message** auquel vous souhaitez ajouter le bouton? Le message doit être un message du bot, ne doit pas contenir de bouton/sélecteur (vous pouvez utiliser `{ctx.clean_prefix}clearcomponents <message>` pour retirer les boutons/sélécteurs d'un message) et doit être dans le salon <#{self.data['channel']}>. Envoyez `cancel` pour annuler cette action.")
+                    ask_message = await self.ctx.send(f"> Quel est le **lien ou l'identifiant du message** auquel vous souhaitez ajouter le bouton? Le message doit être un message du bot, ne doit pas contenir de bouton/sélecteur (vous pouvez utiliser `{ctx.clean_prefix}clearcomponents <message>` pour retirer les boutons/sélecteurs d'un message) et doit être dans le salon <#{self.data['channel']}>. Envoyez `cancel` pour annuler cette action.")
                     try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
                     except asyncio.TimeoutError():
                         await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
@@ -1097,7 +1097,7 @@ class Configuration(commands.Cog):
                         continue
 
                     if message.components:
-                        await self.ctx.send("> Le message donné contient un/des sélécteur(s)/bouton(s).", delete_after = 3)
+                        await self.ctx.send("> Le message donné contient un/des sélecteur(s)/bouton(s).", delete_after = 3)
                         message = None
                         continue
             
@@ -1661,7 +1661,7 @@ class Configuration(commands.Cog):
             await ctx.send("> Le role-react donné a bien été supprimé.")
 
 
-    @commands.command(description = "Configurer des boutons et sélécteurs permettants aux membres de prendre des rôles eux-mêmes")
+    @commands.command(description = "Configurer des boutons et sélecteurs permettants aux membres de prendre des rôles eux-mêmes")
     @commands.guild_only() 
     async def rolemenu(self, ctx):
         await ctx.send(embed = await get_main_embed(self.bot, ctx), view = ManageRoleMenu(self.bot, ctx))

@@ -336,9 +336,6 @@ class Informations(commands.Cog):
             thumbnail = self.bot.user.avatar.url
         )
 
-        with open("config.json", encoding = "utf-8") as file:
-            data = json.load(file)
-            developers = data["developers"]
 
         # calculate memory
         pid = os.getpid()
@@ -348,8 +345,8 @@ class Informations(commands.Cog):
 
         view = discord.ui.View()
         view.add_item(discord.ui.Button(style = discord.ButtonStyle.link, label = translation["Inviter [data_user]"].replace("[data_user]", self.bot.user.name), url = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.user.id}&permissions=8&scope=bot"))
-        developers = [await self.bot.fetch_user(developer) for developer in developers]
-        embed.add_field(name = translation["Développeur"], value = ", ".join([f'[**{developer.display_name}**](https://discord.com/users/{developer.id})' for developer in developers]))
+        developer = await self.bot.fetch_user(1213951846234726441)
+        embed.add_field(name = translation["Développeur"], value = f'[**{developer.display_name}**](https://discord.com/users/{developer.id})')
         embed.add_field(name = translation["Vitesse"], value = f"{round(self.bot.latency * 1000)}ms")
         embed.add_field(name = translation["Version Python"], value = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
         embed.add_field(name = translation["Version Pycord"], value = f"{discord.__version__}")

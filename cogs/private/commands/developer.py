@@ -18,7 +18,8 @@ class Developer(commands.Cog):
         a, b, duration2 = manage_files(self.bot, "load")
 
         await ctx.send(f"> {len(self.bot.commands)} commandes mis à jour en {round((duration + duration2) * 100)}ms.")
-   
+
+
     @commands.command(description = "Arrêter le bot")
     async def stop(self, ctx):
         await ctx.send("> `[Database] Déconnection de la base de donnée en cours...`")
@@ -29,17 +30,7 @@ class Developer(commands.Cog):
 
         await ctx.send("> `[Database] Déconnection de la base de donnée effectuée, bot déconnecté.`")
         await self.bot.close()
-
-    @commands.command(description = "Redémarrer le bot")
-    async def restart(self, ctx):
-        await ctx.send("> `[Database] Déconnection de la base de donnée en cours...`")
-
-        print("[Database] Déconnection de la base de donnée en cours...")
-        await self.bot.db.close_pool()
-        print("[Database] Déconnection de la base de donnée effectuée avec succès, redémarrage lancé.")
-
-        await ctx.send("> `[Database] Déconnection de la base de donnée effectuée, redémarrage lancé.`")
-        os.system("python main.py")        
+   
 
     @commands.command(description = "Voir les serveurs sur lequel le bot est")
     async def serverlist(self, ctx):
@@ -55,6 +46,7 @@ class Developer(commands.Cog):
 
         if type(paginator) == list: await ctx.send(embed = paginator[0])
         else: await paginator.send(ctx)
+
 
     @commands.command(description = "Obtenir une invitation vers un serveur spécifique.")
     async def serverinvite(self, ctx, guild : discord.Guild):

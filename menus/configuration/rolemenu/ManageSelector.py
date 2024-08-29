@@ -46,7 +46,7 @@ class ManageSelector(MyViewClass):
         
         
     @discord.ui.select(
-        placeholder = "Modifier le sélécteur",
+        placeholder = "Modifier le sélecteur",
         options = [
             discord.SelectOption(label = "Texte", emoji = "✏", value = "placeholder"),
             discord.SelectOption(label = "Choix maximum", emoji = "⏫", value = "max_values"),
@@ -72,7 +72,7 @@ class ManageSelector(MyViewClass):
 
             # -------------------------------------- Demande d'une valeure
             ask_message = await self.ctx.send(
-                f"> Quel sera le **{option_name}** de votre sélécteur?" if select.values[0] != "option_create" else "> Quel **texte** souhaitez-vous définir à votre future option?"
+                f"> Quel sera le **{option_name}** de votre sélecteur?" if select.values[0] != "option_create" else "> Quel **texte** souhaitez-vous définir à votre future option?"
             )
             
             def response_check(message):
@@ -89,13 +89,13 @@ class ManageSelector(MyViewClass):
             # ---------------------------- Selector - Placeholder
             if select.values[0] == "placeholder":
                 if len(response_message.content) > 100:
-                    await self.ctx.send("> La taille maximale du texte du sélécteur doit être inférieur à 100 caractères.", delete_after = 3)
+                    await self.ctx.send("> La taille maximale du texte du sélecteur doit être inférieur à 100 caractères.", delete_after = 3)
                     return
                 self.selector_data["placeholder"] = response_message.content
 
             if "values" in select.values[0]:
                 if not response_message.content.isdigit():
-                    await self.ctx.send("> Botre réponse doit être un nombre entier.", delete_after = 3)
+                    await self.ctx.send("> Votre réponse doit être un nombre entier.", delete_after = 3)
                     return
 
                 number = int(response_message.content)                
@@ -124,7 +124,7 @@ class ManageSelector(MyViewClass):
                 
                 for option_data in self.selector_data["options_data"]:
                     if option_data["label"] == response_message.content:
-                        await self.ctx.send(f"> Il éxiste déjà une option sur ce sélécteur possédant le nom `{response_message.content if len(response_message) else response_message.content[:100] + '...'}`", allowed_mentions = AM.none())
+                        await self.ctx.send(f"> Il éxiste déjà une option sur ce sélecteur possédant le nom `{response_message.content if len(response_message) else response_message.content[:100] + '...'}`", allowed_mentions = AM.none())
                         return
                     
                 self.selector_data["options_data"].append({   
@@ -141,7 +141,7 @@ class ManageSelector(MyViewClass):
 
         if select.values[0] == "option_delete":
             if self.selector_data["options_data"]:
-                await interaction.response.send_message("> Il n'y a actuellement aucune option à supprimer sur sélécteur.", ephemeral = True)
+                await interaction.response.send_message("> Il n'y a actuellement aucune option à supprimer sur sélecteur.", ephemeral = True)
                 return
 
             manage_selector_view = self
