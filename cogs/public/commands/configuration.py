@@ -866,7 +866,7 @@ class Configuration(commands.Cog):
                         return (message.author == interaction.user) and (message.channel == interaction.channel) and (message.content)
                     
                     try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
-                    except asyncio.TimeoutError():
+                    except asyncio.TimeoutError:
                         await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                     finally: delete_message(request_message)
                     delete_message(response_message)
@@ -1061,7 +1061,7 @@ class Configuration(commands.Cog):
                 while not message:
                     ask_message = await self.ctx.send(f"> Quel est le **lien ou l'identifiant du message** auquel vous souhaitez ajouter le bouton? Le message doit être un message du bot, ne doit pas contenir de bouton/sélecteur (vous pouvez utiliser `{ctx.clean_prefix}clearcomponents <message>` pour retirer les boutons/sélecteurs d'un message) et doit être dans le salon <#{self.data['channel']}>. Envoyez `cancel` pour annuler cette action.")
                     try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
-                    except asyncio.TimeoutError():
+                    except asyncio.TimeoutError:
                         await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                         await restore()
                         return
@@ -1302,7 +1302,7 @@ class Configuration(commands.Cog):
 
                     message = await ctx.send("> Dans quel **salon** souhaitez-vous envoyer le message de bienvenue? Envoyez `cancel` pour annuler.")
                     try: response = await self.bot.wait_for("message", check = response_check, timeout = 60)
-                    except asyncio.TimeoutError():
+                    except asyncio.TimeoutError:
                         await ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                         return
                     except: return
@@ -1330,7 +1330,7 @@ class Configuration(commands.Cog):
                     message = await ctx.send(f"> Quel sera le nouveau contenu de votre **{option_name}** ? Envoyez `cancel` pour annuler et `remove` pour retirer le contenu actuel.")
 
                     try: response = await self.bot.wait_for("message", check = response_check, timeout = 60)
-                    except asyncio.TimeoutError():
+                    except asyncio.TimeoutError:
                         await ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                         return
                     finally: delete_message(message)
@@ -1482,7 +1482,7 @@ class Configuration(commands.Cog):
 
                     message = await ctx.send("> Dans quel **salon** souhaitez-vous envoyer le message d'adieu? Envoyez `cancel` pour annuler.")
                     try: response = await self.bot.wait_for("message", check = response_check, timeout = 60)
-                    except asyncio.TimeoutError():
+                    except asyncio.TimeoutError:
                         await ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                         return
                     except: return
@@ -1509,7 +1509,7 @@ class Configuration(commands.Cog):
                     message = await ctx.send(f"> Quel sera le nouveau contenu de votre **message d'adieu** ? Envoyez `cancel` pour annuler et `remove` pour retirer le contenu actuel.")
 
                     try: response = await self.bot.wait_for("message", check = response_check, timeout = 60)
-                    except asyncio.TimeoutError():
+                    except asyncio.TimeoutError:
                         await ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                         return
                     finally: delete_message(message)

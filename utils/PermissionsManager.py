@@ -82,7 +82,7 @@ class PermissionsManager:
 
     async def get_allcommands(self) -> list:
         """
-        Renvoyer la liste de toutes les commandes actuelles
+        Renvoyer une liste de toutes les commandes actuelles
         ------------------
         ```
         ["command_name1", "command_name2", "command_name3", ...]
@@ -149,8 +149,8 @@ class PermissionsManager:
         
         return commands
 
-# ------------------------------------------- CHECK -------------------------------------------
 
+# ------------------------------------------- CHECK -------------------------------------------
     async def can_use_cmd(self, ctx, specific_command = None):
         if specific_command: ctx.command = specific_command
         

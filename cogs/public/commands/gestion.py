@@ -400,7 +400,7 @@ class Gestion(commands.Cog):
                 )
 
                 try: response_message = await bot.wait_for("message", timeout = 60, check = check_message_validity)
-                except asyncio.TimeoutError():
+                except asyncio.TimeoutError:
                     await ctx.send("> Action annulée, 1 minute écoulée.", delete_after = 2)
                     return
                 finally: await delete_message(ask_message)

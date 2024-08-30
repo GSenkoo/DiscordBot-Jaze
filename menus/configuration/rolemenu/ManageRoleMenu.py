@@ -38,8 +38,7 @@
 """
 
 """
-Schema of the system (in fragments.configuration.rolemenu) :
-
+Schéma du système de view (dans fragments.configuration.rolemenu) :
                     ManageRoleMenu() + functions.py
                     /             \ 
                    /               \ 
@@ -52,6 +51,9 @@ Schema of the system (in fragments.configuration.rolemenu) :
                    |           /   
                    |          /
                   ManageRoles()   
+
+    
+    Les classes ManageButton() et ManageSelectorOption() utilise la même classe ManageRoles() pour définir leurs rôle à ajouter/retirer, rôle requis et rôle ignoré.
 """
 
 import discord
@@ -155,7 +157,7 @@ class ManageRoleMenu(MyViewClass):
             def response_check(message):
                 return (message.author == interaction.user) and (message.content) and (message.channel == interaction.channel)
             try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
-            except asyncio.TimeoutError():
+            except asyncio.TimeoutError:
                 await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                 return
             finally: tools.create_delete_message_task(ask_message)
@@ -182,7 +184,8 @@ class ManageRoleMenu(MyViewClass):
                         "emoji": None,
                         "role": None,
                         "required_role": None,
-                        "ignored_role": None
+                        "ignored_role": None,
+                        "send_response": True
                     }
                 )
                 self.update_select()
@@ -195,7 +198,8 @@ class ManageRoleMenu(MyViewClass):
                         "placeholder": "Choisir des rôles",
                         "min_values": 0,
                         "max_values": 1,
-                        "options_data": []
+                        "options_data": [],
+                        "send_response": True
                     }
                 )
                 self.update_select()
@@ -280,7 +284,7 @@ class ManageRoleMenu(MyViewClass):
             return (message.author == interaction.user) and (message.channel == interaction.channel) and (message.content)
         
         try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
-        except asyncio.TimeoutError():
+        except asyncio.TimeoutError:
             await error_occured("> Action annulée, 1 minute s'est écoulée.")
             return
         finally: tools.create_delete_message_task(ask_message)

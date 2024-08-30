@@ -53,7 +53,7 @@ class ManageSelectorOption(MyViewClass):
                 return (message.author == interaction.user) and (message.content) and (message.channel == interaction.channel)
 
             try: response_message = await self.bot.wait_for('message', check = response_check, timeout = 60)
-            except asyncio.TimeoutError():
+            except asyncio.TimeoutError:
                 await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                 return
             finally: tools.create_delete_message_task(ask_message)
@@ -75,6 +75,7 @@ class ManageSelectorOption(MyViewClass):
                     await self.ctx.send(f"> La taille de votre {option_name} ne doit pas dépasser les {80 if select.values[0] == 'label' else 100} caractères.", delete_after = 3)
                     return
                 self.data[select.values[0]] = response_message.content
+
             
             # ----------------------------------- L'emoji doit juste éxister
             if select.values[0] == "emoji":

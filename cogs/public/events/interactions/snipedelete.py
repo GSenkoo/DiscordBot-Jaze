@@ -2,9 +2,15 @@ import discord
 from discord.ext import commands
 
 
-class SnipeDeleteEvent(commands.Cog):
+class SnipeDeleteInteractionEvent(commands.Cog):
+    """
+    Lorsqu'un utilisateur utilise la commande +snipe, 2 personnes peuvent supprimer le message de snipe via le bouton configuré :
+        - L'auteur de la commande
+        - L'auteur du message sauvegardé dans le snipe
+    """
     def __init__(self, bot):
         self.bot = bot
+
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction : discord.Interaction):
@@ -20,4 +26,4 @@ class SnipeDeleteEvent(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(SnipeDeleteEvent(bot))
+    bot.add_cog(SnipeDeleteInteractionEvent(bot))

@@ -6,7 +6,26 @@ from discord.ext import commands
 from utils.MyViewClass import MyViewClass
 
 
-class CaptchaInteraction(commands.Cog):
+class CaptchaInteractionEvent(commands.Cog):
+    """
+    Lorsque les membres d'un serveur appuuie sur le bouton de vérification et que le système 
+    de vérification est activé sur le serveur et qu'un rôle valide pour les utilisateurs non 
+    vérifiés a été configuré :
+
+        Le bot envoi un embed intéractif permettant d'entrer un code et d'ensuite le valider.
+        - Si le code est invalide, alors l'utilisateur est expulsé.
+
+        - Si le code est valide, l'utilisateur se fait enlever le rôle des utilisateurs non
+        vérifié.
+            Condition: 
+                Si le serveur a configuré un rôle pour les utilisateurs vérifiés alors
+                l'utilisateur se fait attribuer le rôle des utilisateurs vérifiés.
+            Condition:
+                Si le message de bienvenue a été configuré de tel sorte à ce qu'il soit
+                envoyer après le captcha, alors le bot enverra le message de bienvenue.
+
+        
+    """
     def __init__(self, bot):
         self.bot = bot
         self.guilds_attempts = {}
@@ -42,7 +61,8 @@ class CaptchaInteraction(commands.Cog):
         if interaction.user.id not in self.guilds_attempts.keys():
             self.guilds_attempts[interaction.guild.id][interaction.user.id] = 0
         
-    
+
+        # --------------------------------- Configuration d'une fonction permettantr de mettre à jour l'embed de captcha lorsque l'utilisateur modifie son texte (ou juste lors de l'envoi)
         async def get_captcha_embed(code, code_written, attempts):
             embed = discord.Embed(
                 title = "Vérification",
@@ -57,6 +77,7 @@ class CaptchaInteraction(commands.Cog):
             return embed
         
 
+# -------------------------------------- WRITE CAPTCHA CODE VIEW --------------------------------------
         captcha_interaction = self
         class WriteCaptchaCode(MyViewClass):
             def __init__(self, code):
@@ -167,12 +188,13 @@ class CaptchaInteraction(commands.Cog):
                 await interaction.edit(
                     embed = await get_captcha_embed(self.code, self.written_code, captcha_interaction.guilds_attempts[interaction.guild.id][interaction.user.id])
                 )
+# ----------------------------------------------------------------------------------------------------- FIN DU WRITE CAPTCHA VIEW
 
-
-        code_characters = "0123456789ABCDEFGHIJ"        
+        code_characters = "0123456789ABCDEFGHIJ" # Les caractères utilisés pour le remplissage du code
         generated_code = "".join([secrets.choice(code_characters) for i in range(10)])
         write_captcha_code = WriteCaptchaCode(generated_code)
 
+        # ----------------------------- Callback pour chaque bouton permettant d'ajouter un caractère.
         async def put_character_callback(interaction):
             if interaction.user.id not in captcha_interaction.guilds_attempts[interaction.guild.id].keys():
                 await interaction.response.send_message("> Merci de réclamer un nouveau menu de vérification.", ephemeral = True)
@@ -185,7 +207,7 @@ class CaptchaInteraction(commands.Cog):
             write_captcha_code.written_code += interaction.custom_id.removeprefix("captcha_letter_")
             await interaction.edit(embed = await get_captcha_embed(write_captcha_code.code, write_captcha_code.written_code, captcha_interaction.guilds_attempts[interaction.guild.id][interaction.user.id]))
 
-
+        # ----------------------------- Créer les boutons de remplissage de caractère et leurs définir comme callback la fonction put_character_callback()
         for character in code_characters:
             button = discord.ui.Button(style = discord.ButtonStyle.primary, label = character, custom_id = "captcha_letter_" + character, disabled = True)
             if character in generated_code:
@@ -193,10 +215,11 @@ class CaptchaInteraction(commands.Cog):
                 button.callback = put_character_callback
 
             write_captcha_code.add_item(button)
-
+        
+        # ---------------------------- Envoyer le captcha à remplir
         await interaction.response.send_message(embed = await get_captcha_embed(write_captcha_code.code, write_captcha_code.written_code, captcha_interaction.guilds_attempts[interaction.guild.id][interaction.user.id]), view = write_captcha_code, ephemeral = True)
 
 
 def setup(bot):
 
-    bot.add_cog(CaptchaInteraction(bot))
+    bot.add_cog(CaptchaInteractionEvent(bot))

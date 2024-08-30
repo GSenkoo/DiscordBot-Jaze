@@ -52,7 +52,8 @@ class ManageSelector(MyViewClass):
             discord.SelectOption(label = "Choix maximum", emoji = "⏫", value = "max_values"),
             discord.SelectOption(label = "Choix minimum", emoji = "⏬", value = "min_values"),
             discord.SelectOption(label = "Créer une option", emoji = "➕", value = "option_create"),
-            discord.SelectOption(label = "Supprimer une option", emoji = "➖", value = "option_delete")            
+            discord.SelectOption(label = "Supprimer une option", emoji = "➖", value = "option_delete"),
+            discord.SelectOption(label = "Réponse de confirmation", emoji = "💬", value = "send_response")        
         ]
     )
     async def edit_selector_callback(self, select, interaction):
@@ -79,7 +80,7 @@ class ManageSelector(MyViewClass):
                 return (message.author == interaction.user) and (message.channel == interaction.channel) and (message.content)
             try:
                 response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
-            except asyncio.TimeoutError():
+            except asyncio.TimeoutError:
                 await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
                 return
             finally: tools.create_delete_message_task(ask_message)
@@ -92,6 +93,7 @@ class ManageSelector(MyViewClass):
                     await self.ctx.send("> La taille maximale du texte du sélecteur doit être inférieur à 100 caractères.", delete_after = 3)
                     return
                 self.selector_data["placeholder"] = response_message.content
+
 
             if "values" in select.values[0]:
                 if not response_message.content.isdigit():
@@ -116,7 +118,8 @@ class ManageSelector(MyViewClass):
                         return
                 
                 self.selector_data[select.values[0]] = number
-            
+
+
             if select.values[0] == "option_create":
                 if len(response_message.content) > 80:
                     await self.ctx.send("La taille maximale du texte de votre option doit être inférieur à 80 caractères.", delete_after = 3)
@@ -124,7 +127,7 @@ class ManageSelector(MyViewClass):
                 
                 for option_data in self.selector_data["options_data"]:
                     if option_data["label"] == response_message.content:
-                        await self.ctx.send(f"> Il éxiste déjà une option sur ce sélecteur possédant le nom `{response_message.content if len(response_message) else response_message.content[:100] + '...'}`", allowed_mentions = AM.none())
+                        await self.ctx.send(f"> Une option sur sélecteur possède déjà le nom `{response_message.content if len(response_message.content) <= 100 else response_message.content[:100] + '...'}`.", allowed_mentions = AM.none(), delete_after = 3)
                         return
                     
                 self.selector_data["options_data"].append({   
@@ -139,8 +142,9 @@ class ManageSelector(MyViewClass):
             
             await interaction.message.edit(embed = await get_selector_embed(self.selector_data, self.ctx, self.bot), view = self)
 
+
         if select.values[0] == "option_delete":
-            if self.selector_data["options_data"]:
+            if not self.selector_data["options_data"]:
                 await interaction.response.send_message("> Il n'y a actuellement aucune option à supprimer sur sélecteur.", ephemeral = True)
                 return
 
@@ -151,14 +155,14 @@ class ManageSelector(MyViewClass):
                     options = get_formated_selector_options(manage_selector_view.selector_data["options_data"])
                 )
                 async def choose_option_to_delete(self, select, interaction):
-                    if interaction.user != self.ctx.author:
+                    if interaction.user != manage_selector_view.ctx.author:
                         await interaction.response.send_message("> Vous n'êtes pas autorisés à intéragir avec ceci.", ephemeral = True)
                         return
                     
                     option_label = select.values[0].split("_")[2] # Format d'une valeure d'une option : selector_option_{LABEL}
                     for index, options_data in enumerate(manage_selector_view.selector_data["options_data"]):
                         if options_data["label"] == option_label:
-                            del manage_selector_view[index]
+                            del manage_selector_view.selector_data["options_data"][index]
                             break
                     
                     manage_selector_view.update_displayed_options()
@@ -180,6 +184,11 @@ class ManageSelector(MyViewClass):
                     await interaction.edit(view = manage_selector_view)
 
             await interaction.edit(view = ChooseOptionToDelete())
+
+
+        if select.values[0] == "send_response":
+            self.selector_data["send_response"] = not self.selector_data["send_response"]
+            await interaction.edit(embed = await get_selector_embed(self.selector_data, self.ctx, self.bot))
 
 
     @discord.ui.button(label = "Revenir en arrière", emoji = "↩")

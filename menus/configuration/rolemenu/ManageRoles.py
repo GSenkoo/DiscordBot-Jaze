@@ -3,6 +3,7 @@ import discord
 from utils import GPChecker
 from utils import MyViewClass
 
+
 class ManageRoles(MyViewClass):
     def __init__(self, bot, ctx, choosed_value, option_name, previous_view, get_embed_func):
         super().__init__()
@@ -41,6 +42,14 @@ class ManageRoles(MyViewClass):
                 await interaction.response.send_message("> Le rôle requis et le rôle ignoré ne peuvent pas être identiques.", ephemeral = True)
                 return
         
+        if hasattr(self.previous_view, "manage_selector_view"): # Pour savoir si nous sommes actuellements entrain de gérer une option de sélécteur
+            for index, option_data in enumerate(self.previous_view.manage_selector_view.selector_data["options_data"]):
+                if index == self.previous_view.option_index:
+                    continue
+                if option_data["role"] == role.id:
+                    await interaction.response.send_message(f"> Le rôle {role.mention} est déjà attribué dans une autre option du sélécteur.", ephemeral = True)
+                    return
+
         self.previous_view.data[self.choosed_value] = select.values[0].id
         await interaction.edit(embed = await self.get_embed_func(self.previous_view.data, self.ctx, self.bot), view = self.previous_view)
         

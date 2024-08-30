@@ -26,7 +26,8 @@ class ManageButton(MyViewClass):
             discord.SelectOption(label = "Couleur", emoji = "🎨", value = "color"),
             discord.SelectOption(label = "Rôle", emoji = "👤", value = "role"),
             discord.SelectOption(label = "Rôle requis", emoji = "📌", value = "required_role"),
-            discord.SelectOption(label = "Rôle ignoré", emoji = "🚫", value = "ignored_role")
+            discord.SelectOption(label = "Rôle ignoré", emoji = "🚫", value = "ignored_role"),
+            discord.SelectOption(label = "Réponse de confirmation", emoji = "💬", value = "send_response")
         ]
     )
     async def edit_button_callback(self, select, interaction):
@@ -45,7 +46,7 @@ class ManageButton(MyViewClass):
                 return (message.channel == interaction.channel) and (message.author == interaction.user) and (message.content)
             
             try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
-            except asyncio.TimeoutError():
+            except asyncio.TimeoutError:
                 await self.ctx.send("> Action annulée, 1 miute s'est écoulée.")
                 return
             finally: tools.create_delete_message_task(message)
@@ -80,6 +81,12 @@ class ManageButton(MyViewClass):
                     return
 
             await interaction.message.edit(embed = await get_button_embed(self.data, self.ctx, self.bot))
+
+
+        if select.values[0] == "send_response":
+            self.data["send_response"] = not self.data["send_response"]
+            await interaction.edit(embed = await get_button_embed(self.data, self.ctx, self.bot))
+
 
         if "role" in select.values[0]:
             await interaction.edit(view = ManageRoles(self.bot, self.ctx, select.values[0], option_name, self, get_button_embed))

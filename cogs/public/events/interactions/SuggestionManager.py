@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands
+from utils import Tools
 
 
-class SuggestionsManager(commands.Cog):
+class SuggestionsManagerInteractionEvent(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -67,10 +68,14 @@ class SuggestionsManager(commands.Cog):
                 return
 
             async def add_reaction(message, reaction, if_connot_reaction):
-                try: await message.add_reaction(reaction)
-                except:
-                    try: await message.add_reaction(if_connot_reaction)
-                    except: pass
+                tools = Tools(self.bot)
+                emoji = tools.get_emoji(reaction)
+
+                emoji_to_add = str(emoji) if emoji else if_connot_reaction
+
+                try: await message.add_reaction(emoji_to_add)
+                except: pass
+
             await add_reaction(message, for_emoji, "✅")
             await add_reaction(message, against_emoji, "❌")
             
@@ -108,4 +113,4 @@ class SuggestionsManager(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(SuggestionsManager(bot))
+    bot.add_cog(SuggestionsManagerInteractionEvent(bot))
