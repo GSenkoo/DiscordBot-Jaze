@@ -33,7 +33,7 @@ class RoleButtonInteractionEvent(commands.Cog):
         role_required = interaction.guild.get_role(datas[1]) if datas[1] else None
         role_ignored = interaction.guild.get_role(datas[2]) if datas[2] else None
         send_response = bool(datas[3])
-        member_roles_ids = [role.id for role in interaction.user.roles]
+        member_roles_ids = [role.id for role in interaction.user.roles] if interaction.user.roles else []
 
         if not role:
             await interaction.response.send_message(f"> Le rôle <@&{role.mention}> n'éxiste plus ou ne m'est plus accessible.", ephemeral = True)

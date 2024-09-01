@@ -12,7 +12,7 @@ from .ManageRoles import ManageRoles
 
 class ManageSelectorOption(MyViewClass):
     def __init__(self, bot, ctx, data, manage_selector_view):
-        super().__init__(timeout = 180)
+        super().__init__(timeout = 600)
         self.bot = bot
         self.ctx = ctx
         self.data = data
@@ -31,9 +31,7 @@ class ManageSelectorOption(MyViewClass):
             discord.SelectOption(label = "Texte", emoji = "✏", value = "label"),
             discord.SelectOption(label = "Description", emoji = "📝", value = "description"),
             discord.SelectOption(label = "Emoji", emoji = "🎭", value = "emoji"),
-            discord.SelectOption(label = "Rôle", emoji = "👤", value = "role"),
-            discord.SelectOption(label = "Rôle requis", emoji = "📌", value = "required_role"),
-            discord.SelectOption(label = "Rôle ignoré", emoji = "🚫", value = "ignored_role")
+            discord.SelectOption(label = "Rôle", emoji = "👤", value = "role")
         ]
     )
     async def edit_selector_option_callback(self, select, interaction):
@@ -88,7 +86,7 @@ class ManageSelectorOption(MyViewClass):
             await interaction.edit(embed = await get_selector_option_embed(self.data, self.ctx, self.bot))
         
         # ----------------------------------- ROLE / REQUIRED ROLE / IGNORED ROLE
-        if "role" in select.values[0]:
+        if select.values[0] == "role":
             await interaction.edit(view = ManageRoles(self.bot, self.ctx, select.values[0], option_name, self, get_selector_option_embed))
 
 

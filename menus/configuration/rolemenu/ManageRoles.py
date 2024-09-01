@@ -37,7 +37,7 @@ class ManageRoles(MyViewClass):
             await interaction.response.send_message(check, ephemeral = True)
             return
         
-        if self.choosed_value != "role":
+        if (not hasattr(self.previous_view, "manage_selector_view")) and (self.choosed_value != "role"):
             if (self.choosed_value == "ignored_role" and self.previous_view.data["required_role"] == select.values[0].id) or (self.choosed_value == "required_role" and self.previous_view.data["ignored_role"] == select.values[0].id):
                 await interaction.response.send_message("> Le rôle requis et le rôle ignoré ne peuvent pas être identiques.", ephemeral = True)
                 return

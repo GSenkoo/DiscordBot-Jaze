@@ -11,7 +11,7 @@ async def get_main_embed(bot, ctx, data = None) -> discord.Embed:
 
     embed = discord.Embed(
         title = "Configuration de boutons/sélecteurs à rôle",
-        description = "Un sélecteur équivaut à 5 boutons, et Discord limite chaque message à 25 boutons.\n\n-# *Cette page du role-menu est la principale, et si elle n'est pas utilisé pendant plus de 10 minutes (y compris lorsque vous êtes dans les menus de configuration des boutons/sélecteurs), elle sera désactivé.*"
+        description = "*Un sélecteur équivaut à 5 boutons, et Discord limite chaques messages à 25 boutons.*"
         + "\n\n"
         + f"> *Votre nombre de sélecteur :* ***{len(data['selectors'])}***\n"
         + f"> *Votre nombre de bouton :* ***{len(data['buttons'])}***\n",
@@ -110,8 +110,6 @@ async def get_selector_option_embed(selector_option_data, ctx, bot) -> discord.E
     embed.add_field(name = "Description", value = selector_option_data["description"] if selector_option_data["description"] else "*Aucune description*")
     embed.add_field(name = "Emoji", value = selector_option_data["emoji"] if selector_option_data["emoji"] else "*Aucun emoji*")
     embed.add_field(name = "Rôle", value = f"<@&{selector_option_data['role']}>" if selector_option_data['role'] else "*Aucun rôle (obligatoire)*")
-    embed.add_field(name = "Rôle requis", value = f"<@&{selector_option_data['required_role']}>" if selector_option_data['required_role'] else "*Aucun rôle*")
-    embed.add_field(name = "Rôle ignoré", value = f"<@&{selector_option_data['ignored_role']}>" if selector_option_data['ignored_role'] else "*Aucun rôle*")
 
     return embed
 
@@ -124,9 +122,10 @@ def create_components(data) -> discord.ui.View:
     -              ^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^ ^^^^
     -              Rôle à ajouter      Rôle obligatoire    Rôle interdit       True/False Envoi de réponse de confirmation
 
-    C'est la même chose pour les options des sélecteurs, mais :
-        - Aulieu de "role_button_" au début, c'est "option_".
-        - Il n'y a pas de "_True" ou "_False" à la fin car il est déjà dans le custom_id du sélécteur
+    Pour les valeurs des options de sélecteur c'est juste :
+    - "option_1241484256182669402
+    -         ^^^^^^^^^^^^^^^^^^^
+    -         Rôle à ajouter
     
     Format des custom_id des sélécteurs :
     - "selector_roles_True"
@@ -146,7 +145,7 @@ def create_components(data) -> discord.ui.View:
             placeholder = selector_data["placeholder"],
             min_values = selector_data["min_values"],
             max_values = selector_data["max_values"],
-            custom_id = f"selector_roles_{button_data['send_response']}"
+            custom_id = f"selector_roles_{selector_data['send_response']}"
         )
 
         for option_data in selector_data["options_data"]:
@@ -155,8 +154,6 @@ def create_components(data) -> discord.ui.View:
                 description = option_data["description"],
                 emoji = option_data["emoji"],
                 value = f"option_{option_data['role']}"
-                    + f"_{option_data['required_role'] if option_data['required_role'] else 0}"
-                    + f"_{option_data['ignored_role'] if option_data['ignored_role'] else 0}"
             )
 
         view.add_item(selector)

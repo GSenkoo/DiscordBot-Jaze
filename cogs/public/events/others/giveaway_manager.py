@@ -152,11 +152,11 @@ class on_interaction_giveaway(commands.Cog):
             message : discord.Message = self.bot.get_message(giveaway["message_id"])
             if not message:
                 try:
-                    guild : discord.Guild = await self.bot.fetch_guild(giveaway["guild_id"])
+                    guild : discord.Guild = self.bot.get_guild(giveaway["guild_id"])
                     channel : discord.TextChannel = guild.get_channel(giveaway["channel_id"])
 
                     if not channel: raise ValueError()
-
+                    
                     message : discord.Message = await channel.fetch_message(giveaway["message_id"])
                 except:
                     await self.bot.db.execute("DELETE FROM giveaway WHERE guild_id = %s AND channel_id = %s AND message_id = %s", (giveaway["guild_id"], giveaway["channel_id"], giveaway["message_id"]))

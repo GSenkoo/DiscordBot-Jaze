@@ -335,7 +335,7 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(manage_roles = True)
     async def addrole(self, ctx, role : discord.Role, member : discord.Member = None):
         """
-        Note: les utilisateurs avec la permission owner peuvent ajouter n'importe quel rôle si ils ont accès à la commande.
+        Note: les utilisateurs avec la permission owner peuvent ajouter n'importe quel rôle s'ils ont accès à la commande.
         """
         if not member:
             member = ctx.author
@@ -359,7 +359,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     async def delrole(self, ctx, role : discord.Role, member : discord.Role = None):
         """
-        Note: les utilisateurs avec la permission owner peuvent retirer n'importe quel rôle.
+        Note: les utilisateurs avec la permission owner peuvent retirer n'importe quel rôle s'ils ont accès à la commande.
         """
         if not member:
             member = ctx.author
@@ -411,7 +411,7 @@ class Moderation(commands.Cog):
             reason = f"[{ctx.author.display_name} - {ctx.author.id}] Suppression de {count} messages" + (f" appartenants à {user.display_name}" if user else "")
         )
 
-    
+
     @commands.command(description = "Déconnecter un membre d'un salon vocal")
     @commands.bot_has_guild_permissions(move_members = True)
     async def deco(self, ctx, member : discord.Member):

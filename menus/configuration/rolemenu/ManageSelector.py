@@ -134,9 +134,7 @@ class ManageSelector(MyViewClass):
                     "label": response_message.content,
                     "description": None,
                     "emoji": None,
-                    "role": None,
-                    "required_role": None,
-                    "ignored_role": None
+                    "role": None
                 })
                 self.update_displayed_options()
             

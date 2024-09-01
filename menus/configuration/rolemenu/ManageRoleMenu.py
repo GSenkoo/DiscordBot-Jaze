@@ -25,9 +25,7 @@
                     "label": "A label here",
                     "description": "A description here",
                     "emoji": "emoji_here",
-                    "role": role_id_here,
-                    "required_role": required_role_id_here,
-                    "ignored_role": ignored_role_id_here
+                    "role": role_id_here
                 }
                 ...
             ]
@@ -75,7 +73,7 @@ from .ManageSelector import ManageSelector
 
 class ManageRoleMenu(MyViewClass):
     def __init__(self, bot, ctx):
-        super().__init__(timeout = 600)
+        super().__init__(timeout = 900)
         self.bot = bot
         self.ctx = ctx
         self.data = {"buttons": [], "selectors": []}
@@ -97,7 +95,7 @@ class ManageRoleMenu(MyViewClass):
 
 
     @discord.ui.select(
-        placeholder = "Choisir un bouton/sélecteur",
+        placeholder = "Configurer un bouton/sélecteur",
         options = None
     )
     async def choose_interact_callback(self, select, interaction):
@@ -121,7 +119,7 @@ class ManageRoleMenu(MyViewClass):
 
 
     @discord.ui.select(
-        placeholder = "Gérer les sélecteurs et boutons",
+        placeholder = "Créer/Supprimer les sélecteurs et boutons",
         options = [
             discord.SelectOption(label = "Ajouter un bouton", emoji = "➕", value = "add_button"),
             discord.SelectOption(label = "Ajouter un sélecteur", emoji = "➕", value = "add_selector"),
@@ -199,7 +197,7 @@ class ManageRoleMenu(MyViewClass):
                         "min_values": 0,
                         "max_values": 1,
                         "options_data": [],
-                        "send_response": True
+                        "send_response": False
                     }
                 )
                 self.update_select()
@@ -300,7 +298,13 @@ class ManageRoleMenu(MyViewClass):
         channel = await searcher.search_channel(response_message.content)
 
         if channel:
-            try: await channel.send(view = create_components(self.data))
+            try: 
+                await channel.send(view = create_components(self.data))
+                
+                embed = interaction.message.embeds[0]
+                embed.title = "Configuration terminée"
+                try: await interaction.message.edit(embed = embed, view = None)
+                except: pass
             except: 
                 await error_occured(f"> Impossible d'envoyer de message dans le salon {channel.mention}.")
             return
