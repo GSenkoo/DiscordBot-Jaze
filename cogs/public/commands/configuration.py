@@ -1665,6 +1665,7 @@ class Configuration(commands.Cog):
     @commands.guild_only() 
     async def rolemenu(self, ctx):
         await ctx.send(embed = await get_main_embed(self.bot, ctx), view = ManageRoleMenu(self.bot, ctx))
+    
 
 
 def setup(bot):

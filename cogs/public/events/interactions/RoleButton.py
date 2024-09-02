@@ -27,6 +27,7 @@ class RoleButtonInteractionEvent(commands.Cog):
         assert all(data.isdigit() for data in datas[:-1])
         assert datas[3] in ("True", "False")
 
+        
         datas = [int(data) for data in datas[:-1]] + [datas[3]]
         
         role = interaction.guild.get_role(datas[0])
@@ -47,19 +48,21 @@ class RoleButtonInteractionEvent(commands.Cog):
             await interaction.response.send_message(f"> Vous ne devez pas avoir le rôle {role_ignored.mention}.", ephemeral = True)
             return
         
+        if send_response:
+            await interaction.response.defer(ephemeral = True, invisible = False)
+        else:
+            await interaction.response.defer()
         # --------------------------- Ajout/Retrait du rôle
         if role.id not in member_roles_ids:
             await interaction.user.add_roles(role, reason = "Role-Button")
             if send_response:
-                await interaction.response.send_message(f"> Le rôle {role.mention} vous a été ajouté.", ephemeral = True)
+                await interaction.followup.send(f"> Le rôle {role.mention} vous a été ajouté.", ephemeral = True)
                 return
         else:
             await interaction.user.remove_roles(role, reason = "Role-Button")
             if send_response:
-                await interaction.response.send_message(f"> Le rôle {role.mention} vous a été retiré.", ephemeral = True)
+                await interaction.followup.send(f"> Le rôle {role.mention} vous a été retiré.", ephemeral = True)
                 return
-        
-        await interaction.response.defer()
 
 
 def setup(bot):

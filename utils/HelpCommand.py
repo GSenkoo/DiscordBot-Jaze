@@ -16,12 +16,10 @@ class CustomHelp(commands.HelpCommand):
         help_type = await self.context.bot.db.get_data("guild", "help_type", guild_id = self.context.guild.id)
 
         for cog, commands in mapping.items():
-            if not getattr(cog, "qualified_name", None) or getattr(cog, "qualified_name", None) == "Developer":
+            if (not getattr(cog, "qualified_name", None)) or (not commands) or (getattr(cog, "qualified_name", None) == "Developer"):
                 continue
-            
+
             commands_signatures = [self.get_command_signature(command) for command in commands]
-            if not commands_signatures:
-                continue
 
             titles.append(getattr(cog, "qualified_name").replace("_", " "))
             descriptions.append(
@@ -31,6 +29,15 @@ class CustomHelp(commands.HelpCommand):
             )
 
         if help_type == "s":
+            emojis = {
+                "Configuration": "⚙",
+                "Gestion": "🔧",
+                "Informations": "🔍",
+                "Jeux": "🎮",
+                "Moderation": "🛡",
+                "Permissions": "👨‍⚖️",
+                "Utilitaire": "💡"
+            }
             class HelpView(discord.ui.View):
                 def __init__(self, context):
                     super().__init__()
@@ -42,7 +49,7 @@ class CustomHelp(commands.HelpCommand):
 
                 @discord.ui.select(
                     placeholder = "Choisir une catégorie",
-                    options = [discord.SelectOption(label = title, value = str(index)) for index, title in enumerate(titles)],
+                    options = [discord.SelectOption(label = title, value = str(index), emoji = emojis[title]) for index, title in enumerate(titles)],
                     custom_id = "select"
                 )
                 async def select_callback(self, select, interaction):

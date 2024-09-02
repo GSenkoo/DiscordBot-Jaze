@@ -34,6 +34,8 @@ class RoleSelectInteractionEvent(commands.Cog):
                     select = component
                     break
         assert select
+
+
         
         # ------------------------------------ Obtention/Initialisation des variables nécessaire
         select_send_response = bool(interaction.custom_id.split("_")[2])
@@ -59,6 +61,11 @@ class RoleSelectInteractionEvent(commands.Cog):
                 continue
             roles_to_del.append(role)
 
+        if select_send_response:
+            await interaction.response.defer(ephemeral = True, invisible = False) 
+        else:
+            await interaction.response.defer()
+            
         if roles_to_add:
             await interaction.user.add_roles(*roles_to_add, reason = "Role-Select")
         if roles_to_del:
@@ -68,14 +75,12 @@ class RoleSelectInteractionEvent(commands.Cog):
         roles_to_del = [role.mention for role in roles_to_del]
 
         if (roles_to_add or roles_to_del) and select_send_response:
-            await interaction.respond(
+            await interaction.followup.send(
                 "> Vos rôles ont correctement été mis à jour.\n"
                 + ((f"\nVous avez reçu {len(roles_to_add)} rôle{'s' if len(roles_to_add) > 1 else ''} (" + ", ".join(roles_to_add) + ")") if roles_to_add else "")
                 + ((f"\nVous avez été dépossédé de {len(roles_to_del)} rôle{'s' if len(roles_to_del) > 1 else ''} (" + ", ".join(roles_to_del) + ")") if roles_to_del else ""),
                 ephemeral = True
             )
-        else:
-            await interaction.response.defer()
 
 
 def setup(bot):
