@@ -435,7 +435,11 @@ class Utilitaire(commands.Cog):
             )
         else:
             for_emoji = await self.bot.db.get_data("suggestions", "for_emoji", guild_id = ctx.guild.id)
+            if not for_emoji:
+                for_emoji = "✅"
             against_emoji = await self.bot.db.get_data("suggestions", "against_emoji", guild_id = ctx.guild.id)
+            if not against_emoji:
+                against_emoji = "❌"
 
             message = await suggestion_channel.send(
                 embed = discord.Embed(

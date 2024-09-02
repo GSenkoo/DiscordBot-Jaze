@@ -2,8 +2,9 @@ import discord
 import json
 from discord.ext import commands
 from utils.Database import Database
+from typing import Union
 
-class LemmeDo(commands.AutoShardedBot):
+class JazeMc(commands.AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -59,7 +60,7 @@ class LemmeDo(commands.AutoShardedBot):
         await self.db.set_data("guild", "prefix", new_prefix, guild_id = guild_id)
 
 
-    async def get_prefix(self, message: discord.Message) -> list[str] | str:
+    async def get_prefix(self, message: discord.Message) -> Union[list[str], str]:
         if not message.guild:
             return "+"
         

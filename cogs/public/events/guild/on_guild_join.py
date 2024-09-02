@@ -27,9 +27,12 @@ class on_guild_join(commands.Cog):
             title = f"Merci de m'avoir ajouté sur {guild.name}",
             color = 0xFFFFFF,
             description = textwrap.dedent("""
-                Je suis un bot Discord multifonction et complet, conçu pour offrir une large gamme de fonctionnalités avancées. En raison de ma complexité et de mes capacités étendues, je ne suis pas recommandé pour les petits serveurs, car ceux-ci pourraient ne pas tirer pleinement parti de toutes mes fonctionnalités.
-
-                En cas de problème n'hésitez pas à nous contactez 
+                Je suis un bot discord **polyvalent** et **totalement français**.
+                Par défaut, mon **prefix** sur votre serveur est `+`.
+                                          
+                Si vous souhaitez **utiliser mes fonctionnalitées** sur votre serveur, il est vivement conseillé de me mettre hiérachiquement **au dessus de tous les autres rôles**.
+                                          
+                En cas de problème sur le bot, vous pouvez contacter **senkoo.g4l**.
             """)
         )
 

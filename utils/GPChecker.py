@@ -28,7 +28,7 @@ class GPChecker:
         return True
 
     
-    async def we_can_ban(self, user : discord.User, member : Union[discord.Member, None]) -> Union[str, True]:
+    async def we_can_ban(self, user : discord.User, member : Union[discord.Member, None]) -> Union[str, bool]:
         if user == self.ctx.guild.me: return "> Je ne peux pas m'auto-ban."
         if user == self.ctx.author: return "> Vous ne pouvez pas vous auto-bannir du serveur."
         if user == self.ctx.guild.owner: return "> Vous ne pouvez pas bannir le propriétaire du serveur."
@@ -40,7 +40,7 @@ class GPChecker:
         return True
 
     
-    async def we_can_kick(self, member : discord.Member) -> Union[str, True]:
+    async def we_can_kick(self, member : discord.Member) -> Union[str, bool]:
         if member == self.ctx.guild.me: return "> Je ne peux pas m'auto-kick."
         if member == self.ctx.author: return "> Vous ne pouvez pas vous auto-kick du serveur."
         if member == self.ctx.guild.owner: return "> Vous ne pouvez pas kick le propriétaire du serveur."
@@ -51,7 +51,7 @@ class GPChecker:
         return True
     
 
-    async def we_can_tempmute(self, member : discord.Member) -> Union[str, True]:
+    async def we_can_tempmute(self, member : discord.Member) -> Union[str, bool]:
         if member.timed_out: return f"> Le membre {member.mention} est déjà tempmute."
         if member == self.ctx.guild.me: return "> Je ne peux pas m'auto-tempmute."
         if member == self.ctx.author: return "> Vous ne pouvez pas vous auto-tempmute."
@@ -63,7 +63,7 @@ class GPChecker:
         return True
     
 
-    async def we_can_untempmute(self, member : discord.Member) -> Union[str, True]:
+    async def we_can_untempmute(self, member : discord.Member) -> Union[str, bool]:
         if member == self.ctx.guild.me: return "> D'après mes propres constats, je ne suis pas tempmute."
         if member == self.ctx.author: return "> D'après discord et ma personne, vous n'êtes pas tempmute."
         if not member.timed_out: return f"> Le membre {member.mention} n'est pas tempmute."
@@ -74,7 +74,7 @@ class GPChecker:
         return True
 
     
-    async def we_can_derank(self, member : discord.Member) -> Union[str, True]:
+    async def we_can_derank(self, member : discord.Member) -> Union[str, bool]:
         if member == self.ctx.guild.me: return "> Je ne peux pas m'auto-derank."
         if member == self.ctx.author: return "> Vous ne pouvez pas vous auto-derank."
         if member == self.ctx.guild.owner: return "> Le propriétaire du serveur ne peut pas être derank."
@@ -85,7 +85,7 @@ class GPChecker:
         return True
 
     
-    async def we_can_add_role_to(self, member : discord.Member, role : discord.Role) -> Union[str, True]:
+    async def we_can_add_role_to(self, member : discord.Member, role : discord.Role) -> Union[str, bool]:
         if not role.is_assignable(): return f"> Le rôle {role.mention} n'est pas un rôle assignable."
         if role in getattr(member, "roles", []): return "> " + ("Vous avez" if member == self.ctx.author else f"{member.mention} a") + f" déjà le rôle {role.mention}."
         
@@ -95,14 +95,14 @@ class GPChecker:
         return True
     
 
-    async def we_can_add_role(self, role : discord.Role) -> Union[str, True]:
+    async def we_can_add_role(self, role : discord.Role) -> Union[str, bool]:
         if not role.is_assignable(): return f"> Le rôle {role.mention} n'est pas un rôle assignable."        
         if role.position >= self.ctx.guild.me.top_role.position: return "> Je ne peux pas ajouter un rôle qui est suppérieur ou égal hiérarchiquement à mon rôle le plus élevé."
 
         return True
 
 
-    async def we_can_remove_role(self, member : discord.Member, role : discord.Role) -> Union[str, True]:
+    async def we_can_remove_role(self, member : discord.Member, role : discord.Role) -> Union[str, bool]:
         if role not in getattr(member, "roles", []): return "> " + ("Vous n'avez" if member == self.ctx.author else f"{member.mention} n'a") + f" pas le rôle {role.mention}."
         if not role.is_assignable(): return f"> Le rôle {role.mention} ne peut pas être retiré."
 
@@ -112,7 +112,7 @@ class GPChecker:
         return True
 
 
-    async def we_can_warn(self, member : discord.Member) -> Union[str, True]:
+    async def we_can_warn(self, member : discord.Member) -> Union[str, bool]:
         if member == self.ctx.guild.me: return "> Je ne peux pas m'auto-warn."
         if member.bot: return "> Vous ne pouvez pas warn un bot."
         if member == self.ctx.author: return "> Vous ne pouvez pas vous auto-warn."
@@ -123,7 +123,7 @@ class GPChecker:
         return True
     
     
-    async def we_can_blrank(self, member : discord.Member, action : str) -> Union[str, True]:
+    async def we_can_blrank(self, member : discord.Member, action : str) -> Union[str, bool]:
         assert action in ["add", "del"]
 
         if member == self.ctx.guild.me: return "> Je ne peux pas m'auto blrank."
@@ -139,7 +139,7 @@ class GPChecker:
 
         return True
     
-    async def we_can_blvoc(self, member : discord.Member, action : str) -> Union[str, True]:
+    async def we_can_blvoc(self, member : discord.Member, action : str) -> Union[str, bool]:
         assert action in ["add", "del"]
 
         if member == self.ctx.guild.me: return "> Je ne peux pas m'auto blvoc."

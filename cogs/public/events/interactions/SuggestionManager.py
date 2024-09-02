@@ -54,7 +54,11 @@ class SuggestionsManagerInteractionEvent(commands.Cog):
                 return
 
             for_emoji = await self.bot.db.get_data("suggestions", "for_emoji", guild_id = interaction.guild.id)
+            if not for_emoji:
+                for_emoji = "✅"
             against_emoji = await self.bot.db.get_data("suggestions", "against_emoji", guild_id = interaction.guild.id)
+            if not against_emoji:
+                against_emoji = "❌"
 
             current_message_embed = interaction.message.embeds[0]
             current_message_embed.title = None

@@ -328,10 +328,9 @@ class Informations(commands.Cog):
     @commands.command(description = "Obtenir des informations relatives au bot")
     @commands.guild_only()
     async def botinfo(self, ctx):
-        translation = await self.bot.get_translation("botinfo", ctx.guild.id)
         embed = discord.Embed(
             title = self.bot.user.display_name,
-            description = translation["Bot discord avancé, fiable et complet."],
+            description = "Bot discord avancé, fiable et complet.",
             color = await self.bot.get_theme(ctx.guild.id),
             thumbnail = self.bot.user.avatar.url
         )
@@ -344,15 +343,15 @@ class Informations(commands.Cog):
 
 
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(style = discord.ButtonStyle.link, label = translation["Inviter [data_user]"].replace("[data_user]", self.bot.user.name), url = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.user.id}&permissions=8&scope=bot"))
+        view.add_item(discord.ui.Button(style = discord.ButtonStyle.link, label = f"Inviter {self.bot.user.name}", url = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.user.id}&permissions=8&scope=bot"))
         developer = await self.bot.fetch_user(1213951846234726441)
-        embed.add_field(name = translation["Développeur"], value = f'[**{developer.display_name}**](https://discord.com/users/{developer.id})')
-        embed.add_field(name = translation["Vitesse"], value = f"{round(self.bot.latency * 1000)}ms")
-        embed.add_field(name = translation["Version Python"], value = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
-        embed.add_field(name = translation["Version Pycord"], value = f"{discord.__version__}")
-        embed.add_field(name = translation["Serveurs"], value = f"{len(self.bot.guilds)}")
-        embed.add_field(name = translation["Utilisateur"], value = f"{len(self.bot.users)}")
-        embed.add_field(name = translation["Mémoire utilisée"], value = str(round(memory_usage, 3)) + "GB")
+        embed.add_field(name = "Développeur", value = f'[**{developer.display_name}**](https://discord.com/users/{developer.id})')
+        embed.add_field(name = "Vitesse", value = f"{round(self.bot.latency * 1000)}ms")
+        embed.add_field(name = "Version Python", value = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+        embed.add_field(name = "Version Pycord", value = f"{discord.__version__}")
+        embed.add_field(name = "Serveurs", value = f"{len(self.bot.guilds)}")
+        embed.add_field(name = "Utilisateur", value = f"{len(self.bot.users)}")
+        embed.add_field(name = "Mémoire utilisée", value = str(round(memory_usage, 3)) + "GB")
 
         await ctx.send(embed = embed, view = view)
 

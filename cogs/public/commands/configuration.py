@@ -362,7 +362,7 @@ class Configuration(commands.Cog):
             suggestion_data = {
                 "channel": suggestion_current_data["channel"], "confirm_channel": suggestion_current_data["confirm_channel"],
                 "moderator_roles": json.loads(suggestion_current_data["moderator_roles"]),
-                "enabled": suggestion_current_data["enabled"], "for_emoji": suggestion_current_data["for_emoji"], "against_emoji": suggestion_current_data["against_emoji"]
+                "enabled": suggestion_current_data["enabled"], "for_emoji": suggestion_current_data["for_emoji"] if suggestion_current_data["for_emoji"] else "✅", "against_emoji": suggestion_current_data["against_emoji"] if suggestion_current_data["against_emoji"] else "❌"
             }
         
         async def get_suggestion_settings_embed(data : dict):
@@ -1666,7 +1666,6 @@ class Configuration(commands.Cog):
     async def rolemenu(self, ctx):
         await ctx.send(embed = await get_main_embed(self.bot, ctx), view = ManageRoleMenu(self.bot, ctx))
     
-
 
 def setup(bot):
     bot.add_cog(Configuration(bot))
