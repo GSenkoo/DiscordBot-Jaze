@@ -9,6 +9,8 @@ class on_message_delete(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_delete(self, message : discord.Message):
+        if not message.guild:
+            return
         if message.author == message.guild.me:
             return
 

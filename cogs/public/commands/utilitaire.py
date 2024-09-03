@@ -370,7 +370,7 @@ class Utilitaire(commands.Cog):
 
     @commands.command(description = "Obtenir des/un utilisateur(s) choisi au hasard")
     @commands.guild_only()
-    async def randommember(self, ctx, count : int = None, type = commands.BucketType.user):
+    async def randommember(self, ctx, count : int = None):
         if count is None: count = 1
 
         if not 1 <= count <= 50:

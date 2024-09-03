@@ -125,7 +125,7 @@ class Database:
                     await connection.commit()
                 if fetch:
                     result = await cursor.fetchall()
-                    return result   
+                    return result
 
 
     async def set_data(self, table : str, column : str, new_value, commit : bool = True, **keys_indicator) -> None:
@@ -210,8 +210,12 @@ class Database:
                     await cursor.close()
                     for column_data in columns_data:
                         if column_data[0] == column:
-                            response = column_data[4]
+                            response = column_data[4] # Obtenir la valeur par défaut
+                            if ("int" in column_data[1]) and (column_data[4] is not None): # Vérifier si c'est un nombre
+                                response = int(response)
+                            break
                 
+
                 if list_value:
                     if not response: response = "[]"
                     return json.loads(response)
