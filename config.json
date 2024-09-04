@@ -116,8 +116,8 @@
                 "denied_channel": "BIGINT DEFAULT 0",
                 "moderator_roles": "VARCHAR(237) DEFAULT '[]'",
                 "enabled": "BOOLEAN DEFAULT false",
-                "for_emoji": "VARCHAR(10)",
-                "against_emoji": "VARCHAR(10)"
+                "for_emoji": "VARCHAR(10) DEFAULT '✅'",
+                "against_emoji": "VARCHAR(10) DEFAULT '❌'"
             }
         },
         "soutien": {

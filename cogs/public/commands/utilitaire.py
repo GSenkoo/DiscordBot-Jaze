@@ -15,9 +15,10 @@ from discord.ext.pages import Page, PaginatorButton
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from discord.ext import commands
-from utils.Searcher import Searcher
-from utils.Paginator import CustomPaginator
-from utils.PermissionsManager import PermissionsManager
+from utils import Searcher
+from utils import CustomPaginator
+from utils import PermissionsManager
+from utils import Tools
 
 sys.set_int_max_str_digits(999999999) # Pour la commande +calc
 dotenv.load_dotenv()
@@ -435,11 +436,7 @@ class Utilitaire(commands.Cog):
             )
         else:
             for_emoji = await self.bot.db.get_data("suggestions", "for_emoji", guild_id = ctx.guild.id)
-            if not for_emoji:
-                for_emoji = "✅"
             against_emoji = await self.bot.db.get_data("suggestions", "against_emoji", guild_id = ctx.guild.id)
-            if not against_emoji:
-                against_emoji = "❌"
 
             message = await suggestion_channel.send(
                 embed = discord.Embed(
@@ -450,10 +447,13 @@ class Utilitaire(commands.Cog):
             )
 
             async def add_reaction(message, reaction, if_connot_reaction):
-                try: await message.add_reaction(reaction)
-                except:
-                    try: await message.add_reaction(if_connot_reaction)
-                    except: pass
+                tools = Tools(self.bot)
+                emoji = await tools.get_emoji(reaction)
+
+                emoji_to_add = str(emoji) if emoji else if_connot_reaction
+
+                try: await message.add_reaction(emoji_to_add)
+                except: pass
 
             await add_reaction(message, for_emoji, "✅")
             await add_reaction(message, against_emoji, "❌")

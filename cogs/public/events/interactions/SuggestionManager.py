@@ -54,11 +54,7 @@ class SuggestionsManagerInteractionEvent(commands.Cog):
                 return
 
             for_emoji = await self.bot.db.get_data("suggestions", "for_emoji", guild_id = interaction.guild.id)
-            if not for_emoji:
-                for_emoji = "✅"
             against_emoji = await self.bot.db.get_data("suggestions", "against_emoji", guild_id = interaction.guild.id)
-            if not against_emoji:
-                against_emoji = "❌"
 
             current_message_embed = interaction.message.embeds[0]
             current_message_embed.title = None
@@ -71,9 +67,13 @@ class SuggestionsManagerInteractionEvent(commands.Cog):
                 await interaction.response.send_message(f"> La tentative de l'envoi du message de la suggestion dans le salon <#{suggestion_channel.mention}> a échoué, merci de vérifier que j'ai les permissions nécessaires pour faire ceci.", ephemeral = True)
                 return
 
+            current_message_embed.title = "Suggestion confirmée"
+            current_message_embed.color = 0x00aa53
+            await interaction.edit(embed = current_message_embed, view = None)
+
             async def add_reaction(message, reaction, if_connot_reaction):
                 tools = Tools(self.bot)
-                emoji = tools.get_emoji(reaction)
+                emoji = await tools.get_emoji(reaction)
 
                 emoji_to_add = str(emoji) if emoji else if_connot_reaction
 
@@ -82,10 +82,7 @@ class SuggestionsManagerInteractionEvent(commands.Cog):
 
             await add_reaction(message, for_emoji, "✅")
             await add_reaction(message, against_emoji, "❌")
-            
-            current_message_embed.title = "Suggestion confirmée"
-            current_message_embed.color = 0x00aa53
-            await interaction.message.edit(embed = current_message_embed, view = None)
+
         
         if interaction.custom_id.startswith("suggestion_denied"):
             suggestion_embed = interaction.message.embeds[0]
