@@ -2,7 +2,7 @@ from .Database import *
 from .FilesManager import *
 from .GPChecker import *
 from .HelpCommand import *
-from .JazeMc import *
+from .Jaze import *
 from .MyViewClass import *
 from .Paginator import *
 from .PermissionsManager import *

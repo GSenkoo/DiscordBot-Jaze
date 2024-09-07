@@ -15,6 +15,9 @@ from utils.GPChecker import GPChecker
 
 from menus.configuration.rolemenu.ManageRoleMenu import ManageRoleMenu
 from menus.configuration.rolemenu.functions import get_main_embed
+from menus.configuration.counter.ManageCounters import ManageCounters
+from menus.configuration.counter.functions import get_counters_main_embed
+from menus.configuration.counter.functions import get_data as get_counters_data
 
 
 def delete_message(message):
@@ -868,6 +871,7 @@ class Configuration(commands.Cog):
                     try: response_message = await self.bot.wait_for("message", check = response_check, timeout = 60)
                     except asyncio.TimeoutError:
                         await self.ctx.send("> Action annulée, 1 minute s'est écoulée.", delete_after = 3)
+                        return
                     finally: delete_message(request_message)
                     delete_message(response_message)
 
@@ -1665,7 +1669,14 @@ class Configuration(commands.Cog):
     @commands.guild_only() 
     async def rolemenu(self, ctx):
         await ctx.send(embed = await get_main_embed(self.bot, ctx), view = ManageRoleMenu(self.bot, ctx))
-    
+
+
+    @commands.command(description = "Configurer un ou plusieurs salons vocaux dont le nom (possèdant une ou des variables) est constament mis à jour")
+    @commands.guild_only()
+    async def counter(self, ctx):
+        counters_data = await get_counters_data(self.bot, ctx)
+        await ctx.send(embed = await get_counters_main_embed(self.bot, ctx, counters_data), view = ManageCounters(self.bot, ctx, counters_data))
+
 
 def setup(bot):
     bot.add_cog(Configuration(bot))

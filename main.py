@@ -7,10 +7,10 @@ from discord.ext import commands
 from utils import manage_files
 from utils import PermissionsManager
 from utils import CustomHelp
-from utils import JazeMc
+from utils import Jaze
 
 
-bot = JazeMc(command_prefix = "+", intents = discord.Intents.all(), help_command = CustomHelp())
+bot = Jaze(command_prefix = "+", intents = discord.Intents.all(), help_command = CustomHelp())
 
 @bot.check
 async def can_use_cmd(ctx):

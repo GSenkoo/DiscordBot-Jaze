@@ -134,6 +134,16 @@
             "keys": {
                 "role": "BIGINT"
             }
+        },
+        "counter": {
+            "primary_keys": {"guild_id": "BIGINT NOT NULL", "name": "VARCHAR(80) NOT NULL"},
+            "keys": {
+                "enabled":"BOOLEAN",
+                "text": "VARCHAR(100)",
+                "channel": "BIGINT",
+                "update_frequency": "VARCHAR(3)",
+                "last_update": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+            }
         }
     }
 }

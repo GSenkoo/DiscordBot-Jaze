@@ -77,6 +77,7 @@
     "joins": ["manage_guild", "manage_channels"],
     "leaves": ["manage_guild", "manage_channels"],
     "captcha": ["manage_guild", "moderate_members", "manage_channels"],
+    "counter": ["manage_guild", "manage_channels"],
     "say": ["manage_guild"],
     "clearcomponents": ["administrator"],
     "unbanall": ["administrator"],

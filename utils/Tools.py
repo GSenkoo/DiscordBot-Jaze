@@ -111,12 +111,14 @@ class Tools:
         
         return None
 
+
     def create_delete_message_task(self, message):
         async def task():
             try: await message.delete()
             except: pass
         loop = asyncio.get_event_loop()
         loop.create_task(task())
+
 
     async def get_emoji(self, query):
         if emoji.is_emoji(query):
@@ -145,16 +147,28 @@ class Tools:
             "{MemberStatus}": str(member.status).replace('dnd', 'ne pas déranger').replace('offline', 'hors ligne').replace('online', 'en ligne').replace('idle', 'inactif'),
             "{MemberActivity}": member.activity.name if member.activity else 'Aucune activité'
         }
+    
+
+    def get_member_vars_list(self):
+        return [
+            "{MemberName}", "{MemberDisplayName}", "{MemberMention}",
+            "{MemberId}", "{MemberCreatedAt}", "{MemberCreatedAtf}",
+            "{MemberCreatedAtR}", "{MemberRolesCount}", "{MemberStatus}",
+            "{MemberActivity}"
+        ]
 
 
-    async def get_guild_vars_dict(self, guild):
+    async def get_guild_vars_dict(self, guild : discord.Guild) -> dict:
+        bots = sum([1 for member in guild.members if member.bot])
         return {
             "{ServerName}": guild.name,
             "{ServerId}": str(guild.id),
             "{ServerCreatedAt}": guild.created_at.strftime('%d/%m/%Y %H:%M'),
             "{ServerCreatedAtf}": f"<t:{round(guild.created_at.timestamp())}>",
             "{ServerCreatedAtR}": f"<t:{round(guild.created_at.timestamp())}:R>",
-            "{MemberCount}": str(len(guild.members)),
+            "{MembersCount}": str(len(guild.members)),
+            "{HumansCount}": str(len(guild.members) - bots),
+            "{BotsCount}": str(bots),
             "{ConnectedCount}": str(len([member for member in guild.members if member.status != discord.Status.offline])),
             "{OnlineCount}": str(len([member for member in guild.members if member.status == discord.Status.online])),
             "{OfflineCount}": str(len([member for member in guild.members if member.status == discord.Status.offline])),
@@ -165,6 +179,21 @@ class Tools:
             "{BoostCount}": str(guild.premium_subscription_count),
             "{ChannelCount}": str(len(guild.channels)),
             "{InVoiceCount}": str(len([member for member in guild.members if member.voice]))
+        }
+    
+        # TODO WHEN UPDATE :
+        # - Synchroniser les clées avec le résultat que renvoi la méthode de cette classe .get_guild_vars_list()
+        # - Vérifier si la modification de ceci ne pose pas de problème dans la modification du texte des compteurs (commande +counter)
+    
+
+    def get_guild_vars_list(self):
+        return {
+            "{ServerName}", "{ServerId}", "{ServerCreatedAt}",
+            "{ServerCreatedAtf}", "{ServerCreatedAtR}", "{MembersCount}",
+            "{HumanCounts}", "{BotsCount}", "{ConnectedCount}",
+            "{OnlineCount}", "{OfflineCount}", "{DndCount}",
+            "{IdleCount}", "{AdminCount}", "{BotCount}",
+            "{BoostCount}", "{ChannelCount}", "{InVoiceCount}"
         }
 
 

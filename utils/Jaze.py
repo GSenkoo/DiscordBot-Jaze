@@ -4,7 +4,7 @@ from discord.ext import commands
 from utils.Database import Database
 from typing import Union
 
-class JazeMc(commands.AutoShardedBot):
+class Jaze(commands.AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

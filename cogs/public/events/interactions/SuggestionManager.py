@@ -112,6 +112,5 @@ class SuggestionsManagerInteractionEvent(commands.Cog):
             await interaction.response.send_modal(ReasonModal(title = "Souhaitez-vous ajouter une raison?"))
         
 
-
 def setup(bot):
     bot.add_cog(SuggestionsManagerInteractionEvent(bot))
