@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 
-class statut_updater(commands.Cog):
+class StatusUpdater(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.status_update.start()
@@ -21,4 +21,4 @@ class statut_updater(commands.Cog):
         await self.bot.wait_until_ready()
 
 def setup(bot):
-    bot.add_cog(statut_updater(bot))
+    bot.add_cog(StatusUpdater(bot))

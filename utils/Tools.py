@@ -134,7 +134,7 @@ class Tools:
         return query
 
 
-    async def get_member_vars_dict(self, member):
+    def get_member_vars_dict(self, member):
         return {
             "{MemberName}": member.name,
             "{MemberDisplayName}": member.display_name,
@@ -158,7 +158,7 @@ class Tools:
         ]
 
 
-    async def get_guild_vars_dict(self, guild : discord.Guild) -> dict:
+    def get_guild_vars_dict(self, guild : discord.Guild) -> dict:
         bots = sum([1 for member in guild.members if member.bot])
         return {
             "{ServerName}": guild.name,
@@ -233,8 +233,8 @@ class Tools:
         joins_data = dict(zip(joins_table_columns, joins_sql_data[0]))
         del joins_data["guild_id"]
 
-        member_vars_dict = await self.get_member_vars_dict(member)
-        guild_vars_dict = await self.get_guild_vars_dict(guild)
+        member_vars_dict = self.get_member_vars_dict(member)
+        guild_vars_dict = self.get_guild_vars_dict(guild)
         vars_to_replace = {**member_vars_dict, **guild_vars_dict}
 
         if joins_data["message_dm_enabled"]:
@@ -273,8 +273,8 @@ class Tools:
         
         del leaves_data["guild_id"]
 
-        member_vars_dict = await self.get_member_vars_dict(member)
-        guild_vars_dict = await self.get_guild_vars_dict(guild)
+        member_vars_dict = self.get_member_vars_dict(member)
+        guild_vars_dict = self.get_guild_vars_dict(guild)
         vars_to_replace = {**member_vars_dict, **guild_vars_dict}
 
         embed = None

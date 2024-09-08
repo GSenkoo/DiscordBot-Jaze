@@ -1,6 +1,7 @@
 import discord
 import json
 from typing import List
+from datetime import datetime, timedelta
 
 
 def get_counter_choices(counters_data) -> List[discord.SelectOption]:
@@ -61,5 +62,7 @@ async def get_data(bot, ctx) -> List[dict]:
 
 async def save_data(bot, ctx, counters_data) -> None:
     await bot.db.execute(f"DELETE FROM counter WHERE guild_id = {ctx.guild.id}")
+
+    last_update = datetime.now() - timedelta(hours = 3)
     for counter_data in counters_data:
-        await bot.db.execute("INSERT INTO counter (guild_id, name, enabled, text, channel, update_frequency) VALUES (%s, %s, %s, %s, %s, %s)", (ctx.guild.id, counter_data["name"], counter_data["enabled"], counter_data["text"], counter_data["channel"], counter_data["update_frequency"]))
+        await bot.db.execute("INSERT INTO counter (guild_id, name, enabled, text, channel, update_frequency, last_update) VALUES (%s, %s, %s, %s, %s, %s, %s)", (ctx.guild.id, counter_data["name"], counter_data["enabled"], counter_data["text"], counter_data["channel"], counter_data["update_frequency"], last_update))

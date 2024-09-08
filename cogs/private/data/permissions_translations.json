@@ -37,5 +37,8 @@
     "send_messages_in_threads": "Envoyer des messages dans les fils",
     "use_slash_commands": "Utiliser les commandes slash",
     "manage_guild_expressions": "Gérer les expressions du serveur",
-    "use_application_commands": "Utiliser les commandes d'application"
+    "use_application_commands": "Utiliser les commandes d'application",
+    
+    "owner": "Permission Owner",
+    "buyer": "Propriétaire"
 }

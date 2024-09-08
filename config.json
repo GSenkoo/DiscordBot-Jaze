@@ -142,7 +142,7 @@
                 "text": "VARCHAR(100)",
                 "channel": "BIGINT",
                 "update_frequency": "VARCHAR(3)",
-                "last_update": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+                "last_update": "TIMESTAMP"
             }
         }
     }

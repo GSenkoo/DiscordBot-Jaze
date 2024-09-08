@@ -10,6 +10,7 @@ class database_cleaner(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel):
         await self.bot.db.execute("DELETE FROM role_react WHERE channel_id = %s", (channel.id,))
+        await self.bot.db.exeucte("DELETE FROM counter WHERE channel = %s", (channel.id,))
 
 
     @commands.Cog.listener()
