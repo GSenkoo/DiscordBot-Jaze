@@ -84,7 +84,8 @@ class CounterManager(commands.Cog):
             
             # -------------------------------- Mise à jour du salon
             try:
-                await channel.edit(name = tools.multiple_replaces(counter_data["text"], guild_vars))
+                text = tools.multiple_replaces(counter_data["text"], guild_vars)
+                await channel.edit(name = text if len(text) <= 100 else text[:97] + "...")
                 await self.bot.db.set_data("counter", "last_update", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), guild_id = counter_data["guild_id"], name = counter_data["name"])
             except:
                 pass
