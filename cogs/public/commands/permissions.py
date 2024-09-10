@@ -45,6 +45,7 @@ async def delete_message(message):
     try: await message.delete()
     except: pass
 
+
 async def check_perms_enabled(ctx):
     permissions_enabled = await ctx.bot.db.get_data("guild", "perms_enabled", guild_id = ctx.guild.id)
     if not permissions_enabled:
@@ -878,7 +879,7 @@ class Permissions(commands.Cog):
         await paginator.send(ctx)
         
 
-    @commands.command(description = "Voir et configurer vos permissions personnalisées", aliases = ["customperm"])
+    @commands.command(description = "Voir et configurer vos permissions personnalisées et commandes par permissions personnalisées", aliases = ["customperm"])
     @commands.guild_only()
     @commands.check(check_perms_enabled)
     async def customperms(self, ctx):
