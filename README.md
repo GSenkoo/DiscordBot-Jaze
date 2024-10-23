@@ -11,18 +11,6 @@ The Jaze Discord bot is a Discord bot 🤯. This bot is packed with various feat
 - Games
 And much more! It's up to you to discover it 😎.
 
-# Points to Know About the License
-
-### Conditions
-- When distributing this source code or its modifications, you must make the source code available.
-- You must include the original license and copyright notices in all copies of the software.
-- If you modify and redistribute the software, you must do so under the same GPLv3 license.
-- You must clearly indicate the changes you made to the original software.
-
-### Limitations
-- If the software causes any damage, the authors cannot be held responsible.
-- The software is provided "as is," without any guarantee of functionality.
-
 # Setup Guide
 P.S.: Since this project is abandoned for some personal reasons 😮‍💨, i did not take the time to translate it, so the source code and the bot are entirely in **French**.
 ### 1. ".env" File
