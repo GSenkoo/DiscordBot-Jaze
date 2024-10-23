@@ -1,4 +1,4 @@
-# [Archive] Jaze Bot
+# [Archived Project] Jaze Bot
 The Jaze Discord bot is a Discord bot 🤯. This bot is packed with various features, such as:
 - Advanced permission system
 - Comprehensive and well-organized moderation
