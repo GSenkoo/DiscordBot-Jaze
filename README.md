@@ -1,4 +1,4 @@
-# [Archive] Martial Bot
+# [Archive] Jaze Bot
 The Martial Discord bot is a Discord bot. This bot is packed with various features, such as:
 - Advanced permission system
 - Comprehensive and well-organized moderation
