@@ -1,90 +1,92 @@
-# Bot Martial
-Le bot discord Martial est l'un des bots discord tout en un les plus sophistiqués et complets avec plus de 150 commandes. Ce bot regorge de divers fonctionnalités, tels que :
+# [Archive] Martial Bot
+The Martial Discord bot is a Discord bot. This bot is packed with various features, such as:
+- Advanced permission system
+- Comprehensive and well-organized moderation
+- Suggestion system
+- Welcome/farewell system
+- Role menu
+- Captcha
 - Giveaways
-- Modération
-- Informations
-- Antiraid
-- Auto-Modération
-- Musique
-- Backup
-- Permission
-- Ticket
-- Logs
-- Vocaux temporaires
-- Commandes personnalisées
-Et bien plus encore! À vous de le découvrir 😎.
+- Information
+- Games
+And much more! It's up to you to discover it 😎.
 
-# Points à savoir sur la license
+# Points to Know About the License
 
 ### Conditions
-- En distribuant ce code source ou ses modifications, vous devez rendre le code source disponible.
-- Vous devez inclure les avis de licence et de droit d'auteur d'origine dans toutes les copies du logiciel.
-- Si vous modifiez et redistribuez le logiciel, vous devez le faire sous la même licence GPLv3.
-- Vous devez indiquer clairement les modifications que vous avez apportées au logiciel d'origine.
+- When distributing this source code or its modifications, you must make the source code available.
+- You must include the original license and copyright notices in all copies of the software.
+- If you modify and redistribute the software, you must do so under the same GPLv3 license.
+- You must clearly indicate the changes you made to the original software.
 
 ### Limitations
-- Si le logiciel cause des dommages, les auteurs ne peuvent pas être tenus responsables.
-- Le logiciel est fourni "tel quel", sans garantie de fonctionnement.
+- If the software causes any damage, the authors cannot be held responsible.
+- The software is provided "as is," without any guarantee of functionality.
 
-# Guide de configuration
-### 1. Fichier ".env"
-Créez un fichier nommé ".env" et y-ajouez y les lignes suivantes :
+# Setup Guide
+P.S.: Since this project is abandoned for some personal reasons 😮‍💨, i did not take the time to translate it, so the source code and the bot are entirely in **French**.
+### 1. ".env" File
+Create a file named ".env" and add the following lines:
 ```
-TOKEN = votre_token_ici
+TOKEN = your_token_here
 
-MYSQL_USER = votre_identifiant_mysql
-MYSQL_PASSWORD = votre_mot_de_passe_mysql
-MYSQL_HOST = votre_host
-MYSQL_DB = le_nom_de_votre_db
+MYSQL_USER = your_mysql_username
+MYSQL_PASSWORD = your_mysql_password
+MYSQL_HOST = your_host
+MYSQL_DB = the_name_of_your_db
 
-DEEPL_KEY = votre_clée_deepl
-GOOGLE_API_SEARCH_KEY = votre_clee_api_google
-GOOGLE_API_SEARCH_CSE = votre_clee_de_recherche
-BLAGUE_API_KEY = votre_clee_de_blague_api
+DEEPL_KEY = your_deepl_key
+GOOGLE_API_SEARCH_KEY = your_google_api_key
+GOOGLE_API_SEARCH_CSE = your_search_key
+BLAGUE_API_KEY = your_joke_api_key
 ```
 
-**En Remplaçant :**
-- **`votre_token_ici`** par  *[Le token de votre bot](https://youtu.be/aI4OmIbkJH8?si=RyxOBtSf6JENda9P)*
-- **`votre_identifiant_mysql`** par *[Un idenfiant de compte local mysql](https://www.youtube.com/watch?v=5h5IKUjAO24)*
-- **`votre_mot_de_passe_mysql`** par *[Le mot de passe du compte local mysql donnée](https://www.youtube.com/watch?v=5h5IKUjAO24)*
-- **`votre_clée_deepl`** par *[Une clée deepl](https://www.deepl.com/fr/pro#developer)*
-- **`votre_host`** par votre host mysql (ex: localhost)
-- **`le_nom_de_votre_db`** par le nom de votre base de donnée
-- **`votre_clee_api_google`** par *[Une clée api google](https://developers.google.com/custom-search/v1/overview?hl=fr)*
-- **`votre_clee_de_recherche`** par *[Une clée de recherche google](https://programmablesearchengine.google.com/)*
-- **`votre_clee_de_blague_api`** par *[Une clée de blague API](https://www.blagues-api.fr/)*
+**Replace:**
+- **`your_token_here`** with *[Your bot token](https://youtu.be/aI4OmIbkJH8?si=RyxOBtSf6JENda9P)*
+- **`your_mysql_username`** with *[A local MySQL account identifier](https://www.youtube.com/watch?v=5h5IKUjAO24)*
+- **`your_mysql_password`** with *[The local MySQL account password given](https://www.youtube.com/watch?v=5h5IKUjAO24)*
+- **`your_deepl_key`** with *[A DeepL key](https://www.deepl.com/fr/pro#developer)*
+- **`your_host`** with your MySQL host (e.g., localhost)
+- **`the_name_of_your_db`** with the name of your database
+- **`your_google_api_key`** with *[A Google API key](https://developers.google.com/custom-search/v1/overview?hl=fr)*
+- **`your_search_key`** with *[A Google search key](https://programmablesearchengine.google.com/)*
+- **`your_joke_api_key`** with *[A joke API key](https://www.blagues-api.fr/)*
 
-### 2. Fichier "config.json"
-Tout en haut du fichier "config.json", vous pouvez voir une clée "developers" accompagnée en valeurs, d'une liste.
-Normalement. Si vous avez une bonne vue, vous voyez ça tout en haut :
-```json
+### 2. "config.json" File
+At the top of the "config.json" file, you can see a key "developers" accompanied by a list of values.
+Normally, if you have good vision, you will see this at the top:
+```
 {
     "developers": [1213951846234726441],
     ...
 }
 ```
-Dans cette liste, vous pouvez votre ID discord et/ou celui d'autres personnes. Les utilateurs dont leurs noms sont dans cette liste ont toutes les permissions sur le bot. *N'Envisagez pas de mettre trop de personne dans la liste, ça risque de causer des problèmes*.
+In this list, you can add your Discord ID and/or those of others. Users whose names are in this list have all permissions on the bot. *Do not consider adding too many people to the list, as it may cause problems*.
 
 ### 3. Installations
-Pour utiliser ce bot, vous aurez biensûr besoin de [Python 3.11](https://www.python.org/downloads/release/python-3119/) (Exactement cette version). Dans votre console (Windows), exécutez cette commande pour directement installer tous les packages nécessaires :
+To use this bot, you will of course need [Python 3.11](https://www.python.org/downloads/release/python-3119/) (exactly this version). In your console (Windows), run this command to install all the necessary packages directly: 
 ```
 pip install -r requirements.txt
 ```
-Ou alors, regardez les requirements ci-dessous et installez les un par un.
 
-# Requirements (avec Python et Mysql)
- - py-cord (version suppérieur ou égal à `2.5.0`)
- - aiomysql (version suppérieur ou égal à `0.2.0`)
- - python-dotenv (version suppérieur ou égal à `1.0.1`)
- - cryptography (version suppérieur ou égal à `42.0.8`)
- - PyMySQL (version suppérieur ou égal à `1.1.1`)
- - typing_extensions (version suppérieur ou égal à `4.11.0`)
- - sympy (version suppérieur ou égal à `1.12`)
- - psutil (version suppérieur ou égal à `6.0.0`)
- - wikipedia (version suppérieur ou égal à `1.4.0`)
- - deepl (version suppérieur ou égal à `1.18.0`)
- - blagues-api (version suppérieur ou égal à `1.0.3`)
- - emoji (version suppérieur ou égal à `2.12.1`)
+Alternatively, check the requirements below and install them one by one.
 
-# Lancer votre bot (Visual Studio Code)
-Vous devez vous rendre dans le fichier `main.py`, ensuite, dans le menu tout en haut, utilisez `Run > Start Debugging`
+# Requirements (with Python and MySQL)
+ - py-cord (version greater than or equal to `2.5.0`)
+ - aiomysql (version greater than or equal to `0.2.0`)
+ - python-dotenv (version greater than or equal to `1.0.1`)
+ - cryptography (version greater than or equal to `42.0.8`)
+ - PyMySQL (version greater than or equal to `1.1.1`)
+ - typing_extensions (version greater than or equal to `4.11.0`)
+ - sympy (version greater than or equal to `1.12`)
+ - psutil (version greater than or equal to `6.0.0`)
+ - wikipedia (version greater than or equal to `1.4.0`)
+ - deepl (version greater than or equal to `1.18.0`)
+ - blagues-api (version greater than or equal to `1.0.3`)
+ - emoji (version greater than or equal to `2.12.1`)
+
+# Run Your Bot (Visual Studio Code)
+You need to go to the `main.py` file, then in the top menu, use `Run > Start Debugging`
+
+# ⚠️ Turning Off the Bot
+To properly turn off the bot and close the connection with the database, use the command `+stop`.
